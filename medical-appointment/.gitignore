@@ -1,0 +1,33 @@
+# 1. BỎ QUA FILE CẤU HÌNH CÁ NHÂN 
+# File cấu hình Server nhạy cảm (DB, keys)
+j2ee-backend/src/main/resources/application.properties
+# File biến môi trường (Front-end hoặc Root)
+.env
+# File cấu hình IDE
+.idea/
+*.iml
+.vscode/
+
+# 2. BỎ QUA FILE BINARY VÀ BUILD TEMPORARY
+# Java/Maven
+target/
+**/*.class
+# Lỗi biên dịch tạm thời
+*.log
+# File tạm thời của Spring Boot DevTools
+rebel.xml
+*.jfm
+
+# 3. BỎ QUA CÁC THƯ MỤC PHỤ THUỘC (DEPENDENCIES) CỦA NODE/REACT
+node_modules/
+j2ee-frontend/node_modules/
+
+
+# File build cuối cùng
+j2ee-frontend/build/
+j2ee-frontend/dist/
+npm-debug.log
+
+# 4. BỎ QUA FILE CỦA HỆ ĐIỀU HÀNH
+*.DS_Store
+Thumbs.db

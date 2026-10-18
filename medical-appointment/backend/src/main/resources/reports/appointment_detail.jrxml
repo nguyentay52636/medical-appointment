@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+                               http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="appointment" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+
+    <!-- Parameters -->
+    <parameter name="appointmentCode" class="java.lang.String"/>
+    <parameter name="patientName" class="java.lang.String"/>
+    <parameter name="doctorName" class="java.lang.String"/>
+    <parameter name="specialty" class="java.lang.String"/>
+    <parameter name="date" class="java.lang.String"/>
+    <parameter name="time" class="java.lang.String"/>
+    <parameter name="endTime" class="java.lang.String"/>
+    <parameter name="reason" class="java.lang.String"/>
+    <parameter name="note" class="java.lang.String"/>
+    <parameter name="price" class="java.lang.String"/>
+    <parameter name="paymentMethod" class="java.lang.String"/>
+    <parameter name="paymentStatus" class="java.lang.String"/>
+    <parameter name="status" class="java.lang.String"/>
+    <parameter name="patientLabel" class="java.lang.String"/>
+    <parameter name="doctorLabel" class="java.lang.String"/>
+    <parameter name="patientSignLabel" class="java.lang.String"/>
+    <parameter name="doctorSignLabel" class="java.lang.String"/>
+
+    <detail>
+        <band height="700">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="50"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="22" isBold="true"/>
+                </textElement>
+                <text><![CDATA[PHIẾU LỊCH KHÁM]]></text>
+            </staticText>
+            <line>
+                <reportElement x="0" y="52" width="555" height="2"/>
+            </line>
+
+            <textField>
+                <reportElement x="0" y="60" width="555" height="30" backcolor="#e0f7fa"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Mã lịch: " + $P{appointmentCode}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="95" width="555" height="30"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Bệnh nhân: " + $P{patientName}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="130" width="555" height="30" backcolor="#fff3e0"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Lý do khám: " + $P{reason}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="165" width="555" height="30" backcolor="#fff3e0"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Ghi chú: " + $P{note}]]></textFieldExpression>
+            </textField>
+            <line>
+                <reportElement x="0" y="185" width="555" height="1"/>
+            </line>
+
+            <textField>
+                <reportElement x="0" y="210" width="555" height="30"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Bác sĩ: " + $P{doctorName}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="245" width="555" height="30"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Chuyên khoa: " + $P{specialty}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="280" width="300" height="30"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Ngày: " + $P{date}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="315" width="300" height="30"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Giờ: " + $P{time} + " - " + $P{endTime}]]></textFieldExpression>
+            </textField>
+            <line>
+                <reportElement x="0" y="340" width="555" height="1"/>
+            </line>
+
+            <textField>
+                <reportElement x="405" y="365" width="150" height="30"/>
+                <textElement textAlignment="Right">
+                    <font fontName="DejaVu Sans" size="14" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Giá khám: " + $P{price}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="0" y="400" width="555" height="30"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Phương thức thanh toán: " + $P{paymentMethod}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="435" width="555" height="30"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Trạng thái thanh toán: " + $P{paymentStatus}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="470" width="555" height="30" backcolor="#e0f7fa"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="14" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Trạng thái lịch hẹn: " + $P{status}]]></textFieldExpression>
+            </textField>
+
+            <!-- Nhãn -->
+            <textField>
+                <reportElement x="0" y="520" width="200" height="20"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="16" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{patientLabel}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="350" y="520" width="200" height="20"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="16" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{doctorLabel}]]></textFieldExpression>
+            </textField>
+
+            <!-- Ký -->
+            <textField>
+                <reportElement x="0" y="560" width="200" height="20"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="10" isItalic="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{patientSignLabel}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="350" y="560" width="200" height="20"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="10" isItalic="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{doctorSignLabel}]]></textFieldExpression>
+            </textField>
+
+            <!-- Họ tên -->
+            <textField>
+                <reportElement x="0" y="610" width="200" height="20"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{patientName}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="350" y="610" width="200" height="20"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="14"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{doctorName}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+</jasperReport>
