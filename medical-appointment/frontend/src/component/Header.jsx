@@ -67,7 +67,7 @@ export default function Header() {
 
                     <div className="h-full inline-flex items-center py-0 mr-4">
                         <small className="fa fa-phone-alt text-blue-600 mr-2 text-sm"></small>
-                        <small className="text-gray-700 font-semibold text-xs">(+84) 901 234 567</small>
+                        <small className="text-gray-700 font-semibold text-xs">(+84) 846 777 901</small>
                     </div>
 
                     <div className="h-full inline-flex items-center space-x-1 lg:space-x-2">

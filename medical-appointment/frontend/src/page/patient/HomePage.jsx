@@ -33,15 +33,10 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const closeMenu = () => setIsMenuOpen(false);
   const navigate = useNavigate();
 
   const handleBookingClick = () => {
-    closeMenu();
-
     const token = sessionStorage.getItem("patient");
     if (!token) {
       // hiện popup form login/register
@@ -55,17 +50,6 @@ export default function HomePage() {
   return (
     <div className="bg-gray-50">
 
-      <button
-        onClick={toggleMenu}
-        className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        aria-expanded={isMenuOpen}
-      >
-        {isMenuOpen ? (
-          <i className="fa fa-times text-2xl"></i>
-        ) : (
-          <i className="fa fa-bars text-2xl"></i>
-        )}
-      </button>
 
       {/* Banner slider */}
       <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">

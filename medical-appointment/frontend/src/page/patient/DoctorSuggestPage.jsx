@@ -8,15 +8,12 @@ const ITEMS_PER_PAGE = 3;
 
 export default function DoctorsPage() {
   const [page, setPage] = useState(1);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [address, setAddress] = useState("");
   const [symptom, setSymptom] = useState("");
   const [doctors, setDoctors] = useState([]);
   const [doctorsLoading, setDoctorsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const closeMenu = () => setIsMenuOpen(false);
   const navigate = useNavigate();
 
   const handleSuggestClick = async () => {
@@ -38,8 +35,6 @@ export default function DoctorsPage() {
   const filtered = doctors || [];
 
   const handleBookingClick = (doctor) => {
-    closeMenu();
-
     const token = sessionStorage.getItem("patient");
     if (!token) {
       setShowAuthModal(true);
@@ -61,17 +56,6 @@ export default function DoctorsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-white via-blue-50 to-gray-100 px-4 lg:px-24 py-10">
-      <button
-        onClick={toggleMenu}
-        className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        aria-expanded={isMenuOpen}
-      >
-        {isMenuOpen ? (
-          <i className="fa fa-times text-2xl"></i>
-        ) : (
-          <i className="fa fa-bars text-2xl"></i>
-        )}
-      </button>
       <div className="bg-white rounded-xl shadow p-6 mb-12 border border-blue-600">
         <label htmlFor="">Nhập vị trí muốn tìm bác sĩ</label>
         <input
