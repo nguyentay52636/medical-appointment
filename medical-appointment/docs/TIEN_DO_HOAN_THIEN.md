@@ -125,3 +125,36 @@
 | **Lịch Hẹn Toàn Viện** | [`http://localhost:5173/admin/appointments`](http://localhost:5173/admin/appointments) | Xem và lọc mọi ca khám trong hệ thống. |
 | **Cổng Bác Sĩ (Doctor Portal)** | [`http://localhost:5173/doctor/login`](http://localhost:5173/doctor/login) | Dành cho Bác sĩ tiếp nhận ca khám, quản lý lịch trực.<br>Tài khoản mẫu: `bs.a@example.com` / `password123` |
 | **Trang Chủ Bệnh Nhân** | [`http://localhost:5173/patient/home`](http://localhost:5173/patient/home) | Trải nghiệm đặt lịch khám, trợ lý AI và thanh toán VNPay. |
+
+---
+
+## 6. TÁI CẤU TRÚC CLEAN ARCHITECTURE: PHÂN TRANG (PAGINATION), COMPONENT & CONTEXT
+
+Nhằm tối ưu hóa hiệu năng, khả năng mở rộng và tuân thủ các nguyên lý **Clean Code / Separation of Concerns (SoC)**, toàn bộ phân hệ Admin đã được tái cấu trúc triệt để:
+
+### 6.1. Quản lý trạng thái tập trung với `AdminContext` (`frontend/src/context/AdminContext.jsx`)
+- **Tập trung hóa State**: Đưa toàn bộ danh sách Bác sĩ, Chuyên khoa, Lịch hẹn, Bệnh nhân và các chỉ số thống kê (KPIs) về một Store duy nhất.
+- **Tối ưu hóa Network**: Loại bỏ tình trạng fetch trùng lặp nhiều lần khi chuyển đổi qua lại giữa các trang Dashboard, Doctors, Appointments và Patients.
+- **Real-time Sync**: Khi thêm/sửa/xóa bác sĩ hoặc cập nhật trạng thái lịch hẹn ở bất kỳ component con nào, toàn bộ hệ thống (gồm cả các badge counter trên Sidebar navigation) tự động đồng bộ tức thì.
+- **Custom Hook `useAdmin()`**: Cung cấp giao diện truy cập state và methods trực quan, rõ ràng cho mọi component.
+
+### 6.2. Bộ điều khiển phân trang dùng chung (`Pagination.jsx`)
+- **Vị trí**: `frontend/src/component/common/Pagination.jsx`
+- **Tính năng nổi bật**:
+  - Hỗ trợ chuyển trang: Trang đầu (`<<`), Trước (`<`), các nút số trang có dấu rút gọn (`...`), Sau (`>`), Trang cuối (`>>`).
+  - Chọn số dòng trên mỗi trang (*Page Size Selector*: 5, 10, 20, 50 dòng/trang).
+  - Tự động nhảy về trang 1 khi người dùng gõ từ khóa tìm kiếm hoặc lọc chuyên khoa/trạng thái.
+  - Hiển thị văn bản tóm tắt thân thiện: *"Hiển thị X - Y trong tổng số Z mục"*.
+  - Tích hợp đồng bộ trên 3 trang quản lý chính: Bác sĩ (`AdminDoctors`), Lịch hẹn (`AdminAppointments`) và Bệnh nhân (`AdminPatients`).
+
+### 6.3. Tách nhỏ Component chuyên biệt (Clean Architecture)
+Thay vì nhồi nhét mã nguồn vào các file lớn (trước đây `AdminDoctors.jsx` dài hơn 1.040 dòng), toàn bộ giao diện đã được phân tách thành các component độc lập:
+1. `StatCard.jsx`: Hiển thị thẻ thống kê KPI với thanh gradient, biểu tượng sinh động và nhãn xu hướng.
+2. `DoctorTable.jsx`: Hiển thị danh sách bác sĩ kèm chuyên khoa, avatar, liên hệ, mức phí và các nút thao tác.
+3. `DoctorCreateModal.jsx`: Hộp thoại cấp tài khoản bác sĩ, chọn ảnh avatar từ máy tính, bộ sinh mật khẩu ngẫu nhiên và phân khoa.
+4. `DoctorVoucherModal.jsx`: Hộp thoại bàn giao tài khoản với nút 1-click sao chép thông tin đăng nhập.
+5. `DoctorEditModal.jsx`: Hộp thoại chỉnh sửa thông tin, đổi chuyên khoa và đổi ảnh đại diện.
+6. `DoctorResetPasswordModal.jsx`: Hộp thoại cấp lại mật khẩu nhanh cho bác sĩ.
+7. `AppointmentTable.jsx`: Bảng quản lý lịch hẹn toàn viện, hiển thị trạng thái và dropdown đổi trạng thái trực tiếp.
+8. `PatientTable.jsx`: Bảng danh bạ hồ sơ bệnh nhân kèm thao tác xóa và tìm kiếm.
+

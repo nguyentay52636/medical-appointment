@@ -1,16 +1,42 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, Link } from 'react-router-dom';
+import { AdminProvider, useAdmin } from '../../context/AdminContext';
 
-const navItems = [
-    { name: 'Tổng quan phòng khám', path: '/admin/dashboard', icon: 'fas fa-chart-pie' },
-    { name: 'Quản lý Bác sĩ', path: '/admin/doctors', icon: 'fas fa-user-md' },
-    { name: 'Lịch hẹn toàn viện', path: '/admin/appointments', icon: 'fas fa-calendar-check' },
-    { name: 'Danh sách Bệnh nhân', path: '/admin/patients', icon: 'fas fa-hospital-user' },
-];
-
-export default function AdminLayout() {
+function AdminLayoutInner() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const navigate = useNavigate();
+    const { stats, refreshAll, isLoading } = useAdmin();
+
+    const navItems = [
+        {
+            name: 'Tổng quan phòng khám',
+            path: '/admin/dashboard',
+            icon: 'fas fa-chart-pie',
+            badge: null
+        },
+        {
+            name: 'Quản lý Bác sĩ',
+            path: '/admin/doctors',
+            icon: 'fas fa-user-md',
+            badge: stats.totalDoctors > 0 ? `${stats.totalDoctors}` : null,
+            badgeColor: 'bg-blue-900/80 text-blue-300 border border-blue-700/50'
+        },
+        {
+            name: 'Lịch hẹn toàn viện',
+            path: '/admin/appointments',
+            icon: 'fas fa-calendar-check',
+            badge: stats.pendingAppointments > 0 ? `${stats.pendingAppointments} chờ` : `${stats.totalAppointments}`,
+            badgeColor: stats.pendingAppointments > 0
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold animate-pulse'
+                : 'bg-slate-800 text-slate-400'
+        },
+        {
+            name: 'Danh sách Bệnh nhân',
+            path: '/admin/patients',
+            icon: 'fas fa-hospital-user',
+            badge: stats.totalPatients > 0 ? `${stats.totalPatients}` : null,
+            badgeColor: 'bg-slate-800 text-slate-400'
+        },
+    ];
 
     return (
         <div className="flex h-screen bg-slate-50 font-sans text-slate-800">
@@ -46,8 +72,17 @@ export default function AdminLayout() {
 
                 {/* Navigation Links */}
                 <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
-                    <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                        {isSidebarOpen ? 'Quản lý chính' : '•••'}
+                    <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                        <span>{isSidebarOpen ? 'Quản lý chính' : '•••'}</span>
+                        {isSidebarOpen && (
+                            <button
+                                onClick={refreshAll}
+                                title="Đồng bộ lại toàn bộ dữ liệu"
+                                className="text-slate-500 hover:text-blue-400 transition"
+                            >
+                                <i className={`fas fa-sync-alt text-[10px] ${isLoading ? 'fa-spin text-blue-400' : ''}`}></i>
+                            </button>
+                        )}
                     </div>
 
                     {navItems.map((item) => (
@@ -55,7 +90,7 @@ export default function AdminLayout() {
                             key={item.path}
                             to={item.path}
                             className={({ isActive }) => `
-                                flex items-center gap-3.5 px-3.5 py-3 rounded-xl font-medium text-sm transition-all duration-200
+                                flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-sm transition-all duration-200 group
                                 ${
                                     isActive
                                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-semibold'
@@ -63,8 +98,15 @@ export default function AdminLayout() {
                                 }
                             `}
                         >
-                            <i className={`${item.icon} text-lg w-5 text-center flex-shrink-0`}></i>
-                            {isSidebarOpen && <span className="truncate">{item.name}</span>}
+                            <div className="flex items-center gap-3.5 truncate">
+                                <i className={`${item.icon} text-lg w-5 text-center flex-shrink-0`}></i>
+                                {isSidebarOpen && <span className="truncate">{item.name}</span>}
+                            </div>
+                            {isSidebarOpen && item.badge && (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${item.badgeColor}`}>
+                                    {item.badge}
+                                </span>
+                            )}
                         </NavLink>
                     ))}
 
@@ -124,6 +166,16 @@ export default function AdminLayout() {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        <button
+                            onClick={refreshAll}
+                            disabled={isLoading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer disabled:opacity-50"
+                            title="Làm mới toàn bộ số liệu"
+                        >
+                            <i className={`fas fa-sync-alt ${isLoading ? 'fa-spin text-blue-600' : 'text-slate-500'}`}></i>
+                            <span className="hidden md:inline">Đồng bộ</span>
+                        </button>
+
                         <div className="text-right hidden md:block">
                             <p className="text-xs font-bold text-slate-800">Cơ sở An Dương Vương</p>
                             <p className="text-[11px] text-slate-500">273 An Dương Vương, P.4, Q.5, TP.HCM</p>
@@ -144,5 +196,13 @@ export default function AdminLayout() {
                 </main>
             </div>
         </div>
+    );
+}
+
+export default function AdminLayout() {
+    return (
+        <AdminProvider>
+            <AdminLayoutInner />
+        </AdminProvider>
     );
 }

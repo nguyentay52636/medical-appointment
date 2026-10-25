@@ -475,10 +475,83 @@ def create_report(output_path):
                 if i == 0:
                     run.font.bold = True
 
+    # -------------------------------------------------------------
+    # SECTION 6: CLEAN ARCHITECTURE, COMPONENT & CONTEXT REFACTORING
+    # -------------------------------------------------------------
+    doc.add_paragraph()
+    h6 = doc.add_paragraph()
+    r6 = h6.add_run("6. TÁI CẤU TRÚC CLEAN ARCHITECTURE: PHÂN TRANG (PAGINATION), COMPONENT & CONTEXT")
+    r6.font.bold = True
+    r6.font.size = Pt(13)
+    r6.font.color.rgb = RGBColor(0x1E, 0x40, 0xAF)
+
+    p_clean = doc.add_paragraph()
+    p_clean.add_run("Nhằm tối ưu hóa hiệu năng và tuân thủ các nguyên lý Clean Code / Separation of Concerns (SoC), toàn bộ phân hệ Admin đã được tái cấu trúc thành kiến trúc đa tầng hiện đại:")
+    p_clean.paragraph_format.space_after = Pt(6)
+
+    clean_table = doc.add_table(rows=1, cols=3)
+    clean_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    clean_widths = [Inches(1.8), Inches(2.2), Inches(2.7)]
+
+    c_headers = ["Thành phần kiến trúc", "Vị trí mã nguồn", "Mục đích & Lợi ích tối ưu"]
+    for i, h_text in enumerate(c_headers):
+        cell = clean_table.rows[0].cells[i]
+        cell.text = h_text
+        cell.width = clean_widths[i]
+        set_cell_background(cell, "1E3A8A")
+        set_cell_margins(cell, top=100, bottom=100, left=80, right=80)
+        p = cell.paragraphs[0]
+        for run in p.runs:
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            run.font.size = Pt(9)
+
+    clean_data = [
+        ("AdminContext & useAdmin()", "frontend/src/context/AdminContext.jsx",
+         "Quản lý trạng thái tập trung (Bác sĩ, Chuyên khoa, Lịch hẹn, Bệnh nhân, KPIs), triệt tiêu gọi trùng API và đồng bộ badge counters."),
+        ("Component Phân trang dùng chung", "frontend/src/component/common/Pagination.jsx",
+         "Điều hướng trang (<<, <, số trang, >, >>), chọn số dòng/trang (5, 10, 20, 50), tự động reset về trang 1 khi tìm kiếm."),
+        ("Thẻ KPI Tái sử dụng", "frontend/src/component/admin/StatCard.jsx",
+         "Hiển thị số liệu thống kê Dashboard với thanh gradient, biểu tượng sinh động và nhãn phân loại."),
+        ("Bảng Bác sĩ & Thao tác", "frontend/src/component/admin/DoctorTable.jsx",
+         "Hiển thị bảng bác sĩ kèm avatar, chuyên khoa, mức phí, kinh nghiệm và nhóm nút thao tác sửa/đổi pass/xóa."),
+        ("Dialog Cấp Tài Khoản Bác Sĩ", "frontend/src/component/admin/DoctorCreateModal.jsx",
+         "Tải avatar từ máy tính người dùng, sinh mật khẩu ngẫu nhiên, phân công chuyên khoa và tích hợp geocoding."),
+        ("Phiếu Bàn Giao Tài Khoản", "frontend/src/component/admin/DoctorVoucherModal.jsx",
+         "Hiển thị thông tin tài khoản bác sĩ vừa cấp với nút 1-click sao chép định dạng văn bản gửi bác sĩ."),
+        ("Dialog Sửa & Đổi Chuyên Khoa", "frontend/src/component/admin/DoctorEditModal.jsx",
+         "Chỉnh sửa thông tin bác sĩ, điều chuyển khoa và tải ảnh đại diện mới từ thiết bị."),
+        ("Dialog Cấp Lại Mật Khẩu", "frontend/src/component/admin/DoctorResetPasswordModal.jsx",
+         "Đổi mật khẩu nhanh cho bác sĩ trong popup và sao chép mật khẩu mới."),
+        ("Bảng Lịch Hẹn Toàn Viện", "frontend/src/component/admin/AppointmentTable.jsx",
+         "Quản lý danh sách lịch khám toàn viện kèm dropdown cập nhật trạng thái trực tiếp."),
+        ("Bảng Danh Bạ Bệnh Nhân", "frontend/src/component/admin/PatientTable.jsx",
+         "Hiển thị hồ sơ bệnh nhân, mã định danh, avatar ký tự đầu và chức năng xóa hồ sơ.")
+    ]
+
+    for idx, item in enumerate(clean_data):
+        row = clean_table.add_row()
+        for i, val in enumerate(item):
+            cell = row.cells[i]
+            cell.text = val
+            cell.width = clean_widths[i]
+            set_cell_background(cell, "FFFFFF" if idx % 2 == 0 else "F8FAFC")
+            set_cell_margins(cell, top=70, bottom=70, left=80, right=80)
+            set_cell_border(cell, top=dict(sz=4, val='single', color='E2E8F0'),
+                                  bottom=dict(sz=4, val='single', color='E2E8F0'),
+                                  left=dict(sz=4, val='single', color='E2E8F0'),
+                                  right=dict(sz=4, val='single', color='E2E8F0'))
+            p = cell.paragraphs[0]
+            for run in p.runs:
+                run.font.size = Pt(8.5)
+                if i == 0:
+                    run.font.bold = True
+
     # Save document
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     doc.save(output_path)
     print(f"Report successfully saved to: {output_path}")
+
 
 if __name__ == '__main__':
     target_path = "/Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/docs/TIEN_DO_HOAN_THIEN.docx"
