@@ -29,6 +29,15 @@ export const adminService = {
         return res.data;
     },
 
+    uploadAvatar: async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await axios.post(`${API_BASE}/upload/image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return res.data;
+    },
+
     // 2. Quản lý Chuyên khoa
     getAllSpecialties: async () => {
         const res = await axios.get(`${API_BASE}/specialty/all`);

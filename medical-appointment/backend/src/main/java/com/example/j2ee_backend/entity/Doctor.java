@@ -36,7 +36,7 @@ public class Doctor {
     @JoinColumn(name = "specialty_id", nullable = false)
     private Specialty specialty;
 
-    @Column(name="image_url")
+    @Column(name="image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
     @Column(name = "experience_years", nullable = false)
