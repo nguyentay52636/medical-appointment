@@ -324,8 +324,12 @@ def create_report(output_path):
          "Lấy danh sách các chuyên khoa để phân công cho bác sĩ khi tạo tài khoản."),
         ("/api/appointment/all", "GET", "AppointmentController\nAppointmentService",
          "Lấy toàn bộ lịch hẹn khám trong toàn hệ thống phục vụ Admin Dashboard."),
+        ("/api/appointment/admin/{id}/status", "PUT", "AppointmentController\nAppointmentService",
+         "Admin trực tiếp duyệt, hoàn tất hoặc hủy lịch khám bệnh của mọi chuyên khoa."),
         ("/api/patient/all", "GET", "PatientController\nPatientService",
-         "Lấy danh sách toàn bộ hồ sơ bệnh nhân đã đăng ký trên hệ thống.")
+         "Lấy danh sách toàn bộ hồ sơ bệnh nhân đã đăng ký trên hệ thống."),
+        ("/api/patient/admin/{id}", "DELETE", "PatientController\nPatientService",
+         "Admin xóa hồ sơ bệnh nhân khỏi hệ thống có kiểm tra an toàn dữ liệu lịch hẹn.")
     ]
 
     for idx, item in enumerate(be_data):

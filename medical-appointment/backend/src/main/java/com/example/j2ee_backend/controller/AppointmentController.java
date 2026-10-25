@@ -40,6 +40,17 @@ public class AppointmentController {
         }
     }
 
+    @PutMapping("/admin/{id}/status")
+    public ResponseEntity<?> adminUpdateStatus(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        try {
+            String status = body.get("status");
+            appointmentService.adminUpdateAppointmentStatus(id, status);
+            return ResponseEntity.ok(Map.of("message", "Cập nhật trạng thái lịch hẹn thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @GetMapping("/doctor/{doctorId}")
     public ResponseEntity<?> getAppointments(@PathVariable Integer doctorId) {
         try {

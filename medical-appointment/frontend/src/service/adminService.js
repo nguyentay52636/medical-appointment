@@ -50,9 +50,19 @@ export const adminService = {
         return res.data;
     },
 
+    updateAppointmentStatus: async (appointmentId, status) => {
+        const res = await axios.put(`${API_BASE}/appointment/admin/${appointmentId}/status`, { status });
+        return res.data;
+    },
+
     // 4. Quản lý Bệnh nhân
     getAllPatients: async () => {
         const res = await axios.get(`${API_BASE}/patient/all`);
+        return res.data;
+    },
+
+    deletePatient: async (patientId) => {
+        const res = await axios.delete(`${API_BASE}/patient/admin/${patientId}`);
         return res.data;
     }
 };

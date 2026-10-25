@@ -63,6 +63,26 @@ public class AppointmentService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void adminUpdateAppointmentStatus(Integer appointmentId, String newStatus) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn với ID: " + appointmentId));
+
+        appointment.setStatus(newStatus.toLowerCase());
+        appointment.setUpdateAt(Timestamp.valueOf(LocalDateTime.now()));
+
+        if ("completed".equalsIgnoreCase(newStatus)) {
+            appointment.setPaymentStatus("paid");
+        } else if ("rejected".equalsIgnoreCase(newStatus) || "cancelled".equalsIgnoreCase(newStatus)) {
+            if (appointment.getBookableSlot() != null) {
+                appointment.getBookableSlot().setStatus("available");
+                slotRepo.save(appointment.getBookableSlot());
+            }
+        }
+
+        appointmentRepository.save(appointment);
+    }
+
     // Lấy chi tiết lịch
     public AppointmentDTO getAppointmentDetail(Integer doctorId, Integer appointmentId) {
         Optional<Appointment> optional = appointmentRepository.findByIdAndDoctor(appointmentId, doctorId);

@@ -93,7 +93,9 @@
 | `/api/doctor/all` | `GET` | `DoctorController`<br>`DoctorService` | Lấy danh sách toàn bộ bác sĩ công tác tại phòng khám kèm chuyên khoa. |
 | `/api/specialty/all` | `GET` | `SpecialtyController`<br>`SpecialtyService` | Lấy danh sách toàn bộ các chuyên khoa để phân công cho bác sĩ. |
 | `/api/appointment/all` | `GET` | `AppointmentController`<br>`AppointmentService` | Lấy toàn bộ lịch hẹn khám trong toàn hệ thống phục vụ Admin Dashboard. |
+| `/api/appointment/admin/{id}/status` | `PUT` | `AppointmentController`<br>`AppointmentService` | Admin trực tiếp duyệt, hoàn tất hoặc hủy lịch khám bệnh của mọi chuyên khoa. |
 | `/api/patient/all` | `GET` | `PatientController`<br>`PatientService` | Lấy danh sách toàn bộ hồ sơ bệnh nhân đã đăng ký. |
+| `/api/patient/admin/{id}` | `DELETE` | `PatientController`<br>`PatientService` | Admin xóa hồ sơ bệnh nhân khỏi hệ thống có kiểm tra an toàn dữ liệu lịch hẹn. |
 | `/api/upload/image` | `POST` | `UploadController`<br>`WebMvcConfig` | Tải ảnh avatar từ máy tính người dùng; lưu vào thư mục `uploads/` và đồng bộ `public/uploads/`; phục vụ tĩnh trực tiếp. |
 
 ---

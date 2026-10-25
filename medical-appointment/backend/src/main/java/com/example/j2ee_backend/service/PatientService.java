@@ -124,6 +124,16 @@ public class PatientService {
                 .map(com.example.j2ee_backend.dto.PatientDTO::new)
                 .collect(java.util.stream.Collectors.toList());
     }
+
+    public void deletePatient(Integer id) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bệnh nhân với ID: " + id));
+        try {
+            patientRepository.delete(patient);
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể xóa bệnh nhân vì đã có dữ liệu lịch hẹn khám bệnh liên quan!");
+        }
+    }
 }
 
 

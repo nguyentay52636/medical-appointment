@@ -22,7 +22,7 @@ public class PatientDTO {
         if (patient != null) {
             this.id = patient.getId();
             this.fullName = patient.getFullName();
-            this.password = patient.getPassword();
+            this.password = null;
             this.email = patient.getEmail();
             this.phoneNumber = patient.getPhoneNumber();
             this.address = patient.getAddress();

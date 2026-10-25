@@ -111,4 +111,14 @@ public class PatientController {
                     .body(Map.of("message", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/admin/{id}")
+    public ResponseEntity<?> deletePatient(@PathVariable Integer id) {
+        try {
+            patientService.deletePatient(id);
+            return ResponseEntity.ok(Map.of("message", "Xóa hồ sơ bệnh nhân thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }
