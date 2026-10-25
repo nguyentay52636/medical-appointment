@@ -122,8 +122,8 @@ ReactDOM.createRoot(root).render(
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="doctors" element={<AdminDoctors />} />
-                <Route path="doctors/create" element={<AdminCreateDoctor />} />
-                <Route path="create-doctor" element={<AdminCreateDoctor />} />
+                <Route path="doctors/create" element={<Navigate to="/admin/doctors?action=create" replace />} />
+                <Route path="create-doctor" element={<Navigate to="/admin/doctors?action=create" replace />} />
                 <Route path="appointments" element={<AdminAppointments />} />
                 <Route path="patients" element={<AdminPatients />} />
               </Route>
@@ -132,7 +132,7 @@ ReactDOM.createRoot(root).render(
               <Route path="dashboard" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard/doctor" element={<Navigate to="/admin/doctors" replace />} />
               <Route path="dashboard/doctors" element={<Navigate to="/admin/doctors" replace />} />
-              <Route path="dashboard/create-doctor" element={<Navigate to="/admin/doctors/create" replace />} />
+              <Route path="dashboard/create-doctor" element={<Navigate to="/admin/doctors?action=create" replace />} />
 
               {/* -------------------- 404 -------------------- */}
               <Route

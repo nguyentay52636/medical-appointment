@@ -251,19 +251,17 @@ def create_report(output_path):
 
     fe_data = [
         ("1", "AdminLayout.jsx", "/admin/*",
-         "Khung giao diện chuẩn Slate-900 / Blue-600; Sidebar thu gọn thông minh; Nút chuyển nhanh sang Cổng Bác sĩ và Website người dùng; Có mục menu riêng 'Cấp tài khoản Bác sĩ'."),
+         "Khung giao diện chuẩn Slate-900 / Blue-600; Sidebar thu gọn thông minh; Nút chuyển nhanh sang Cổng Bác sĩ và Website người dùng; Menu điều hướng tinh gọn 4 phân hệ cốt lõi."),
         ("2", "AdminDashboard.jsx", "/admin/dashboard\n/dashboard",
-         "KPI Cards: Tổng bác sĩ, chuyên khoa, số ca khám, bệnh nhân, doanh thu. Thanh phân bổ tỷ lệ ca khám (Chờ duyệt, Đã khám, Đã hủy). Nút lối tắt cấp tài khoản và danh sách bác sĩ."),
-        ("3", "AdminCreateDoctor.jsx", "/admin/doctors/create\n/admin/create-doctor",
-         "Giao diện Cấp Tài Khoản Bác Sĩ Toàn Diện: Form 3 phần chuẩn hóa (Tài khoản & Pass khởi tạo, Định danh & Phân khoa động từ DB, Liên hệ & Avatar). Live Preview theo thời gian thực. Hộp thoại bàn giao tài khoản với nút 'Sao chép thông tin gửi Bác sĩ' (1-click copy)."),
-        ("4", "AdminDoctors.jsx", "/admin/doctors\n/dashboard/doctor",
-         "Bảng danh bạ bác sĩ, tìm kiếm, lọc chuyên khoa. Modal chỉnh sửa thông tin & điều chuyển chuyên khoa. Modal Cấp lại mật khẩu (Reset Password). Nút xóa bác sĩ có kiểm tra an toàn."),
-        ("5", "AdminAppointments.jsx", "/admin/appointments",
+         "KPI Cards: Tổng bác sĩ, chuyên khoa, số ca khám, bệnh nhân, doanh thu. Thanh phân bổ tỷ lệ ca khám (Chờ duyệt, Đã khám, Đã hủy). Nút lối tắt cấp tài khoản (kích hoạt mở Dialog) và danh sách bác sĩ."),
+        ("3", "AdminDoctors.jsx", "/admin/doctors\n/dashboard/doctor",
+         "Bảng danh sách bác sĩ & Dialog Cấp tài khoản / Upload ảnh tại chỗ:\n• Dialog Cấp Tài Khoản Mới: Mở trực tiếp ngay trong trang, không cần chuyển hướng trang.\n• Chọn ảnh từ máy tính / thiết bị: Tải ảnh avatar trực tiếp từ máy tính (<input type='file'>), tự động upload lên server và hiển thị preview tức thì.\n• Sinh mật khẩu tự động & Bàn giao: Nút random mật khẩu; Phiếu bàn giao tài khoản với nút 1-click Copy.\n• Modal Sửa & Đổi ảnh & Chuyên khoa: Cập nhật thông tin, đổi chuyên khoa và đổi ảnh đại diện từ máy tính.\n• Modal Cấp lại mật khẩu: Đổi mật khẩu tài khoản bác sĩ nhanh chóng.\n• Xóa Bác sĩ: Hộp thoại an toàn có xử lý ràng buộc lịch hẹn."),
+        ("4", "AdminAppointments.jsx", "/admin/appointments",
          "Theo dõi và rà soát mọi ca khám bệnh của tất cả các chuyên khoa; Lọc theo trạng thái và tìm kiếm theo tên bệnh nhân / bác sĩ phụ trách."),
-        ("6", "AdminPatients.jsx", "/admin/patients",
+        ("5", "AdminPatients.jsx", "/admin/patients",
          "Quản lý danh bạ hồ sơ bệnh nhân đã đăng ký trên hệ thống, email, số điện thoại, địa chỉ."),
-        ("7", "adminService.js", "N/A (API Service)",
-         "Tầng Axios Service kết nối backend Spring Boot: cấp tài khoản, cập nhật, đổi mật khẩu, xóa bác sĩ, tải danh sách chuyên khoa, tải lịch khám...")
+        ("6", "adminService.js", "N/A (API Service)",
+         "Tầng Axios Service kết nối backend Spring Boot: cấp tài khoản, upload avatar từ máy tính, cập nhật, đổi mật khẩu, xóa bác sĩ, tải danh sách chuyên khoa, tải lịch khám...")
     ]
 
     for item in fe_data:
@@ -316,6 +314,8 @@ def create_report(output_path):
          "Admin cập nhật thông tin bác sĩ & điều chuyển sang chuyên khoa công tác mới."),
         ("/api/doctor/admin/{id}/reset-password", "PUT", "DoctorController\nDoctorService",
          "Admin cấp lại mật khẩu mới trực tiếp cho bác sĩ mà không cần biết mật khẩu cũ."),
+        ("/api/upload/image", "POST", "UploadController\nWebMvcConfig",
+         "Tải ảnh avatar trực tiếp từ máy tính / thiết bị người dùng; lưu vào uploads/ và phục vụ tĩnh trực tiếp qua URL."),
         ("/api/doctor/{id}", "DELETE", "DoctorController\nDoctorService",
          "Xóa bác sĩ khỏi CSDL theo ID có xử lý ràng buộc toàn vẹn lịch khám bệnh."),
         ("/api/doctor/all", "GET", "DoctorController\nDoctorService",
