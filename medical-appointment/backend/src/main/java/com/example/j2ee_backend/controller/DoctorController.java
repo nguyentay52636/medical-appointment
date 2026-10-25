@@ -170,4 +170,36 @@ public class DoctorController {
         List<Doctor> doctors = geocodeService.findNearByDoctors(lat, lng, topN, radiusKm);
         return doctors.stream().map(DoctorDTO::new).toList();
     }
+
+    @PostMapping("/create")
+    public ResponseEntity<?> createDoctor(@RequestBody Map<String, Object> body) {
+        try {
+            DoctorDTO dto = new DoctorDTO();
+            dto.setFullName((String) body.get("fullName"));
+            dto.setEmail((String) body.get("email"));
+            dto.setPhoneNumber((String) body.get("phoneNumber"));
+            dto.setSpecialtyId(body.get("specialtyId") != null ? Integer.valueOf(body.get("specialtyId").toString()) : null);
+            dto.setExperienceYears(body.get("experienceYears") != null ? Integer.valueOf(body.get("experienceYears").toString()) : 1);
+            dto.setPricePerAppointment(body.get("pricePerAppointment") != null ? Integer.valueOf(body.get("pricePerAppointment").toString()) : 200000);
+            dto.setAddress((String) body.get("address"));
+            dto.setBio((String) body.get("bio"));
+            dto.setImageUrl((String) body.get("imageUrl"));
+
+            String rawPassword = (String) body.get("password");
+            DoctorDTO created = doctorServices.createDoctor(dto, rawPassword);
+            return ResponseEntity.ok(Map.of("message", "Thêm bác sĩ thành công!", "doctor", created));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteDoctor(@PathVariable Integer id) {
+        try {
+            doctorServices.deleteDoctor(id);
+            return ResponseEntity.ok(Map.of("message", "Xóa bác sĩ thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

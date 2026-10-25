@@ -29,6 +29,9 @@ public class DoctorService {
     private TokenService tokenService;
 
     @Autowired
+    private com.example.j2ee_backend.repository.SpecialtyRepository specialtyRepository;
+
+    @Autowired
     public DoctorService(DoctorRepository doctorRepository, PasswordEncoder passwordEncoder,GoogleAuthService googleAuthService, EmailService emailService, GeocodeService geocodeService, TokenService tokenService) {
         this.doctorRepository = doctorRepository;
         this.passwordEncoder = passwordEncoder;
@@ -158,5 +161,41 @@ public class DoctorService {
         doctorRepository.save(doctor);
 
         tokenService.removeToken(token);
+    }
+
+    public DoctorDTO createDoctor(DoctorDTO dto, String rawPassword) {
+        if (doctorRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new RuntimeException("Email bác sĩ '" + dto.getEmail() + "' đã tồn tại trên hệ thống!");
+        }
+
+        com.example.j2ee_backend.entity.Specialty specialty = null;
+        if (dto.getSpecialtyId() != null) {
+            specialty = specialtyRepository.findById(dto.getSpecialtyId())
+                    .orElseThrow(() -> new RuntimeException("Chuyên khoa không tồn tại: " + dto.getSpecialtyId()));
+        }
+
+        Doctor doctor = new Doctor();
+        doctor.setFullName(dto.getFullName());
+        doctor.setEmail(dto.getEmail());
+        doctor.setPassword(passwordEncoder.encode(rawPassword != null && !rawPassword.isBlank() ? rawPassword : "123456"));
+        doctor.setPhoneNumber(dto.getPhoneNumber());
+        doctor.setSpecialty(specialty);
+        doctor.setImageUrl(dto.getImageUrl() != null && !dto.getImageUrl().isBlank() ? dto.getImageUrl() : "https://i.pravatar.cc/350?img=1");
+        doctor.setExperienceYears(dto.getExperienceYears() != null ? dto.getExperienceYears() : 1);
+        doctor.setPricePerAppointment(dto.getPricePerAppointment() != null ? dto.getPricePerAppointment() : 200000);
+        doctor.setBio(dto.getBio());
+        doctor.setAddress(dto.getAddress());
+        doctor.setLat(dto.getLat() != null ? dto.getLat() : 10.762622);
+        doctor.setLng(dto.getLng() != null ? dto.getLng() : 106.660172);
+
+        Doctor saved = doctorRepository.save(doctor);
+        return new DoctorDTO(saved);
+    }
+
+    public void deleteDoctor(Integer id) {
+        if (!doctorRepository.existsById(id)) {
+            throw new RuntimeException("Không tìm thấy bác sĩ với ID: " + id);
+        }
+        doctorRepository.deleteById(id);
     }
 }

@@ -83,6 +83,8 @@ export default function Footer() {
                         <Link className="block text-gray-300 hover:text-white transition duration-200 mb-2" to="/patient/contact">Liên hệ phòng khám</Link>
                         <Link className="block text-gray-300 hover:text-white transition duration-200 mb-2" to="/patient/support">Hỗ trợ khách hàng</Link>
                         <Link className="block text-gray-300 hover:text-white transition duration-200 mb-2" to="/patient/condition">Điều khoản & Điều kiện</Link>
+                        <Link className="block text-blue-400 hover:text-blue-300 transition duration-200 mb-2 font-medium" to="/doctor">Cổng Bác sĩ (Doctor Portal)</Link>
+                        <Link className="block text-emerald-400 hover:text-emerald-300 transition duration-200 mb-2 font-medium" to="/admin/dashboard">Quản trị Phòng khám (Admin)</Link>
                     </div>
 
                     {/* Cột 4: Đăng ký nhận tin */}

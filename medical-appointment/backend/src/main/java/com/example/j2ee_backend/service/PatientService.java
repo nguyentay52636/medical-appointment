@@ -117,6 +117,13 @@ public class PatientService {
 
         tokenService.removeToken(token);
     }
+
+    public java.util.List<com.example.j2ee_backend.dto.PatientDTO> getAllPatients() {
+        return patientRepository.findAll()
+                .stream()
+                .map(com.example.j2ee_backend.dto.PatientDTO::new)
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
 
 

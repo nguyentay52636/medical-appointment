@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { PatientContext } from "../context/PatientContext.jsx";
 
 export default function Header() {
@@ -65,9 +65,31 @@ export default function Header() {
                         </div>
                     )}
 
-                    <div className="h-full inline-flex items-center py-0 mr-4">
+                    <div className="h-full inline-flex items-center py-0 mr-3">
                         <small className="fa fa-phone-alt text-blue-600 mr-2 text-sm"></small>
                         <small className="text-gray-700 font-semibold text-xs">(+84) 846 777 901</small>
+                    </div>
+
+                    {/* Lối vào Cổng Bác sĩ / Doctor Portal */}
+                    <div className="h-full inline-flex items-center py-0 mr-2">
+                        <Link
+                            to="/doctor"
+                            className="inline-flex items-center py-1 px-2.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition duration-150"
+                            title="Dành cho Bác sĩ / Quản lý ca khám cá nhân"
+                        >
+                            <i className="fas fa-user-md mr-1.5 text-blue-600"></i> Cổng Bác sĩ
+                        </Link>
+                    </div>
+
+                    {/* Lối vào Quản trị phòng khám / Clinic Admin Dashboard */}
+                    <div className="h-full inline-flex items-center py-0 mr-3">
+                        <Link
+                            to="/admin/dashboard"
+                            className="inline-flex items-center py-1 px-2.5 text-xs font-semibold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md transition duration-150"
+                            title="Bảng điều khiển quản trị toàn diện phòng khám"
+                        >
+                            <i className="fas fa-hospital-alt mr-1.5 text-blue-600"></i> Quản trị Phòng khám
+                        </Link>
                     </div>
 
                     <div className="h-full inline-flex items-center space-x-1 lg:space-x-2">

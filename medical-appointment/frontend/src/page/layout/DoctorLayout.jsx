@@ -124,14 +124,26 @@ function DashboardHeader({ avatarUrl }) {
 function DoctorLayout({ avatarUrl }) {
     const location = useLocation();
     const { doctor, logout } = useContext(DoctorContext);
-    const storedDoctor = JSON.parse(sessionStorage.getItem('doctor'));
-    const finalAvatar = avatarUrl || doctor?.imageUrl || storedDoctor?.imageUrl || "https://i.pravatar.cc/150?img=5";
+    const storedDoctor = JSON.parse(sessionStorage.getItem('doctor') || 'null');
+    const currentDoctor = doctor || storedDoctor;
+    const finalAvatar = avatarUrl || currentDoctor?.imageUrl || "https://i.pravatar.cc/150?img=5";
     const navigate = useNavigate();
+
+    // Bảo vệ tuyến đường Doctor: chưa đăng nhập thì tự động đẩy về trang /doctor/login
+    useEffect(() => {
+        if (!currentDoctor) {
+            navigate("/doctor/login", { replace: true });
+        }
+    }, [currentDoctor, navigate]);
 
     const handleLogout = () => {
         logout();
-        navigate("/doctor");
+        navigate("/doctor/login");
     };
+
+    if (!currentDoctor) {
+        return null;
+    }
 
     return (
         <div className="flex h-screen bg-gradient-to-r from-white via-blue-50 to-gray-100 font-sans">
@@ -166,7 +178,15 @@ function DoctorLayout({ avatarUrl }) {
                     })}
                 </nav>
 
-                <div className="mt-auto p-4 border-t border-blue-600">
+                <div className="mt-auto p-4 border-t border-gray-100 space-y-2">
+                    <NavLink
+                        to="/patient/home"
+                        className="flex items-center space-x-3 px-5 py-2.5 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                    >
+                        <i className="fas fa-home text-base w-6 text-gray-400"></i>
+                        <span>Về trang phòng khám</span>
+                    </NavLink>
+
                     <button
                         onClick={handleLogout}
                         className="flex items-center space-x-4 text-lg font-bold text-red-500 hover:text-white hover:bg-red-600 w-full px-5 py-3 rounded-xl transition-colors duration-200 cursor-pointer"

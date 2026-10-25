@@ -56,6 +56,13 @@ public class AppointmentService {
                 .collect(Collectors.toList());
     }
 
+    public List<AppointmentDTO> getAllAppointments() {
+        return appointmentRepository.findAll()
+                .stream()
+                .map(AppointmentDTO::new)
+                .collect(Collectors.toList());
+    }
+
     // Lấy chi tiết lịch
     public AppointmentDTO getAppointmentDetail(Integer doctorId, Integer appointmentId) {
         Optional<Appointment> optional = appointmentRepository.findByIdAndDoctor(appointmentId, doctorId);

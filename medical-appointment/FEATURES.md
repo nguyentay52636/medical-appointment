@@ -44,25 +44,29 @@
 
 ---
 
-## 2. MA TRẬN PHÂN QUYỀN & VAI TRÒ
+## 2. MA TRẬN PHÂN QUYỀN & VAI TRÒ (3 PHÂN HỆ)
 
-| Nhóm tính năng | Khách vãng lai (Guest) | Bệnh nhân (Patient) | Bác sĩ (Doctor) |
-| :--- | :---: | :---: | :---: |
-| Xem trang chủ, giới thiệu, chuyên khoa | ✅ | ✅ | ✅ |
-| Tìm kiếm danh sách bác sĩ | ✅ | ✅ | ✅ |
-| Xem bản đồ phòng khám & khoảng cách | ✅ | ✅ | ✅ |
-| Chat với Trợ lý ảo AI & Gợi ý bác sĩ | ✅ | ✅ | ✅ |
-| Đăng ký / Đăng nhập (Mật khẩu & Google) | ✅ | ✅ | ✅ |
-| Quên mật khẩu / Khôi phục qua Email | ✅ | ✅ | ✅ |
-| Đặt lịch khám theo khung giờ (`BookableSlot`) | ❌ | ✅ | ❌ |
-| Thanh toán trực tuyến qua VNPay | ❌ | ✅ | ❌ |
-| Quản lý lịch sử khám, Dời lịch, Hủy hẹn | ❌ | ✅ | ❌ |
-| Quản lý thông tin hồ sơ cá nhân | ❌ | ✅ | ✅ |
-| Dashboard báo cáo & Biểu đồ doanh thu | ❌ | ❌ | ✅ |
-| Cấu hình lịch biểu hàng tuần (`Availability`) | ❌ | ❌ | ✅ |
-| Duyệt lịch hẹn, Tiếp nhận khám, Từ chối | ❌ | ❌ | ✅ |
-| Xuất phiếu khám bệnh PDF (JasperReports) | ❌ | ❌ | ✅ |
-| Nhận thông báo lịch khám thời gian thực | ❌ | ❌ | ✅ |
+| Nhóm tính năng | Khách vãng lai (Guest) | Bệnh nhân (Patient) | Bác sĩ (Doctor) | Quản trị phòng khám (Admin) |
+| :--- | :---: | :---: | :---: | :---: |
+| Xem trang chủ, giới thiệu, chuyên khoa | ✅ | ✅ | ✅ | ✅ |
+| Tìm kiếm danh sách bác sĩ | ✅ | ✅ | ✅ | ✅ |
+| Xem bản đồ phòng khám & khoảng cách | ✅ | ✅ | ✅ | ✅ |
+| Chat với Trợ lý ảo AI & Gợi ý bác sĩ | ✅ | ✅ | ✅ | ✅ |
+| Đăng ký / Đăng nhập (Mật khẩu & Google) | ✅ | ✅ | ✅ | ✅ |
+| Quên mật khẩu / Khôi phục qua Email | ✅ | ✅ | ✅ | ✅ |
+| Đặt lịch khám theo khung giờ (`BookableSlot`) | ❌ | ✅ | ❌ | ❌ |
+| Thanh toán trực tuyến qua VNPay | ❌ | ✅ | ❌ | ❌ |
+| Quản lý lịch sử khám, Dời lịch, Hủy hẹn | ❌ | ✅ | ❌ | ❌ |
+| Quản lý thông tin hồ sơ cá nhân | ❌ | ✅ | ✅ | ✅ |
+| Doctor Portal: Lịch khám, ca khám cá nhân | ❌ | ❌ | ✅ | ❌ |
+| Cấu hình lịch biểu hàng tuần (`Availability`) | ❌ | ❌ | ✅ | ❌ |
+| Duyệt lịch hẹn, Tiếp nhận khám, Từ chối | ❌ | ❌ | ✅ | ❌ |
+| Xuất phiếu khám bệnh PDF (JasperReports) | ❌ | ❌ | ✅ | ❌ |
+| Nhận thông báo lịch khám thời gian thực | ❌ | ❌ | ✅ | ❌ |
+| **Admin Dashboard**: Thống kê vận hành toàn viện | ❌ | ❌ | ❌ | ✅ |
+| **Quản lý danh sách Bác sĩ (Thêm/Sửa/Xóa)** | ❌ | ❌ | ❌ | ✅ |
+| **Quản lý lịch hẹn toàn phòng khám** | ❌ | ❌ | ❌ | ✅ |
+| **Quản lý danh bạ Bệnh nhân** | ❌ | ❌ | ❌ | ✅ |
 
 ---
 

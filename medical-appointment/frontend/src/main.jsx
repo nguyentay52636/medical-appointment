@@ -44,6 +44,19 @@ import DoctorProfile from './page/doctor/ProfilePage';
 import ChangePassword from './page/doctor/ChangePasswordPage';
 import ReportsPage from './page/doctor/ReportsPage';
 
+// ------------------ Clinic Admin Dashboard Pages ------------------
+import AdminLayout from './page/layout/AdminLayout';
+import AdminDashboard from './page/admin/AdminDashboard';
+import AdminDoctors from './page/admin/AdminDoctors';
+import AdminAppointments from './page/admin/AdminAppointments';
+import AdminPatients from './page/admin/AdminPatients';
+
+// Helper điều hướng thông minh cho cổng bác sĩ
+function DoctorIndexRedirect() {
+  const doctor = sessionStorage.getItem("doctor");
+  return doctor ? <Navigate to="/doctor/dashboard" replace /> : <Navigate to="/doctor/login" replace />;
+}
+
 const root = document.getElementById("root");
 
 ReactDOM.createRoot(root).render(
@@ -83,10 +96,15 @@ ReactDOM.createRoot(root).render(
 
               {/* -------------------- DOCTOR ROUTES -------------------- */}
               <Route path="doctor">
-                <Route index element={<LoginForm role="doctor" />} />
+                {/* /doctor -> Tự động vào Dashboard nếu đã đăng nhập, hoặc vào Login nếu chưa */}
+                <Route index element={<DoctorIndexRedirect />} />
+                <Route path="login" element={<LoginForm role="doctor" />} />
+                {/* Trang quên & đặt lại mật khẩu độc lập (không bọc trong DoctorLayout có sidebar) */}
+                <Route path="forgot_password" element={<ForgotPassword role="doctor" />} />
+                <Route path="reset_password" element={<ResetPassword role="doctor" />} />
+
+                {/* Khu vực làm việc của Bác sĩ (Bọc bởi DoctorLayout) */}
                 <Route element={<DoctorLayout />}>
-                  <Route path="forgot_password" element={<ForgotPassword role="doctor" />} />
-                  <Route path="reset_password" element={<ResetPassword role="doctor" />} />
                   <Route path="dashboard" element={<DoctorDashboard />} />
                   <Route path="appointment" element={<Appointment />} />
                   <Route path="appointment/:id" element={<AppointmentDetail />} />
@@ -97,6 +115,20 @@ ReactDOM.createRoot(root).render(
                   <Route path="reports" element={<ReportsPage />} />
                 </Route>
               </Route>
+
+              {/* -------------------- CLINIC ADMIN DASHBOARD ROUTES -------------------- */}
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="doctors" element={<AdminDoctors />} />
+                <Route path="appointments" element={<AdminAppointments />} />
+                <Route path="patients" element={<AdminPatients />} />
+              </Route>
+
+              {/* Bí danh tiện lợi: /dashboard và /dashboard/doctor */}
+              <Route path="dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard/doctor" element={<Navigate to="/admin/doctors" replace />} />
+              <Route path="dashboard/doctors" element={<Navigate to="/admin/doctors" replace />} />
 
               {/* -------------------- 404 -------------------- */}
               <Route

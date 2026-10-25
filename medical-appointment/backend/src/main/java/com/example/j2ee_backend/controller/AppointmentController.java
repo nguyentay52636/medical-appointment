@@ -29,6 +29,17 @@ public class AppointmentController {
     @Autowired
     private BookableSlotService bookableSlotService;
 
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllAppointments() {
+        try {
+            List<AppointmentDTO> appointments = appointmentService.getAllAppointments();
+            return ResponseEntity.ok(appointments);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @GetMapping("/doctor/{doctorId}")
     public ResponseEntity<?> getAppointments(@PathVariable Integer doctorId) {
         try {
