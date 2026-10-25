@@ -48,6 +48,7 @@ import ReportsPage from './page/doctor/ReportsPage';
 import AdminLayout from './page/layout/AdminLayout';
 import AdminDashboard from './page/admin/AdminDashboard';
 import AdminDoctors from './page/admin/AdminDoctors';
+import AdminCreateDoctor from './page/admin/AdminCreateDoctor';
 import AdminAppointments from './page/admin/AdminAppointments';
 import AdminPatients from './page/admin/AdminPatients';
 
@@ -121,6 +122,8 @@ ReactDOM.createRoot(root).render(
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="doctors" element={<AdminDoctors />} />
+                <Route path="doctors/create" element={<AdminCreateDoctor />} />
+                <Route path="create-doctor" element={<AdminCreateDoctor />} />
                 <Route path="appointments" element={<AdminAppointments />} />
                 <Route path="patients" element={<AdminPatients />} />
               </Route>
@@ -129,6 +132,7 @@ ReactDOM.createRoot(root).render(
               <Route path="dashboard" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard/doctor" element={<Navigate to="/admin/doctors" replace />} />
               <Route path="dashboard/doctors" element={<Navigate to="/admin/doctors" replace />} />
+              <Route path="dashboard/create-doctor" element={<Navigate to="/admin/doctors/create" replace />} />
 
               {/* -------------------- 404 -------------------- */}
               <Route

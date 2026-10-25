@@ -193,6 +193,43 @@ public class DoctorController {
         }
     }
 
+    @PutMapping("/admin/{id}")
+    public ResponseEntity<?> adminUpdateDoctor(@PathVariable Integer id, @RequestBody Map<String, Object> body) {
+        try {
+            DoctorDTO dto = new DoctorDTO();
+            if (body.containsKey("fullName")) dto.setFullName((String) body.get("fullName"));
+            if (body.containsKey("phoneNumber")) dto.setPhoneNumber((String) body.get("phoneNumber"));
+            if (body.containsKey("specialtyId") && body.get("specialtyId") != null) {
+                dto.setSpecialtyId(Integer.valueOf(body.get("specialtyId").toString()));
+            }
+            if (body.containsKey("experienceYears") && body.get("experienceYears") != null) {
+                dto.setExperienceYears(Integer.valueOf(body.get("experienceYears").toString()));
+            }
+            if (body.containsKey("pricePerAppointment") && body.get("pricePerAppointment") != null) {
+                dto.setPricePerAppointment(Integer.valueOf(body.get("pricePerAppointment").toString()));
+            }
+            if (body.containsKey("address")) dto.setAddress((String) body.get("address"));
+            if (body.containsKey("bio")) dto.setBio((String) body.get("bio"));
+            if (body.containsKey("imageUrl")) dto.setImageUrl((String) body.get("imageUrl"));
+
+            DoctorDTO updated = doctorServices.adminUpdateDoctor(id, dto);
+            return ResponseEntity.ok(Map.of("message", "Cập nhật thông tin bác sĩ thành công!", "doctor", updated));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/admin/{id}/reset-password")
+    public ResponseEntity<?> adminResetPassword(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        try {
+            String newPassword = body.get("newPassword");
+            doctorServices.adminResetPassword(id, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Cấp lại mật khẩu bác sĩ thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDoctor(@PathVariable Integer id) {
         try {

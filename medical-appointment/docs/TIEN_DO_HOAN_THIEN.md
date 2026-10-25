@@ -51,12 +51,13 @@
 
 | STT | Tập tin | Đường dẫn (URL) | Chức năng chi tiết |
 |:---:|:---|:---|:---|
-| 1 | [`AdminLayout.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/layout/AdminLayout.jsx) | `/admin/*` | Khung giao diện quản trị chuẩn Slate-900 / Blue-600; Sidebar thu gọn thông minh; Phím tắt chuyển nhanh sang Cổng Bác sĩ và Website người dùng; Thông tin trực ban 24/7. |
-| 2 | [`AdminDashboard.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminDashboard.jsx) | `/admin/dashboard`<br>`/dashboard` | **KPI Cards**: Tổng bác sĩ, Tổng chuyên khoa, Tổng ca khám, Bệnh nhân, Doanh thu ước tính.<br>**Tiến độ**: Thanh phân bố tỷ lệ ca khám *(Chờ duyệt, Đã duyệt, Đã khám, Đã hủy)*.<br>**Xem nhanh**: Danh sách bác sĩ đang công tác tại phòng khám. |
-| 3 | [`AdminDoctors.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminDoctors.jsx) | `/admin/doctors`<br>`/dashboard/doctor`<br>`/dashboard/doctors` | **Bảng danh sách bác sĩ**: Avatar, Họ tên, Chuyên khoa, Email, SĐT, Năm KN, Giá khám.<br>**Bộ lọc**: Tìm kiếm theo tên/email và lọc theo Chuyên khoa.<br>**Modal Thêm Bác sĩ Mới**: Nhập đầy đủ thông tin, gán chuyên khoa, mã hóa mật khẩu, tọa độ phòng khám.<br>**Xóa Bác sĩ**: Nút xóa với hộp thoại xác nhận an toàn. |
-| 4 | [`AdminAppointments.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminAppointments.jsx) | `/admin/appointments` | Theo dõi và rà soát mọi ca khám bệnh của tất cả các chuyên khoa; Lọc theo trạng thái và tìm kiếm theo tên bệnh nhân / bác sĩ phụ trách. |
-| 5 | [`AdminPatients.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminPatients.jsx) | `/admin/patients` | Quản lý danh bạ hồ sơ bệnh nhân đã đăng ký trên hệ thống, email, SĐT, địa chỉ. |
-| 6 | [`adminService.js`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/service/adminService.js) | N/A | Tầng Axios Service xử lý gọi các API quản trị từ backend Spring Boot. |
+| 1 | [`AdminLayout.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/layout/AdminLayout.jsx) | `/admin/*` | Khung giao diện quản trị chuẩn Slate-900 / Blue-600; Sidebar thu gọn thông minh; Phím tắt chuyển nhanh sang Cổng Bác sĩ và Website người dùng; Thông tin trực ban 24/7. Có mục menu riêng **"Cấp tài khoản Bác sĩ"**. |
+| 2 | [`AdminDashboard.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminDashboard.jsx) | `/admin/dashboard`<br>`/dashboard` | **KPI Cards**: Tổng bác sĩ, Tổng chuyên khoa, Tổng ca khám, Bệnh nhân, Doanh thu ước tính.<br>**Tiến độ**: Thanh phân bố tỷ lệ ca khám *(Chờ duyệt, Đã duyệt, Đã khám, Đã hủy)*.<br>**Lối tắt**: Nút "Cấp Tài Khoản Bác Sĩ" và "Danh Sách Bác Sĩ". |
+| 3 | [`AdminDoctors.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminDoctors.jsx) | `/admin/doctors`<br>`/dashboard/doctor`<br>`/dashboard/doctors` | **Bảng danh sách bác sĩ**: Avatar, Họ tên, Chuyên khoa, Email, SĐT, Năm KN, Giá khám.<br>**Bộ lọc**: Tìm kiếm theo tên/email và lọc theo Chuyên khoa.<br>**Nút Cấp Tài Khoản Mới**: Dẫn tới trang tạo tài khoản chuyên nghiệp.<br>**Modal Sửa & Phân lại chuyên khoa**: Cập nhật thông tin và điều chuyển chuyên khoa.<br>**Modal Cấp lại mật khẩu**: Đổi mật khẩu tài khoản bác sĩ nhanh chóng.<br>**Xóa Bác sĩ**: Hộp thoại xác nhận an toàn với thông báo ràng buộc lịch hẹn. |
+| 4 | [`AdminCreateDoctor.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminCreateDoctor.jsx) | `/admin/doctors/create`<br>`/admin/create-doctor`<br>`/dashboard/create-doctor` | **Giao diện Cấp Tài Khoản Bác Sĩ Toàn Diện**: Form 3 phần chuẩn hóa (Tài khoản & Mật khẩu khởi tạo, Định danh & Phân chuyên khoa động từ DB, Liên hệ & Chọn Avatar bác sĩ).<br>**Live Preview**: Xem trước thẻ hồ sơ bác sĩ theo thời gian thực.<br>**Phiếu bàn giao tài khoản**: Hộp thoại hiển thị thông tin đăng nhập kèm nút **"Sao chép thông tin gửi Bác sĩ"** (1-click copy). |
+| 5 | [`AdminAppointments.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminAppointments.jsx) | `/admin/appointments` | Theo dõi và rà soát mọi ca khám bệnh của tất cả các chuyên khoa; Lọc theo trạng thái và tìm kiếm theo tên bệnh nhân / bác sĩ phụ trách. |
+| 6 | [`AdminPatients.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/admin/AdminPatients.jsx) | `/admin/patients` | Quản lý danh bạ hồ sơ bệnh nhân đã đăng ký trên hệ thống, email, SĐT, địa chỉ. |
+| 7 | [`adminService.js`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/service/adminService.js) | N/A | Tầng Axios Service xử lý gọi các API quản trị từ backend Spring Boot (cấp tài khoản, cập nhật, đổi mật khẩu, xóa bác sĩ, tải chuyên khoa...). |
 
 ---
 
@@ -64,14 +65,14 @@
 
 - **Cấu hình Routes trong [`main.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/main.jsx)**:
   - Khởi tạo cụm route `/admin` độc lập bọc bởi `AdminLayout`.
-  - Hỗ trợ bí danh URL thông minh: Gõ `/dashboard`, `/dashboard/doctor`, hoặc `/dashboard/doctors` đều tự động điều hướng chính xác vào trang Quản lý Bác sĩ / Dashboard phòng khám.
-  - Tách các trang Quên mật khẩu & Đổi mật khẩu của bác sĩ ra ngoài `DoctorLayout` (trở thành trang xác thực độc lập, không còn bị dính thanh sidebar).
+  - Hỗ trợ bí danh URL thông minh: Gõ `/dashboard`, `/dashboard/doctor`, `/dashboard/create-doctor` đều tự động điều hướng chính xác.
+  - Tách các trang Quên mật khẩu & Đổi mật khẩu của bác sĩ ra ngoài `DoctorLayout`.
   - Bổ sung route chính thức `/doctor/login` và cơ chế `DoctorIndexRedirect`.
 - **Bảo vệ tuyến đường trong [`DoctorLayout.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/page/layout/DoctorLayout.jsx)**:
   - Bổ sung **Auth Guard**: Tự động chuyển hướng về `/doctor/login` nếu chưa đăng nhập.
   - Thêm nút liên kết **"Về trang phòng khám"** trên Sidebar bác sĩ.
 - **Bổ sung lối vào trên Header & Footer**:
-  - [`Header.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/component/Header.jsx): Thêm 2 nút bấm riêng biệt: **"Cổng Bác sĩ"** và **"Quản trị Phòng khám"** ở góc trên cùng.
+  - [`Header.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/component/Header.jsx): Thêm nút riêng biệt: **"Cổng Bác sĩ"** và **"Quản trị Phòng khám"** ở góc trên cùng.
   - [`Footer.jsx`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/frontend/src/component/Footer.jsx): Bổ sung liên kết nhanh tới cả 2 cổng quản lý.
 
 ---
@@ -80,8 +81,10 @@
 
 | Endpoint | Phương thức | Lớp xử lý | Chức năng |
 |:---|:---:|:---|:---|
-| `/api/doctor/create` | `POST` | `DoctorController`<br>`DoctorService` | Thêm bác sĩ mới vào CSDL; kiểm tra trùng email; mã hóa mật khẩu `BCrypt`; liên kết khóa ngoại với `Specialty`; gán tọa độ mặc định. |
-| `/api/doctor/{id}` | `DELETE` | `DoctorController`<br>`DoctorService` | Xóa bác sĩ khỏi CSDL theo ID. |
+| `/api/doctor/create` | `POST` | `DoctorController`<br>`DoctorService` | Cấp tài khoản bác sĩ mới vào CSDL; kiểm tra trùng email; mã hóa mật khẩu `BCrypt`; liên kết khóa ngoại với `Specialty`; gán tọa độ mặc định. |
+| `/api/doctor/admin/{id}` | `PUT` | `DoctorController`<br>`DoctorService` | Admin cập nhật thông tin bác sĩ & phân lại chuyên khoa. |
+| `/api/doctor/admin/{id}/reset-password` | `PUT` | `DoctorController`<br>`DoctorService` | Admin cấp lại mật khẩu mới cho bác sĩ mà không cần biết mật khẩu cũ. |
+| `/api/doctor/{id}` | `DELETE` | `DoctorController`<br>`DoctorService` | Xóa bác sĩ khỏi CSDL theo ID có xử lý ràng buộc toàn vẹn dữ liệu. |
 | `/api/appointment/all` | `GET` | `AppointmentController`<br>`AppointmentService` | Lấy toàn bộ lịch hẹn khám trong toàn hệ thống phục vụ Admin Dashboard. |
 | `/api/patient/all` | `GET` | `PatientController`<br>`PatientService` | Lấy danh sách toàn bộ hồ sơ bệnh nhân đã đăng ký. |
 

@@ -192,10 +192,60 @@ public class DoctorService {
         return new DoctorDTO(saved);
     }
 
-    public void deleteDoctor(Integer id) {
-        if (!doctorRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy bác sĩ với ID: " + id);
+    public DoctorDTO adminUpdateDoctor(Integer id, DoctorDTO dto) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin bác sĩ với ID: " + id));
+
+        if (dto.getFullName() != null && !dto.getFullName().isBlank()) {
+            doctor.setFullName(dto.getFullName());
         }
-        doctorRepository.deleteById(id);
+        if (dto.getPhoneNumber() != null) {
+            doctor.setPhoneNumber(dto.getPhoneNumber());
+        }
+        if (dto.getExperienceYears() != null) {
+            doctor.setExperienceYears(dto.getExperienceYears());
+        }
+        if (dto.getPricePerAppointment() != null) {
+            doctor.setPricePerAppointment(dto.getPricePerAppointment());
+        }
+        if (dto.getAddress() != null) {
+            doctor.setAddress(dto.getAddress());
+        }
+        if (dto.getBio() != null) {
+            doctor.setBio(dto.getBio());
+        }
+        if (dto.getImageUrl() != null && !dto.getImageUrl().isBlank()) {
+            doctor.setImageUrl(dto.getImageUrl());
+        }
+        if (dto.getSpecialtyId() != null) {
+            com.example.j2ee_backend.entity.Specialty specialty = specialtyRepository.findById(dto.getSpecialtyId())
+                    .orElseThrow(() -> new RuntimeException("Chuyên khoa không tồn tại: " + dto.getSpecialtyId()));
+            doctor.setSpecialty(specialty);
+        }
+
+        Doctor saved = doctorRepository.save(doctor);
+        return new DoctorDTO(saved);
+    }
+
+    public void adminResetPassword(Integer doctorId, String newPassword) {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bác sĩ với ID: " + doctorId));
+
+        if (newPassword == null || newPassword.trim().length() < 6) {
+            throw new RuntimeException("Mật khẩu mới phải có ít nhất 6 ký tự!");
+        }
+
+        doctor.setPassword(passwordEncoder.encode(newPassword.trim()));
+        doctorRepository.save(doctor);
+    }
+
+    public void deleteDoctor(Integer id) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bác sĩ với ID: " + id));
+        try {
+            doctorRepository.delete(doctor);
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể xóa bác sĩ vì đã có dữ liệu lịch hẹn hoặc ca khám liên quan! Bạn có thể chỉnh sửa thông tin hoặc đổi mật khẩu.");
+        }
     }
 }

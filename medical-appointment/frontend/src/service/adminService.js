@@ -14,6 +14,16 @@ export const adminService = {
         return res.data;
     },
 
+    updateDoctor: async (doctorId, doctorData) => {
+        const res = await axios.put(`${API_BASE}/doctor/admin/${doctorId}`, doctorData);
+        return res.data;
+    },
+
+    resetDoctorPassword: async (doctorId, newPassword) => {
+        const res = await axios.put(`${API_BASE}/doctor/admin/${doctorId}/reset-password`, { newPassword });
+        return res.data;
+    },
+
     deleteDoctor: async (doctorId) => {
         const res = await axios.delete(`${API_BASE}/doctor/${doctorId}`);
         return res.data;

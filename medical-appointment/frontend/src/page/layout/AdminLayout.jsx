@@ -4,6 +4,7 @@ import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 const navItems = [
     { name: 'Tổng quan phòng khám', path: '/admin/dashboard', icon: 'fas fa-chart-pie' },
     { name: 'Quản lý Bác sĩ', path: '/admin/doctors', icon: 'fas fa-user-md' },
+    { name: 'Cấp tài khoản Bác sĩ', path: '/admin/doctors/create', icon: 'fas fa-user-plus' },
     { name: 'Lịch hẹn toàn viện', path: '/admin/appointments', icon: 'fas fa-calendar-check' },
     { name: 'Danh sách Bệnh nhân', path: '/admin/patients', icon: 'fas fa-hospital-user' },
 ];

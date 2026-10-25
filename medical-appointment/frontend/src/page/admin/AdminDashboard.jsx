@@ -73,10 +73,16 @@ export default function AdminDashboard() {
 
                 <div className="flex items-center gap-3">
                     <Link
-                        to="/admin/doctors"
+                        to="/admin/doctors/create"
                         className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm shadow-md shadow-blue-500/20 transition cursor-pointer"
                     >
-                        <i className="fas fa-user-plus"></i> Quản lý Bác sĩ
+                        <i className="fas fa-user-plus"></i> Cấp Tài Khoản Bác Sĩ
+                    </Link>
+                    <Link
+                        to="/admin/doctors"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-sm transition cursor-pointer"
+                    >
+                        <i className="fas fa-list"></i> Danh Sách Bác Sĩ
                     </Link>
                 </div>
             </div>
