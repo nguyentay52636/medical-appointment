@@ -25,6 +25,9 @@ public class RagDataIngestionService {
 
     @PostConstruct
     public void initVectorStore() {
+        // Tạm dừng việc nạp dữ liệu vào Vector Store khi chưa cấu hình Pinecone hợp lệ
+        if (true) return;
+
         List<DoctorDTO> doctorList = doctorService.getRagDataDoctor();
         List<Document> documents = doctorList.stream()
                 .filter(doctor -> {

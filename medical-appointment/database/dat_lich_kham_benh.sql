@@ -33,6 +33,35 @@ USE dat_lich_kham_benh;
 -- Table structure for table `appointment`
 --
 
+REATE TABLE `ai_appointment_summary` (
+  `id` int(11) NOT NULL,
+  `appointment_id` int(11) NOT NULL,
+  `summary` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `ai_symptom_analysis`
+--
+
+CREATE TABLE `ai_symptom_analysis` (
+  `id` int(11) NOT NULL,
+  `patient_id` int(11) NOT NULL,
+  `symptoms` text NOT NULL,
+  `ai_response` text DEFAULT NULL,
+  `suggested_specialty_id` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `appointment`
+--
+
 CREATE TABLE `appointment` (
   `id` int(11) NOT NULL,
   `appointment_code` varchar(50) NOT NULL,
@@ -40,27 +69,23 @@ CREATE TABLE `appointment` (
   `bookable_slot_id` int(11) NOT NULL,
   `status` enum('pending','confirmed','completed','cancelled','missed') DEFAULT 'pending',
   `reason_for_visit` text DEFAULT NULL,
+  `symptoms` text DEFAULT NULL,
+  `symptom_duration` varchar(255) DEFAULT NULL,
+  `symptom_severity` enum('mild','moderate','severe') DEFAULT NULL,
+  `medical_history` text DEFAULT NULL,
+  `current_medications` text DEFAULT NULL,
+  `allergies` text DEFAULT NULL,
   `note` varchar(255) DEFAULT NULL,
   `price` int(11) DEFAULT 0,
   `payment_method` enum('offline','online') DEFAULT 'offline',
   `payment_status` enum('pending','paid','failed','refunded') DEFAULT 'pending',
-  `vnp_txn_ref` varchar(64) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `appointment`
---
-
-INSERT INTO `appointment` (`id`, `appointment_code`, `patient_id`, `bookable_slot_id`, `status`, `reason_for_visit`, `note`, `price`, `payment_method`, `payment_status`, `vnp_txn_ref`, `created_at`, `updated_at`) VALUES
-(1, 'APT001', 1, 1, 'confirmed', 'Khám tim mạch', NULL, 250000, 'offline', 'pending', NULL, '2025-11-26 15:55:40', '2025-11-26 15:55:40'),
-(2, 'APT002', 1, 3, 'pending', 'Viêm họng', NULL, 200000, 'online', 'paid', NULL, '2025-11-26 15:55:40', '2025-11-26 15:55:40');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `bookable_slot`
+-- Cấu trúc bảng cho bảng `bookable_slot`
 --
 
 CREATE TABLE `bookable_slot` (
@@ -73,21 +98,10 @@ CREATE TABLE `bookable_slot` (
   `availability_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `bookable_slot`
---
-
-INSERT INTO `bookable_slot` (`id`, `doctor_id`, `slot_date`, `start_time`, `end_time`, `status`, `availability_id`) VALUES
-(1, 1, '2025-11-10', '08:00:00', '08:15:00', 'booked', 1),
-(2, 1, '2025-11-10', '08:15:00', '08:30:00', 'available', 1),
-(3, 2, '2025-11-11', '09:00:00', '09:15:00', 'booked', 3),
-(4, 3, '2025-11-14', '14:00:00', '14:15:00', 'available', 4),
-(5, 4, '2025-11-15', '08:30:00', '08:45:00', 'available', 5);
-
 -- --------------------------------------------------------
 
 --
--- Table structure for table `doctor`
+-- Cấu trúc bảng cho bảng `doctor`
 --
 
 CREATE TABLE `doctor` (
@@ -103,26 +117,13 @@ CREATE TABLE `doctor` (
   `price_per_appointment` int(11) DEFAULT 0,
   `bio` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `lat` double DEFAULT NULL,
-  `lng` double DEFAULT NULL
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `doctor`
---
-
-INSERT INTO `doctor` (`id`, `full_name`, `email`, `password`, `phone_number`, `address`, `specialty_id`, `image_url`, `experience_years`, `price_per_appointment`, `bio`, `created_at`, `updated_at`, `lat`, `lng`) VALUES
-(1, 'BS. Nguyễn Văn A', 'bs.a@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0901111222', '396D An Dương Vương,Phường 4,Quận 5,Thành Phố Hồ Chí Minh', 2, 'https://i.pravatar.cc/350?img=1', 12, 250000, 'Chuyên khoa tim mạch', '2025-11-26 15:55:39', '2025-11-26 16:05:56', 10.75955, 106.67806),
-(2, 'BS. Trần Thị B', 'bs.b@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0902333444', '69 Nguyễn Khắc Nhu,Phường Cô Giang,Quận 1,Thành Phố Hồ Chí Minh', 1, 'https://i.pravatar.cc/350?img=2', 9, 200000, 'Khám nội tổng quát', '2025-11-26 15:55:39', '2025-11-26 16:05:07', 10.76378, 106.69293),
-(3, 'BS. Lê Văn C', 'bs.c@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0904555666', '502 Phan Xích Long,Phường 4,Quận Phú Nhuận,Thành Phố Hồ Chí Minh', 3, 'https://i.pravatar.cc/350?img=4', 15, 300000, 'Tai Mũi Họng', '2025-11-26 15:55:39', '2025-11-26 16:04:07', 10.80301, 106.68216),
-(4, 'BS. Phạm Thị D', 'bs.d@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0906777888', '26 Nguyễn Thái Bình,Phường 4,Quận Tân Bình,Thành Phố Hồ Chí Minh', 4, 'https://i.pravatar.cc/350?img=9', 6, 280000, 'Da liễu & thẩm mỹ', '2025-11-26 15:55:39', '2025-11-26 16:03:22', 10.79952, 106.65623),
-(5, 'BS. Võ Thanh E', 'bs.e@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0908999000', '268 Tô Hiến Thành,Phường 15,Quận 10,Thành phố Hồ Chí Minh', 5, 'https://i.pravatar.cc/350?img=5', 10, 220000, 'Khám nhi', '2025-11-26 15:55:39', '2025-11-26 16:02:27', 10.77839, 106.66543);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `doctor_availability`
+-- Cấu trúc bảng cho bảng `doctor_availability`
 --
 
 CREATE TABLE `doctor_availability` (
@@ -131,31 +132,19 @@ CREATE TABLE `doctor_availability` (
   `day_of_week` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') NOT NULL,
   `start_time` time NOT NULL,
   `end_time` time NOT NULL,
-  `slot_duration_minutes` int(11) NOT NULL DEFAULT 15,
-  `active` tinyint(1) NOT NULL DEFAULT 1
+  `slot_duration_minutes` int(11) NOT NULL DEFAULT 30,
+  `active` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `doctor_availability`
---
-
-INSERT INTO `doctor_availability` (`id`, `doctor_id`, `day_of_week`, `start_time`, `end_time`, `slot_duration_minutes`, `active`) VALUES
-(1, 1, 'Monday', '08:00:00', '11:00:00', 15, 1),
-(2, 1, 'Wednesday', '13:00:00', '17:00:00', 15, 1),
-(3, 2, 'Tuesday', '09:00:00', '12:00:00', 15, 1),
-(4, 3, 'Friday', '14:00:00', '18:00:00', 15, 1),
-(5, 4, 'Saturday', '08:30:00', '11:30:00', 15, 1),
-(6, 5, 'Thursday', '08:00:00', '11:00:00', 15, 1);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `notification`
+-- Cấu trúc bảng cho bảng `notification`
 --
 
 CREATE TABLE `notification` (
   `id` int(11) NOT NULL,
-  `doctor_id` int(11) NOT NULL,
+  `doctor_id` int(11) DEFAULT NULL,
   `patient_id` int(11) DEFAULT NULL,
   `title` varchar(255) NOT NULL,
   `message` text DEFAULT NULL,
@@ -163,24 +152,10 @@ CREATE TABLE `notification` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `notification`
---
-
-INSERT INTO `notification` (`id`, `doctor_id`, `patient_id`, `title`, `message`, `is_read`, `created_at`) VALUES
-(1, 1, 1, 'Lịch hẹn mới', 'Bệnh nhân Nguyễn Văn A đã đặt lịch khám vào 10/11', 0, '2025-11-26 15:55:40'),
-(2, 1, 2, 'Lịch hủy', 'Bệnh nhân Trần Thị B đã hủy lịch khám vào 12/11', 0, '2025-11-26 15:55:40'),
-(3, 1, 3, 'Nhắc nhở lịch khám', 'Bệnh nhân Lê Văn C có lịch khám vào 15/11', 0, '2025-11-26 15:55:40'),
-(4, 1, NULL, 'Thông báo chung', 'Có thông báo mới cho bác sĩ 1', 0, '2025-11-26 15:55:40'),
-(5, 2, 4, 'Lịch hẹn mới', 'Bệnh nhân Phạm Thị D đã đặt lịch khám vào 16/11', 0, '2025-11-26 15:55:40'),
-(6, 2, NULL, 'Thông báo chung', 'Có thông báo mới cho bác sĩ 2', 0, '2025-11-26 15:55:40'),
-(7, 3, 5, 'Lịch hủy', 'Bệnh nhân Nguyễn Thị E đã hủy lịch khám', 0, '2025-11-26 15:55:40'),
-(8, 3, NULL, 'Thông báo quan trọng', 'Có thông báo quan trọng cho bác sĩ 3', 0, '2025-11-26 15:55:40');
-
 -- --------------------------------------------------------
 
 --
--- Table structure for table `patient`
+-- Cấu trúc bảng cho bảng `patient`
 --
 
 CREATE TABLE `patient` (
@@ -189,25 +164,14 @@ CREATE TABLE `patient` (
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `phone_number` varchar(20) DEFAULT NULL,
-  `address` varchar(500) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `patient`
---
-
-INSERT INTO `patient` (`id`, `full_name`, `email`, `password`, `phone_number`, `address`, `created_at`) VALUES
-(1, 'Nguyễn Văn Long', 'long@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0912345678', 'Hà Nội', '2025-11-26 15:55:39'),
-(2, 'Trần Thị Hương', 'huong@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0923456789', 'Hồ Chí Minh', '2025-11-26 15:55:39'),
-(3, 'Lê Quang Minh', 'minh@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0934567890', 'Đà Nẵng', '2025-11-26 15:55:39'),
-(4, 'Phạm Ngọc Lan', 'lan@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0965678901', 'Cần Thơ', '2025-11-26 15:55:39'),
-(5, 'Đỗ Gia Huy', 'huy@example.com', '$2a$10$Bxz3QIpaI.LuWQ2yhlUHm.dC8GkH0BHf/CjbdQWEd4ohzaCGIpLKm', '0986789012', 'Hải Phòng', '2025-11-26 15:55:39');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `specialty`
+-- Cấu trúc bảng cho bảng `specialty`
 --
 
 CREATE TABLE `specialty` (
@@ -217,155 +181,186 @@ CREATE TABLE `specialty` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `specialty`
---
-
-INSERT INTO `specialty` (`id`, `specialty_name`, `description`) VALUES
-(1, 'Nội khoa', 'Chẩn đoán và điều trị các bệnh lí bên trong cơ thể, không phẫu thuật.'),
-(2, 'Tim mạch', 'Chuyên điều trị bệnh tim và hệ mạch máu.'),
-(3, 'Tai Mũi Họng', 'Chẩn đoán và điều trị các bệnh tai, mũi, họng và vùng cổ.'),
-(4, 'Da liễu', 'Khám và điều trị bệnh lý da, tóc, móng và dị ứng da.'),
-(5, 'Nhi khoa', 'Chăm sóc sức khỏe trẻ em từ sơ sinh đến thiếu niên.');
-
---
--- Indexes for dumped tables
+-- Chỉ mục cho các bảng đã đổ
 --
 
 --
--- Indexes for table `appointment`
+-- Chỉ mục cho bảng `ai_appointment_summary`
+--
+ALTER TABLE `ai_appointment_summary`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `appointment_id` (`appointment_id`);
+
+--
+-- Chỉ mục cho bảng `ai_symptom_analysis`
+--
+ALTER TABLE `ai_symptom_analysis`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_ai_symptom_patient` (`patient_id`),
+  ADD KEY `fk_ai_symptom_specialty` (`suggested_specialty_id`);
+
+--
+-- Chỉ mục cho bảng `appointment`
 --
 ALTER TABLE `appointment`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `appointment_code` (`appointment_code`),
-  ADD UNIQUE KEY `vnp_txn_ref` (`vnp_txn_ref`),
-  ADD KEY `patient_id` (`patient_id`),
-  ADD KEY `bookable_slot_id` (`bookable_slot_id`);
+  ADD KEY `fk_appointment_patient` (`patient_id`),
+  ADD KEY `fk_appointment_slot` (`bookable_slot_id`);
 
 --
--- Indexes for table `bookable_slot`
+-- Chỉ mục cho bảng `bookable_slot`
 --
 ALTER TABLE `bookable_slot`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uk_slot` (`doctor_id`,`slot_date`,`start_time`),
-  ADD KEY `availability_id` (`availability_id`);
+  ADD UNIQUE KEY `doctor_id` (`doctor_id`,`slot_date`,`start_time`),
+  ADD KEY `fk_slot_availability` (`availability_id`);
 
 --
--- Indexes for table `doctor`
+-- Chỉ mục cho bảng `doctor`
 --
 ALTER TABLE `doctor`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`),
-  ADD KEY `specialty_id` (`specialty_id`);
+  ADD KEY `fk_doctor_specialty` (`specialty_id`);
 
 --
--- Indexes for table `doctor_availability`
+-- Chỉ mục cho bảng `doctor_availability`
 --
 ALTER TABLE `doctor_availability`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uk_avail` (`doctor_id`,`day_of_week`,`start_time`,`end_time`,`slot_duration_minutes`);
+  ADD KEY `fk_availability_doctor` (`doctor_id`);
 
 --
--- Indexes for table `notification`
+-- Chỉ mục cho bảng `notification`
 --
 ALTER TABLE `notification`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `doctor_id` (`doctor_id`),
-  ADD KEY `patient_id` (`patient_id`);
+  ADD KEY `fk_notification_doctor` (`doctor_id`),
+  ADD KEY `fk_notification_patient` (`patient_id`);
 
 --
--- Indexes for table `patient`
+-- Chỉ mục cho bảng `patient`
 --
 ALTER TABLE `patient`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
 
 --
--- Indexes for table `specialty`
+-- Chỉ mục cho bảng `specialty`
 --
 ALTER TABLE `specialty`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `specialty_name` (`specialty_name`);
+  ADD PRIMARY KEY (`id`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT cho các bảng đã đổ
 --
 
 --
--- AUTO_INCREMENT for table `appointment`
+-- AUTO_INCREMENT cho bảng `ai_appointment_summary`
+--
+ALTER TABLE `ai_appointment_summary`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `ai_symptom_analysis`
+--
+ALTER TABLE `ai_symptom_analysis`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `appointment`
 --
 ALTER TABLE `appointment`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `bookable_slot`
+-- AUTO_INCREMENT cho bảng `bookable_slot`
 --
 ALTER TABLE `bookable_slot`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `doctor`
+-- AUTO_INCREMENT cho bảng `doctor`
 --
 ALTER TABLE `doctor`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `doctor_availability`
+-- AUTO_INCREMENT cho bảng `doctor_availability`
 --
 ALTER TABLE `doctor_availability`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `notification`
+-- AUTO_INCREMENT cho bảng `notification`
 --
 ALTER TABLE `notification`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `patient`
+-- AUTO_INCREMENT cho bảng `patient`
 --
 ALTER TABLE `patient`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `specialty`
+-- AUTO_INCREMENT cho bảng `specialty`
 --
 ALTER TABLE `specialty`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- Constraints for dumped tables
+-- Các ràng buộc cho các bảng đã đổ
 --
 
 --
--- Constraints for table `appointment`
+-- Các ràng buộc cho bảng `ai_appointment_summary`
+--
+ALTER TABLE `ai_appointment_summary`
+  ADD CONSTRAINT `fk_ai_summary_appointment` FOREIGN KEY (`appointment_id`) REFERENCES `appointment` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `ai_symptom_analysis`
+--
+ALTER TABLE `ai_symptom_analysis`
+  ADD CONSTRAINT `fk_ai_symptom_patient` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_ai_symptom_specialty` FOREIGN KEY (`suggested_specialty_id`) REFERENCES `specialty` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `appointment`
 --
 ALTER TABLE `appointment`
-  ADD CONSTRAINT `appointment_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`),
-  ADD CONSTRAINT `appointment_ibfk_2` FOREIGN KEY (`bookable_slot_id`) REFERENCES `bookable_slot` (`id`);
+  ADD CONSTRAINT `fk_appointment_patient` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_appointment_slot` FOREIGN KEY (`bookable_slot_id`) REFERENCES `bookable_slot` (`id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `bookable_slot`
+-- Các ràng buộc cho bảng `bookable_slot`
 --
 ALTER TABLE `bookable_slot`
-  ADD CONSTRAINT `bookable_slot_ibfk_1` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`),
-  ADD CONSTRAINT `bookable_slot_ibfk_2` FOREIGN KEY (`availability_id`) REFERENCES `doctor_availability` (`id`);
+  ADD CONSTRAINT `fk_slot_availability` FOREIGN KEY (`availability_id`) REFERENCES `doctor_availability` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_slot_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Constraints for table `doctor`
+-- Các ràng buộc cho bảng `doctor`
 --
 ALTER TABLE `doctor`
-  ADD CONSTRAINT `doctor_ibfk_1` FOREIGN KEY (`specialty_id`) REFERENCES `specialty` (`id`);
+  ADD CONSTRAINT `fk_doctor_specialty` FOREIGN KEY (`specialty_id`) REFERENCES `specialty` (`id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `doctor_availability`
+-- Các ràng buộc cho bảng `doctor_availability`
 --
 ALTER TABLE `doctor_availability`
-  ADD CONSTRAINT `doctor_availability_ibfk_1` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`);
+  ADD CONSTRAINT `fk_availability_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Constraints for table `notification`
+-- Các ràng buộc cho bảng `notification`
 --
 ALTER TABLE `notification`
-  ADD CONSTRAINT `notification_ibfk_1` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `notification_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `fk_notification_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_notification_patient` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
