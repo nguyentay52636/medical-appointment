@@ -257,7 +257,14 @@
 - `POST /api/rag-chat/ask` - Truy vấn y tế với RAG + Pinecone Vector Store
 - `GET /api/notification/doctor/{doctorId}` - Lấy danh sách thông báo của bác sĩ
 - `GET /api/notification/doctor/{doctorId}/unread_count` - Lấy số lượng thông báo chưa đọc
-- `POST /api/notification/doctor/{doctorId}/mark_all_read` - Đánh dấu tất cả thông báo đã đọc
+### 8.6. Clinic Admin & Doctor Provisioning APIs
+- `POST /api/doctor/create` - Cấp tài khoản bác sĩ mới kèm phân khoa & mật khẩu BCrypt
+- `PUT /api/doctor/admin/{id}` - Admin cập nhật thông tin bác sĩ & điều chuyển chuyên khoa công tác
+- `PUT /api/doctor/admin/{id}/reset-password` - Admin cấp lại mật khẩu mới trực tiếp cho bác sĩ
+- `DELETE /api/doctor/{id}` - Xóa bác sĩ khỏi hệ thống có xử lý ràng buộc lịch hẹn
+- `GET /api/appointment/all` - Xem toàn bộ lịch khám của mọi khoa phục vụ Admin Dashboard
+- `GET /api/patient/all` - Lấy danh bạ hồ sơ toàn bộ bệnh nhân đã đăng ký
+- `GET /api/specialty/all` - Lấy danh mục chuyên khoa để phân công bác sĩ
 
 ---
 
