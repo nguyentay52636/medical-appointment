@@ -18,6 +18,7 @@ function DoctorProfile() {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     //component mount - Khi mở một trang hoặc render một component, React “gắn” nó vào giao diện
     useEffect(() => {
@@ -27,6 +28,36 @@ function DoctorProfile() {
         }
         setLoading(false); 
     }, []);
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Vui lòng chọn ảnh nhỏ hơn 10MB');
+            return;
+        }
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const res = await axios.post('http://localhost:8080/api/upload/image', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            if (res.data && res.data.imageUrl) {
+                setProfile(prev => ({ ...prev, imageUrl: res.data.imageUrl }));
+            }
+        } catch (err) {
+            console.error('Lỗi upload avatar:', err);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfile(prev => ({ ...prev, imageUrl: reader.result }));
+            };
+            reader.readAsDataURL(file);
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     // Nếu đang loading, hiển thị spinner hoặc thông báo
     if (loading) {
@@ -50,11 +81,12 @@ function DoctorProfile() {
         e.preventDefault();
         setIsSaving(true);
 
-        // 1. Tạo DTO chỉ chứa các trường được phép sửa
+        // 1. Tạo DTO chứa các trường được phép sửa bao gồm imageUrl
         const doctorDTO = {
             id: profile.id,
             phoneNumber: profile.phoneNumber,
             experienceYears: profile.experienceYears,
+            imageUrl: profile.imageUrl
         };
 
         try {
@@ -122,11 +154,29 @@ function DoctorProfile() {
 
                 {/* CARD THÔNG TIN CƠ BẢN VÀ AVATAR */}
                 <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-10 pb-6 border-b border-gray-100">
-                    <div className="flex-shrink-0">
-                        {/* Ảnh đại diện giả lập */}
-                        <div className={`w-32 h-32 rounded-full bg-${PRIMARY_COLOR}-100 flex items-center justify-center border-4 border-${PRIMARY_COLOR}-300 shadow-xl overflow-hidden`}>
-                            <i className={`fas fa-user-circle text-7xl text-${PRIMARY_COLOR}-500`}></i>
-                        </div>
+                    <div className="flex-shrink-0 relative group">
+                        <img
+                            src={profile.imageUrl || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=350"}
+                            alt={profile.fullName}
+                            className="w-32 h-32 rounded-2xl object-cover border-4 border-blue-200 shadow-xl"
+                            onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=350"; }}
+                        />
+                        {isUploading && (
+                            <div className="absolute inset-0 bg-slate-900/60 rounded-2xl flex items-center justify-center text-white text-xs">
+                                <i className="fas fa-spinner fa-spin text-lg"></i>
+                            </div>
+                        )}
+                        {isEditing && (
+                            <label className="absolute -bottom-2 -right-2 bg-blue-600 hover:bg-blue-700 text-white w-9 h-9 rounded-xl shadow-lg flex items-center justify-center cursor-pointer transition ring-2 ring-white">
+                                <i className="fas fa-camera text-sm"></i>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleAvatarUpload}
+                                />
+                            </label>
+                        )}
                     </div>
                     <div>
                         <h2 className="text-3xl font-extrabold text-gray-800">{profile.fullName}</h2>

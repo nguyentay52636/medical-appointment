@@ -34,3 +34,9 @@ build/
 
 # Bảo mật Google OAuth and email (SMTP)
 .env
+
+# Uploaded doctor and user images
+uploads/*
+!uploads/.gitkeep
+images/*
+!images/.gitkeep

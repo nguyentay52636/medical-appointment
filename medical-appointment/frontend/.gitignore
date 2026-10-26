@@ -25,3 +25,9 @@ dist-ssr
 
 #file
 .env
+
+# Uploaded images
+public/uploads/*
+!public/uploads/.gitkeep
+public/images/*
+!public/images/.gitkeep

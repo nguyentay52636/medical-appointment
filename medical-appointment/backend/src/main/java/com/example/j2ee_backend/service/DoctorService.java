@@ -93,6 +93,9 @@ public class DoctorService {
 
         doctor.setPhoneNumber(doctorDTO.getPhoneNumber());
         doctor.setExperienceYears(doctorDTO.getExperienceYears());
+        if (doctorDTO.getImageUrl() != null && !doctorDTO.getImageUrl().trim().isEmpty()) {
+            doctor.setImageUrl(doctorDTO.getImageUrl().trim());
+        }
         doctorRepository.save(doctor);
 
         //đọc trả lại dto
