@@ -357,6 +357,16 @@ export default function DoctorCreateModal({ isOpen, onClose }) {
                             ></textarea>
                         </div>
 
+                        {/* Schedule Auto-Provisioning Notice */}
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                                <i className="fas fa-calendar-check text-sm"></i>
+                            </div>
+                            <div className="text-xs text-emerald-800 leading-relaxed">
+                                <span className="font-bold">Tự động cấu hình lịch khám chuẩn:</span> Khi cấp tài khoản, hệ thống sẽ kích hoạt ngay lịch làm việc chuẩn (Thứ 2 - Thứ 6: 08:00-11:30 & 13:30-17:00, 35h/tuần) để bệnh nhân có thể đặt lịch ngay. Bác sĩ có thể tự điều chỉnh lại trong cổng cá nhân.
+                            </div>
+                        </div>
+
                         {/* Modal Action Buttons */}
                         <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
                             <button

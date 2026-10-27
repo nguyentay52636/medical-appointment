@@ -74,5 +74,110 @@ public class DoctorAvailabilityService {
             doctorAvailabilityRepository.save(slot);
         }
     }
+
+    @Transactional
+    public void initDefaultAvailability(Doctor doctor) {
+        if (doctor == null || doctor.getId() == null) return;
+        String[] defaultDays = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+        LocalTime morningStart = LocalTime.of(8, 0);
+        LocalTime morningEnd = LocalTime.of(11, 30);
+        LocalTime afternoonStart = LocalTime.of(13, 30);
+        LocalTime afternoonEnd = LocalTime.of(17, 0);
+        int slotDuration = 30;
+
+        for (String day : defaultDays) {
+            // Disable existing if any
+            doctorAvailabilityRepository.disableByDoctorIdAndDay(doctor.getId().longValue(), day.toLowerCase());
+
+            // Ca sáng
+            DoctorAvailability morning = new DoctorAvailability();
+            morning.setDoctor(doctor);
+            morning.setDayOfWeek(day);
+            morning.setStartTime(morningStart);
+            morning.setEndTime(morningEnd);
+            morning.setSlotDurationMinutes(slotDuration);
+            morning.setActive(true);
+            doctorAvailabilityRepository.save(morning);
+
+            // Ca chiều
+            DoctorAvailability afternoon = new DoctorAvailability();
+            afternoon.setDoctor(doctor);
+            afternoon.setDayOfWeek(day);
+            afternoon.setStartTime(afternoonStart);
+            afternoon.setEndTime(afternoonEnd);
+            afternoon.setSlotDurationMinutes(slotDuration);
+            afternoon.setActive(true);
+            doctorAvailabilityRepository.save(afternoon);
+        }
+    }
+
+    @Transactional
+    public void initDefaultAvailabilityByDoctorId(Integer doctorId) {
+        Doctor doctor = doctorRepo.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bác sĩ với ID: " + doctorId));
+        initDefaultAvailability(doctor);
+    }
+
+    public com.example.j2ee_backend.dto.DoctorScheduleSummaryDTO getScheduleSummary(Integer doctorId) {
+        List<DoctorAvailability> availabilities = findByDoctorId(doctorId);
+
+        java.util.Map<String, String> dayViMap = new java.util.LinkedHashMap<>();
+        dayViMap.put("Monday", "Thứ Hai");
+        dayViMap.put("Tuesday", "Thứ Ba");
+        dayViMap.put("Wednesday", "Thứ Tư");
+        dayViMap.put("Thursday", "Thứ Năm");
+        dayViMap.put("Friday", "Thứ Sáu");
+        dayViMap.put("Saturday", "Thứ Bảy");
+        dayViMap.put("Sunday", "Chủ Nhật");
+
+        java.util.Set<String> activeDaySet = new java.util.HashSet<>();
+        long totalMinutes = 0;
+
+        for (DoctorAvailability da : availabilities) {
+            if (da.getActive() != null && da.getActive() && da.getStartTime() != null && da.getEndTime() != null) {
+                String normDay = da.getDayOfWeek().substring(0, 1).toUpperCase() + da.getDayOfWeek().substring(1).toLowerCase();
+                activeDaySet.add(normDay);
+
+                long mins = java.time.Duration.between(da.getStartTime(), da.getEndTime()).toMinutes();
+                if (mins > 0) {
+                    totalMinutes += mins;
+                }
+            }
+        }
+
+        double totalHours = Math.round((totalMinutes / 60.0) * 10.0) / 10.0;
+        int activeDaysCount = activeDaySet.size();
+        double minRequiredHours = 20.0;
+        int minRequiredDays = 3;
+        boolean isCompliant = totalHours >= minRequiredHours && activeDaysCount >= minRequiredDays;
+
+        List<String> orderedDays = new java.util.ArrayList<>();
+        List<String> orderedDaysVi = new java.util.ArrayList<>();
+        for (String dayEn : dayViMap.keySet()) {
+            if (activeDaySet.contains(dayEn)) {
+                orderedDays.add(dayEn);
+                orderedDaysVi.add(dayViMap.get(dayEn));
+            }
+        }
+
+        String complianceMessage;
+        if (isCompliant) {
+            complianceMessage = "Đạt chuẩn quy chế phòng khám (" + totalHours + "h/tuần, " + activeDaysCount + " ngày).";
+        } else {
+            complianceMessage = "Chưa đạt chuẩn tối thiểu của phòng khám (Cần tối thiểu " + minRequiredHours + "h/tuần và " + minRequiredDays + " ngày trực). Hiện tại: " + totalHours + "h, " + activeDaysCount + " ngày.";
+        }
+
+        return com.example.j2ee_backend.dto.DoctorScheduleSummaryDTO.builder()
+                .doctorId(doctorId)
+                .totalWeeklyHours(totalHours)
+                .activeDaysCount(activeDaysCount)
+                .minRequiredHours(minRequiredHours)
+                .minRequiredDays(minRequiredDays)
+                .isCompliant(isCompliant)
+                .workingDays(orderedDays)
+                .workingDaysVi(orderedDaysVi)
+                .complianceMessage(complianceMessage)
+                .build();
+    }
 }
 

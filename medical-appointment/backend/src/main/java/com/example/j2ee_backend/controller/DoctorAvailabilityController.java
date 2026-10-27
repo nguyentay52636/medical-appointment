@@ -44,6 +44,23 @@ public class DoctorAvailabilityController {
             return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
+
+    // TỔNG KẾT TUÂN THỦ QUY CHẾ THỜI GIAN LÀM VIỆC TỐI THIỂU
+    @GetMapping("/summary")
+    public ResponseEntity<com.example.j2ee_backend.dto.DoctorScheduleSummaryDTO> getScheduleSummary(@RequestParam Integer doctorId) {
+        return ResponseEntity.ok(doctorAvailabilityService.getScheduleSummary(doctorId));
+    }
+
+    // KHỞI TẠO LỊCH LÀM VIỆC CHUẨN MẶC ĐỊNH (THỨ 2 - THỨ 6)
+    @PostMapping("/init-default")
+    public ResponseEntity<String> initDefaultSchedule(@RequestParam Integer doctorId) {
+        try {
+            doctorAvailabilityService.initDefaultAvailabilityByDoctorId(doctorId);
+            return ResponseEntity.ok("Khởi tạo lịch làm việc chuẩn (Thứ 2 - Thứ 6) thành công!");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        }
+    }
 }
 
 

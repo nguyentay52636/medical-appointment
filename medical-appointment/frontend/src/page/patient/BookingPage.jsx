@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
-import { fetchDoctorsBySpecialtyId } from "../../service/doctorService";
+import { fetchDoctorsBySpecialtyId, fetchScheduleSummary } from "../../service/doctorService";
 import { specialtyService } from "../../service/specialtyService";
 import { appointmentService } from "../../service/appointmentService";
 import { bookableSlotService } from "../../service/bookableSlotService";
@@ -12,8 +12,8 @@ const BookingSidebar = () => (
             LƯU Ý QUAN TRỌNG
         </h3>
 
-        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded text-sm text-yellow-800 font-semibold">
-            Vui lòng đặt lịch khám trong <strong>tuần hiện tại.</strong>
+        <div className="mb-4 p-3 bg-blue-100 border border-blue-300 rounded text-sm text-blue-900 font-semibold">
+            Vui lòng chọn ngày khám phù hợp với <strong>lịch trực trong tuần</strong> của Bác sĩ.
         </div>
 
         <ul className="space-y-4 text-gray-700">
@@ -72,6 +72,9 @@ export default function BookingPage() {
     const [doctors, setDoctors] = useState([]);
     const [specialties, setSpecialties] = useState([]);
     const [availableSlots, setAvailableSlots] = useState([]);
+    const [doctorScheduleSummary, setDoctorScheduleSummary] = useState(null);
+    const [dateWarningMessage, setDateWarningMessage] = useState('');
+    const [suggestedDates, setSuggestedDates] = useState([]);
     const navigate = useNavigate();
 
     const { patient } = useContext(PatientContext);
@@ -145,6 +148,53 @@ export default function BookingPage() {
         }
     }, [formData.doctorId, doctors]);
 
+    // Load thông tin lịch trực và tính các ngày gợi ý gần nhất của bác sĩ
+    useEffect(() => {
+        if (!formData.doctorId) {
+            setDoctorScheduleSummary(null);
+            setSuggestedDates([]);
+            return;
+        }
+
+        fetchScheduleSummary(formData.doctorId)
+            .then(summary => {
+                setDoctorScheduleSummary(summary);
+                if (summary && summary.workingDays && summary.workingDays.length > 0) {
+                    const dayMap = {
+                        'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
+                        'thursday': 4, 'friday': 5, 'saturday': 6
+                    };
+                    const targetDayNums = summary.workingDays.map(d => dayMap[d.toLowerCase()]);
+                    const suggestions = [];
+                    const curr = new Date();
+
+                    for (let i = 0; i < 21 && suggestions.length < 4; i++) {
+                        const candidate = new Date();
+                        candidate.setDate(curr.getDate() + i);
+                        const dayNum = candidate.getDay();
+                        if (targetDayNums.includes(dayNum)) {
+                            const yyyy = candidate.getFullYear();
+                            const mm = String(candidate.getMonth() + 1).padStart(2, '0');
+                            const dd = String(candidate.getDate()).padStart(2, '0');
+                            const dateStr = `${yyyy}-${mm}-${dd}`;
+
+                            const weekdayVi = candidate.toLocaleDateString('vi-VN', { weekday: 'long' });
+                            const formattedDisplay = `${weekdayVi.charAt(0).toUpperCase() + weekdayVi.slice(1)}, ${dd}/${mm}`;
+                            suggestions.push({ dateStr, label: formattedDisplay });
+                        }
+                    }
+                    setSuggestedDates(suggestions);
+                } else {
+                    setSuggestedDates([]);
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi lấy thông tin lịch bác sĩ:", err);
+                setDoctorScheduleSummary(null);
+                setSuggestedDates([]);
+            });
+    }, [formData.doctorId]);
+
     // Load danh sách bác sĩ khi chuyên khoa được chọn
     useEffect(() => {
         if (!formData.specialty) {
@@ -180,8 +230,11 @@ export default function BookingPage() {
     useEffect(() => {
         if (!formData.doctorId || !formData.date) {
             setAvailableSlots([]);
+            setDateWarningMessage('');
             return;
         }
+
+        setDateWarningMessage('');
 
         bookableSlotService.getAvailableSlots(formData.doctorId, formData.date)
             .then(slots => {
@@ -197,7 +250,7 @@ export default function BookingPage() {
                         const slotTime = new Date(selectedDate);
                         slotTime.setHours(hours, minutes, 0, 0);
 
-                        if (slotTime <= now) return false; // đã qua giờ hiện tại
+                        if (slotTime <= now) return false;
                     }
 
                     return true;
@@ -206,16 +259,20 @@ export default function BookingPage() {
                 setAvailableSlots(available);
 
                 if (slots.length === 0) {
-                    alert("Ngày này không phải lịch làm việc của bác sĩ. Vui lòng chọn ngày khác.");
-                }else if(available.length === 0){
-                    alert("Ngày này đã hết slot trống. Vui lòng chọn ngày khác.");
+                    const dayNameVi = new Date(formData.date + 'T00:00:00').toLocaleDateString('vi-VN', { weekday: 'long' });
+                    setDateWarningMessage(`Bác sĩ ${formData.doctorName || ''} không có lịch trực vào ${dayNameVi}. Vui lòng chọn một trong các ngày gợi ý bên dưới.`);
+                } else if (available.length === 0) {
+                    setDateWarningMessage("Ngày này đã kín hết slot khám hoặc các khung giờ đã trôi qua. Vui lòng chọn một ngày khám khác.");
+                } else {
+                    setDateWarningMessage('');
                 }
             })
             .catch(err => {
                 console.error("Lỗi lấy slot:", err);
                 setAvailableSlots([]);
+                setDateWarningMessage('Không thể nạp danh sách giờ khám. Vui lòng thử lại!');
             });
-    }, [formData.doctorId, formData.date]);
+    }, [formData.doctorId, formData.date, formData.doctorName]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -350,46 +407,108 @@ export default function BookingPage() {
                                 {doctors.map(d => <option key={d.id} value={d.id}>{d.fullName}</option>)}
                             </select>
 
-                            <input
-                                type="date"
-                                name="date"
-                                value={formData.date}
-                                onChange={handleChange}
-                                required
-                                className={`border rounded-xl p-3 w-full cursor-pointer ${formData.date ? 'text-black' : 'text-gray-500'}`}
-                                min={(() => {
-                                    const today = new Date();
-                                    const dayOfWeek = today.getDay(); // 0 = CN, 1 = T2
-                                    const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
-                                    const monday = new Date(today);
-                                    monday.setDate(today.getDate() + diffToMonday);
+                            {/* Doctor Working Days & Quick Suggestions */}
+                            {doctorScheduleSummary && (
+                                <div className="md:col-span-2 -mt-2 p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                                            <i className="fas fa-calendar-check text-blue-600"></i>
+                                            Lịch trực trong tuần của Bác sĩ:
+                                        </span>
+                                        {doctorScheduleSummary.workingDaysVi && doctorScheduleSummary.workingDaysVi.length > 0 ? (
+                                            doctorScheduleSummary.workingDaysVi.map((dayVi, idx) => (
+                                                <span key={idx} className="px-2.5 py-1 bg-white border border-blue-300 text-blue-800 text-xs font-bold rounded-lg shadow-2xs">
+                                                    {dayVi}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-amber-700 italic">Bác sĩ chưa cập nhật lịch trực</span>
+                                        )}
+                                    </div>
 
-                                    // Lấy ngày lớn hơn giữa Monday và Today
-                                    const minDate = today > monday ? today : monday;
+                                    {suggestedDates.length > 0 && (
+                                        <div className="pt-2 border-t border-blue-200/60 flex flex-wrap items-center gap-2">
+                                            <span className="text-xs font-bold text-gray-700">Gợi ý ngày trực gần nhất:</span>
+                                            {suggestedDates.map((item, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ ...prev, date: item.dateStr }))}
+                                                    className={`px-2.5 py-1 text-xs rounded-lg font-bold border transition cursor-pointer ${formData.date === item.dateStr ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white hover:bg-blue-100 text-blue-700 border-blue-200'}`}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
-                                    return minDate.toISOString().split("T")[0];
-                                })()}
-                                max={(() => {
-                                    const today = new Date();
-                                    const dayOfWeek = today.getDay();
-                                    const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
-                                    const monday = new Date(today);
-                                    monday.setDate(today.getDate() + diffToMonday);
-                                    const sunday = new Date(monday);
-                                    sunday.setDate(monday.getDate() + 6); // Chủ Nhật
-                                    return sunday.toISOString().split("T")[0];
-                                })()}
-                            />
-                            <select name="bookableSlotId" value={formData.bookableSlotId} onChange={handleChange} disabled={!availableSlots.length} required
-                                className={`border rounded-xl p-3 w-full cursor-pointer ${formData.bookableSlotId ? 'text-black' : 'text-gray-400'}
-                                `}>
-                                <option value="">-- Giờ khám (Chọn ngày trước) --</option>
-                                {availableSlots.map(slot => (
-                                    <option key={slot.id} value={slot.id}>
-                                        {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
-                                    </option>
-                                ))}
-                            </select>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                    Ngày khám dự kiến
+                                </label>
+                                <input
+                                    type="date"
+                                    name="date"
+                                    value={formData.date}
+                                    onChange={handleChange}
+                                    required
+                                    className={`border rounded-xl p-3 w-full cursor-pointer ${formData.date ? 'text-black' : 'text-gray-500'} ${dateWarningMessage ? 'border-amber-400 bg-amber-50/30' : ''}`}
+                                    min={new Date().toISOString().split("T")[0]}
+                                    max={(() => {
+                                        const d = new Date();
+                                        d.setDate(d.getDate() + 30);
+                                        return d.toISOString().split("T")[0];
+                                    })()}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                    Khung giờ khám
+                                </label>
+                                <select
+                                    name="bookableSlotId"
+                                    value={formData.bookableSlotId}
+                                    onChange={handleChange}
+                                    disabled={!availableSlots.length}
+                                    required
+                                    className={`border rounded-xl p-3 w-full cursor-pointer ${formData.bookableSlotId ? 'text-black' : 'text-gray-400'}`}
+                                >
+                                    <option value="">-- {availableSlots.length ? 'Chọn khung giờ khám' : 'Giờ khám (Chọn ngày trước)'} --</option>
+                                    {availableSlots.map(slot => (
+                                        <option key={slot.id} value={slot.id}>
+                                            {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Inline Warning Notice thay cho Popup Alert */}
+                            {dateWarningMessage && (
+                                <div className="md:col-span-2 p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-start gap-2.5 shadow-2xs">
+                                    <i className="fas fa-exclamation-circle text-amber-600 text-base mt-0.5 shrink-0"></i>
+                                    <div className="space-y-1.5 flex-1">
+                                        <p className="font-semibold text-xs leading-relaxed">{dateWarningMessage}</p>
+                                        {suggestedDates.length > 0 && (
+                                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                <span className="font-bold text-gray-700">Chọn nhanh ngày có lịch:</span>
+                                                {suggestedDates.map((item, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({ ...prev, date: item.dateStr }))}
+                                                        className="px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-md text-[11px] font-bold cursor-pointer transition shadow-2xs"
+                                                    >
+                                                        {item.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             <textarea name="reason" placeholder="Lý do khám (không bắt buộc)" rows="4" value={formData.reason} onChange={handleChange} className="border rounded-xl p-3 w-full" />
                             <textarea name="note" placeholder="Triệu chứng hoặc lịch sử bệnh án (nếu có)" rows="4" value={formData.note} onChange={handleChange} className="border rounded-xl p-3 w-full" />

@@ -32,6 +32,9 @@ public class DoctorService {
     private com.example.j2ee_backend.repository.SpecialtyRepository specialtyRepository;
 
     @Autowired
+    private DoctorAvailabilityService doctorAvailabilityService;
+
+    @Autowired
     public DoctorService(DoctorRepository doctorRepository, PasswordEncoder passwordEncoder,GoogleAuthService googleAuthService, EmailService emailService, GeocodeService geocodeService, TokenService tokenService) {
         this.doctorRepository = doctorRepository;
         this.passwordEncoder = passwordEncoder;
@@ -192,6 +195,16 @@ public class DoctorService {
         doctor.setLng(dto.getLng() != null ? dto.getLng() : 106.660172);
 
         Doctor saved = doctorRepository.save(doctor);
+
+        // Tự động khởi tạo lịch làm việc chuẩn (Thứ 2 - Thứ 6) để bác sĩ có lịch nhận bệnh nhân ngay
+        if (doctorAvailabilityService != null) {
+            try {
+                doctorAvailabilityService.initDefaultAvailability(saved);
+            } catch (Exception e) {
+                System.err.println("Lỗi tự động khởi tạo lịch làm việc cho bác sĩ: " + e.getMessage());
+            }
+        }
+
         return new DoctorDTO(saved);
     }
 

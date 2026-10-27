@@ -89,6 +89,34 @@ function EditSchedule() {
         setCurrentTimes(currentTimes.filter(t => t.timeRange !== timeRangeToRemove));
     };
 
+    // Tính toán dự kiến tổng giờ và số ngày làm việc sau khi lưu
+    const projectedStats = (() => {
+        if (!fullSchedule) return { totalHours: 0, activeDays: 0, isCompliant: false };
+
+        let totalMins = 0;
+        let activeDays = 0;
+
+        const DAYS_LIST = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        for (const d of DAYS_LIST) {
+            const slots = (d === dayKey) ? currentTimes : (fullSchedule[d] || []);
+            if (slots.length > 0) {
+                activeDays += 1;
+                for (const s of slots) {
+                    if (!s.timeRange || !s.timeRange.includes("-")) continue;
+                    const [start, end] = s.timeRange.split("-");
+                    const [sh, sm] = start.split(":").map(Number);
+                    const [eh, em] = end.split(":").map(Number);
+                    const diff = (eh * 60 + em) - (sh * 60 + sm);
+                    if (diff > 0) totalMins += diff;
+                }
+            }
+        }
+
+        const totalHours = Math.round((totalMins / 60) * 10) / 10;
+        const isCompliant = totalHours >= 20 && activeDays >= 3;
+        return { totalHours, activeDays, isCompliant };
+    })();
+
     const handleSave = async () => {
         const doctorId = JSON.parse(sessionStorage.getItem("doctor"))?.id;
         if (!doctorId) return alert("Không tìm thấy ID bác sĩ!");
@@ -103,11 +131,19 @@ function EditSchedule() {
             slotDurationMinutes: t.slotDurationMinutes
         }));
         
-        if (oldTimes.length === 0 && newTimes.length === 0) {
-            return alert("Ngày này chưa có khung giờ nào. Hãy thêm ít nhất 1 khung giờ trước khi lưu.");
-        }
         if (JSON.stringify(oldTimes) === JSON.stringify(newTimes)) {
             return alert("Không có thay đổi nào để lưu!");
+        }
+
+        // Cảnh báo quy chế nếu chưa đạt định mức tối thiểu
+        if (!projectedStats.isCompliant) {
+            const confirmSave = window.confirm(
+                `CẢNH BÁO QUY CHẾ PHÒNG KHÁM:\n\n` +
+                `Sau khi lưu ngày này, tổng thời gian trực trong tuần của bạn là ${projectedStats.totalHours} giờ và ${projectedStats.activeDays} ngày làm việc.\n` +
+                `(Quy chế yêu cầu tối thiểu 20 giờ và 3 ngày trực/tuần để đảm bảo nhận lịch khám).\n\n` +
+                `Bạn có chắc chắn vẫn muốn lưu cấu hình này?`
+            );
+            if (!confirmSave) return;
         }
 
         setIsSaving(true);
@@ -241,7 +277,20 @@ function EditSchedule() {
                 </div>
             </div>
 
-            <div className="flex justify-between pt-4">
+            {/* Projected Weekly Compliance Banner */}
+            <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${projectedStats.isCompliant ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'}`}>
+                <div className="flex items-center gap-2.5 text-sm font-semibold">
+                    <i className={`fas ${projectedStats.isCompliant ? 'fa-check-circle text-emerald-600 text-base' : 'fa-exclamation-triangle text-amber-600 text-base'}`}></i>
+                    <span>
+                        Tổng giờ trực dự kiến cả tuần: <strong className="text-base">{projectedStats.totalHours}h / 20h</strong> ({projectedStats.activeDays} / 3 ngày)
+                    </span>
+                </div>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full self-start sm:self-auto ${projectedStats.isCompliant ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-200 text-amber-900'}`}>
+                    {projectedStats.isCompliant ? '✓ Đạt định mức tối thiểu' : '⚠ Dưới định mức tối thiểu (Cần ≥ 20h, ≥ 3 ngày)'}
+                </span>
+            </div>
+
+            <div className="flex justify-between pt-2">
                 <button
                     onClick={() => navigate('/doctor/schedule')}
                     className="bg-red-500 text-white px-8 py-3 rounded-xl text-lg font-semibold hover:bg-red-600 transition-all shadow-xl transform hover:scale-[1.01] flex items-center cursor-pointer"

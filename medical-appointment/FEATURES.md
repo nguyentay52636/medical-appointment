@@ -265,6 +265,36 @@
 - `GET /api/appointment/all` - Xem toàn bộ lịch khám của mọi khoa phục vụ Admin Dashboard
 - `GET /api/patient/all` - Lấy danh bạ hồ sơ toàn bộ bệnh nhân đã đăng ký
 - `GET /api/specialty/all` - Lấy danh mục chuyên khoa để phân công bác sĩ
+- `GET /api/availability/summary` - Lấy báo cáo tuân thủ định mức thời gian làm việc tối thiểu của bác sĩ
+- `POST /api/availability/init-default` - Khởi tạo / Khôi phục lịch làm việc chuẩn (Thứ 2 - Thứ 6, 35 giờ/tuần)
+
+---
+
+## 9. QUY CHẾ LỊCH TRỰC & TRẢI NGHIỆM ĐẶT LỊCH (MỚI BỔ SUNG)
+
+### 9.1. Tự động Khởi tạo Lịch làm việc khi Cấp tài khoản Bác sĩ
+- Khắc phục triệt để tình trạng bác sĩ mới tạo có lịch trống 100%.
+- Khi Admin tạo bác sĩ qua `POST /api/doctor/create`, hệ thống tự động sinh bộ lịch chuẩn:
+  - Các ngày: Thứ Hai đến Thứ Sáu (Monday - Friday).
+  - Ca sáng: `08:00 - 11:30` (Slot 30 phút).
+  - Ca chiều: `13:30 - 17:00` (Slot 30 phút).
+  - Tổng định mức: 7 giờ/ngày x 5 ngày = **35 giờ/tuần**.
+- Bệnh nhân có thể đặt lịch ngay sau khi tài khoản bác sĩ được tạo mà không bị báo lỗi ngày nghỉ.
+
+### 9.2. Ràng buộc Định mức Thời gian Làm việc Tối thiểu (Compliance)
+- **Quy chuẩn phòng khám**:
+  - Bác sĩ phải đăng ký **tối thiểu 20 giờ làm việc/tuần**.
+  - Bác sĩ phải trực **tối thiểu 3 ngày/tuần**.
+- **Tiện ích trên Doctor Portal**:
+  - **Bảng theo dõi tuân thủ (Compliance Banner)**: Hiển thị thời gian thực tổng số giờ trực (`X / 20.0h`) kèm thanh tiến độ %, số ngày trực (`Y / 3 ngày`) và nhãn phân loại (Đạt chuẩn / Chưa đạt định mức).
+  - **Nút khôi phục lịch chuẩn 1 chạm**: Bác sĩ có thể bấm "Áp dụng Lịch Chuẩn (Thứ 2 - Thứ 6)" để tự động phục hồi lịch 35h/tuần bất cứ lúc nào.
+  - **Cảnh báo thông minh khi chỉnh sửa ca**: Nếu thay đổi ca trực khiến thời gian tuần tụt xuống dưới 20 giờ hoặc dưới 3 ngày, hệ thống sẽ cảnh báo trực tiếp trước khi lưu.
+
+### 9.3. Tối ưu hóa Trải nghiệm Chọn ngày của Bệnh nhân (Patient UX)
+- **Hiển thị trực quan lịch trực**: Ngay khi chọn bác sĩ, giao diện hiển thị danh sách các thứ bác sĩ có ca trực trong tuần (`[Thứ Hai] [Thứ Ba] [Thứ Tư]...`).
+- **Gợi ý ngày khám gần nhất**: Tự động tính toán và đưa ra các nút chọn nhanh cho 4 ngày khám gần nhất mà bác sĩ có ca trực.
+- **Loại bỏ popup `alert()`**: Thay thế toàn bộ popup alert chặn màn hình bằng thông báo cảnh báo inline mềm mại, đẹp mắt và tích hợp nút 1-click chọn ngay ngày có lịch trực.
+- **Mở rộng phạm vi đặt lịch**: Cho phép bệnh nhân đặt lịch trước linh hoạt trong vòng **30 ngày**, thay vì bị giới hạn cứng trong tuần hiện tại.
 
 ---
 

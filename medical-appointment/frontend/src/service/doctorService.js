@@ -14,18 +14,38 @@ export const fetchDoctorSchedule = async (doctorId) => {
   const formatted = {};
   DAYS.forEach((d) => (formatted[d] = []));
 
-  data.forEach((slot) => {
-    const key = slot.dayOfWeek.trim().toLowerCase();
-    const start = slot.startTime.split(":").slice(0, 2).join(":");
-    const end = slot.endTime.split(":").slice(0, 2).join(":");
+  if (Array.isArray(data)) {
+    data.forEach((slot) => {
+      const key = slot.dayOfWeek.trim().toLowerCase();
+      const start = slot.startTime.split(":").slice(0, 2).join(":");
+      const end = slot.endTime.split(":").slice(0, 2).join(":");
 
-    formatted[key].push({
-      timeRange: `${start}-${end}`,
-      slotDurationMinutes: slot.slotDurationMinutes ?? 15
+      if (formatted[key]) {
+        formatted[key].push({
+          timeRange: `${start}-${end}`,
+          slotDurationMinutes: slot.slotDurationMinutes ?? 15
+        });
+      }
     });
-  });
+  }
 
   return formatted;
+};
+
+export const fetchScheduleSummary = async (doctorId) => {
+  const response = await axios.get(
+    `${API_ENDPOINT}/api/availability/summary?doctorId=${doctorId}`,
+    { withCredentials: true }
+  );
+  return response.data;
+};
+
+export const initDefaultDoctorSchedule = async (doctorId) => {
+  return axios.post(
+    `${API_ENDPOINT}/api/availability/init-default?doctorId=${doctorId}`,
+    {},
+    { withCredentials: true }
+  );
 };
 
 export const updateDoctorSchedule = async (doctorId, request) => {

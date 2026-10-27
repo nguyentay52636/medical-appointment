@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import { PatientContext } from "../../context/PatientContext";
 import { appointmentService } from "../../service/appointmentService";
-import { fetchAllDoctor } from "../../service/doctorService";
+import { fetchAllDoctor, fetchScheduleSummary } from "../../service/doctorService";
 import { bookableSlotService } from "../../service/bookableSlotService";
 import { reportService } from "../../service/reportService";
 
@@ -18,6 +18,9 @@ export default function BookingHistory() {
   const [newTime, setNewTime] = useState("");
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [rescheduleWarning, setRescheduleWarning] = useState("");
+  const [rescheduleSummary, setRescheduleSummary] = useState(null);
+  const [suggestedRescheduleDates, setSuggestedRescheduleDates] = useState([]);
 
   const [filterDate, setFilterDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -102,31 +105,36 @@ export default function BookingHistory() {
 
   // Lọc ngày và giờ khám
   useEffect(() => {
-    if (!rescheduleAppt || !newDate) return;
+    if (!rescheduleAppt || !newDate) {
+      setRescheduleWarning("");
+      return;
+    }
 
     const fetchSlots = async () => {
       setSlotsLoading(true);
+      setRescheduleWarning("");
       try {
-        // Lấy tất cả slot của bác sĩ trong ngày
         const slots = await bookableSlotService.getAvailableSlots(rescheduleAppt.doctorId, newDate);
 
         const now = new Date();
         const selectedDate = new Date(newDate);
 
-        // Chỉ lấy slot đang có trạng thái 'available' và chưa qua thời gian hiện tại
         const available = slots.filter(slot => {
-          if (slot.status !== "available") return false; // chỉ lấy slot trống
+          if (slot.status !== "available") return false;
           if (
             selectedDate.toDateString() === now.toDateString() &&
             slot.startTime <= now.toTimeString().slice(0, 5)
-          ) return false; // slot đã qua giờ hiện tại
+          ) return false;
           return true;
         });
 
         if (slots.length === 0) {
-          alert("Ngày này không phải lịch làm việc của bác sĩ. Vui lòng chọn ngày khác!");
+          const dayNameVi = new Date(newDate + 'T00:00:00').toLocaleDateString('vi-VN', { weekday: 'long' });
+          setRescheduleWarning(`Bác sĩ không có lịch trực vào ${dayNameVi}. Vui lòng chọn một trong các ngày gợi ý.`);
         } else if (available.length === 0) {
-          alert("Ngày này đã hết slot trống. Vui lòng chọn ngày khác!");
+          setRescheduleWarning("Ngày này đã kín hết slot khám hoặc khung giờ đã trôi qua. Vui lòng chọn ngày khác.");
+        } else {
+          setRescheduleWarning("");
         }
 
         setAvailableSlots(available);
@@ -134,6 +142,7 @@ export default function BookingHistory() {
       } catch (err) {
         console.error(err);
         setAvailableSlots([]);
+        setRescheduleWarning("Không thể tải danh sách giờ khám. Vui lòng thử lại!");
       } finally {
         setSlotsLoading(false);
       }
@@ -145,10 +154,49 @@ export default function BookingHistory() {
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString("vi-VN");
 
   // Khi nhấn dời lịch
-  const handleRescheduleClick = (appt) => {
+  const handleRescheduleClick = async (appt) => {
     setRescheduleAppt(appt);
     setNewDate("");
     setNewTime("");
+    setRescheduleWarning("");
+    setRescheduleSummary(null);
+    setSuggestedRescheduleDates([]);
+
+    if (appt?.doctorId) {
+      try {
+        const summary = await fetchScheduleSummary(appt.doctorId);
+        setRescheduleSummary(summary);
+
+        if (summary && summary.workingDays && summary.workingDays.length > 0) {
+          const dayMap = {
+            'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
+            'thursday': 4, 'friday': 5, 'saturday': 6
+          };
+          const targetDayNums = summary.workingDays.map(d => dayMap[d.toLowerCase()]);
+          const suggestions = [];
+          const curr = new Date();
+
+          for (let i = 0; i < 21 && suggestions.length < 4; i++) {
+            const candidate = new Date();
+            candidate.setDate(curr.getDate() + i);
+            const dayNum = candidate.getDay();
+            if (targetDayNums.includes(dayNum)) {
+              const yyyy = candidate.getFullYear();
+              const mm = String(candidate.getMonth() + 1).padStart(2, '0');
+              const dd = String(candidate.getDate()).padStart(2, '0');
+              const dateStr = `${yyyy}-${mm}-${dd}`;
+
+              const weekdayVi = candidate.toLocaleDateString('vi-VN', { weekday: 'long' });
+              const formattedDisplay = `${weekdayVi.charAt(0).toUpperCase() + weekdayVi.slice(1)}, ${dd}/${mm}`;
+              suggestions.push({ dateStr, label: formattedDisplay });
+            }
+          }
+          setSuggestedRescheduleDates(suggestions);
+        }
+      } catch (err) {
+        console.error("Lỗi lấy thông tin lịch bác sĩ khi dời lịch:", err);
+      }
+    }
   };
 
   // Khi đóng popup dời lịch
@@ -157,6 +205,9 @@ export default function BookingHistory() {
     setNewDate("");
     setNewTime("");
     setAvailableSlots([]);
+    setRescheduleWarning("");
+    setRescheduleSummary(null);
+    setSuggestedRescheduleDates([]);
   };
 
   // Khi nhấn xác nhận dời lịch
@@ -450,41 +501,80 @@ export default function BookingHistory() {
 
             <h2 className="text-2xl font-bold mb-5 text-center">Dời lịch hẹn</h2>
 
-            <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded text-sm text-yellow-800 font-semibold text-center">
-              Vui lòng dời lịch khám trong <strong>tuần hiện tại.</strong>
-            </div>
+            {/* Doctor working days info */}
+            {rescheduleSummary && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-1.5 text-left">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-blue-900 font-bold">
+                  <i className="fas fa-calendar-check text-blue-600"></i>
+                  Lịch trực của Bác sĩ:
+                  {rescheduleSummary.workingDaysVi && rescheduleSummary.workingDaysVi.length > 0 ? (
+                    rescheduleSummary.workingDaysVi.map((d, idx) => (
+                      <span key={idx} className="px-2 py-0.5 bg-white border border-blue-300 text-blue-800 rounded font-semibold text-[11px]">
+                        {d}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="italic text-gray-500 font-normal">Chưa có lịch trực cố định</span>
+                  )}
+                </div>
+                {suggestedRescheduleDates.length > 0 && (
+                  <div className="pt-1.5 border-t border-blue-200/60 flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="font-semibold text-gray-700">Gợi ý ngày trực:</span>
+                    {suggestedRescheduleDates.map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setNewDate(item.dateStr)}
+                        className={`px-2 py-0.5 text-[11px] rounded font-bold border transition cursor-pointer ${newDate === item.dateStr ? 'bg-blue-600 text-white border-blue-600' : 'bg-white hover:bg-blue-100 text-blue-700 border-blue-200'}`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-            <label className="block mb-2">Chọn ngày mới</label>
+            <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Chọn ngày mới</label>
             <input
               type="date"
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}
-              className="w-full mb-4 border px-3 py-2 rounded cursor-pointer"
-              min={(() => {
-                const today = new Date();
-                const dayOfWeek = today.getDay(); // 0 = CN, 1 = T2
-                const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
-                const monday = new Date(today);
-                monday.setDate(today.getDate() + diffToMonday);
-
-                // Lấy ngày lớn hơn giữa Monday và Today
-                const minDate = today > monday ? today : monday;
-
-                return minDate.toISOString().split("T")[0];
-              })()}
+              className={`w-full mb-3 border px-3 py-2 rounded-xl cursor-pointer ${rescheduleWarning ? 'border-amber-400 bg-amber-50/30' : ''}`}
+              min={new Date().toISOString().split("T")[0]}
               max={(() => {
-                const today = new Date();
-                const dayOfWeek = today.getDay();
-                const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
-                const monday = new Date(today);
-                monday.setDate(today.getDate() + diffToMonday);
-                const sunday = new Date(monday);
-                sunday.setDate(monday.getDate() + 6); // Chủ Nhật
-                return sunday.toISOString().split("T")[0];
+                const d = new Date();
+                d.setDate(d.getDate() + 30);
+                return d.toISOString().split("T")[0];
               })()}
             />
 
-            <label className="block mb-2">Chọn khung giờ</label>
+            {/* Inline warning notice */}
+            {rescheduleWarning && (
+              <div className="mb-3 p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-start gap-2 text-left">
+                <i className="fas fa-exclamation-circle text-amber-600 mt-0.5 shrink-0"></i>
+                <div className="space-y-1">
+                  <p className="font-semibold leading-relaxed">{rescheduleWarning}</p>
+                  {suggestedRescheduleDates.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1 pt-1">
+                      <span className="font-bold text-gray-700">Chọn nhanh:</span>
+                      {suggestedRescheduleDates.map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setNewDate(item.dateStr)}
+                          className="px-2 py-0.5 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 rounded text-[11px] font-bold cursor-pointer transition"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <label className="block mb-1 text-xs font-bold text-gray-700 uppercase">Chọn khung giờ mới</label>
             {slotsLoading ? (
               <div className="mb-4">Đang tải slot...</div>
             ) : (
