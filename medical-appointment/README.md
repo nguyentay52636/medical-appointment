@@ -15,8 +15,9 @@
 [Công Nghệ](#-công-nghệ-sử-dụng) •
 [Kiến Trúc](#-kiến-trúc-hệ-thống) •
 [Cài Đặt & Khởi Chạy](#-hướng-dẫn-cài-đặt--khởi-chạy) •
-[Tài Khoản Thử Nghiệm](#-tài-khoản-thử-nghiệm-demo) •
-[Tài Liệu API](#-tài-liệu-api-swagger)
+[Báo Cáo Tổng Quan (Markdown)](docs/TONG_QUAN_VA_TINH_NANG_DU_AN.md) •
+[Báo Cáo Word (.docx)](docs/TONG_QUAN_VA_TINH_NANG_DU_AN.docx) •
+[Tài Khoản Demo](#-tài-khoản-thử-nghiệm-demo)
 
 </div>
 

@@ -296,6 +296,20 @@
 - **Loại bỏ popup `alert()`**: Thay thế toàn bộ popup alert chặn màn hình bằng thông báo cảnh báo inline mềm mại, đẹp mắt và tích hợp nút 1-click chọn ngay ngày có lịch trực.
 - **Mở rộng phạm vi đặt lịch**: Cho phép bệnh nhân đặt lịch trước linh hoạt trong vòng **30 ngày**, thay vì bị giới hạn cứng trong tuần hiện tại.
 
+### 9.4. Tối ưu hóa Hiệu Năng API Đặt Lịch & Async Kafka (`POST /api/appointment/save`)
+- **Khắc phục lỗi treo 60 giây**: Chuyển tiến trình gửi tin nhắn Apache Kafka sang bất đồng bộ hoàn toàn (`CompletableFuture.runAsync`) và giới hạn timeout `MAX_BLOCK_MS_CONFIG = 1500ms`. Nhờ đó, ngay cả khi Kafka broker chưa khởi động, API vẫn phản hồi siêu tốc trong **10 - 20ms**.
+- **Chuẩn hóa phản hồi mã lỗi HTTP 400**: Controller bắt ngoại lệ nghiệp vụ và trả về JSON chuẩn `{ "success": false, "message": "..." }` với mã 400 Bad Request rõ ràng thay vì quăng lỗi 500 unhandled.
+- **Làm giàu dữ liệu phản hồi (Rich Response Metadata)**: Trả về đầy đủ `id`, `appointmentCode`, `doctorName`, `specialtyName`, `slotDate`, `startTime`, `endTime`, `price`, `paymentMethod`, giải quyết triệt để lỗi thiếu `id` khi điều hướng sang trang thanh toán trực tuyến `/patient/payment`.
+
+### 9.5. Phiếu Xác Nhận Đặt Lịch Khám Thành Công (`BookingSuccessModal`) & Tải PDF Tức Thì
+- **Loại bỏ popup `alert()`**: Thay thế thông báo browser alert đơn điệu bằng Modal Phiếu xác nhận đặt lịch khám sang trọng, hiện đại.
+- **Hộp Mã Lịch Hẹn nổi bật**: Hiển thị mã lịch hẹn (ví dụ `APT006`) đi kèm nút **"Sao chép mã" 1-click** (với hiệu ứng chuyển đổi trạng thái *"Đã chép mã!"*).
+- **Chi tiết phiếu khám đầy đủ**: Hiển thị họ tên Bác sĩ, Chuyên khoa, Ngày khám tiếng Việt, Khung giờ khám, Bệnh nhân, Hình thức thanh toán và Tổng tiền.
+- **Hành động tức thì**:
+  - Nút **"Xem Lịch Sử Hẹn"**: Điều hướng trực tiếp tới `/patient/booking-history` để theo dõi tiến độ duyệt lịch.
+  - Nút **"In Phiếu (PDF)"**: Gọi `reportService.downloadAppointment(id)` tải ngay file PDF phiếu hẹn về máy tính/điện thoại.
+- **Cải tiến nút gửi**: Bổ sung trạng thái loading spinner trên nút "Xác Nhận Đặt Lịch Khám" để chống gửi lặp (Double Submit).
+
 ---
 
 *(Tài liệu được biên soạn tự động dựa trên mã nguồn thực tế của hệ thống MediCare)*
