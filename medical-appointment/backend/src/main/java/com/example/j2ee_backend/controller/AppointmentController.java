@@ -114,8 +114,15 @@ public class AppointmentController {
 
     @PostMapping("/save")
     public ResponseEntity<?> bookAppointment(@RequestBody AppointmentDTO dto) {
-        Map<String, String> result = appointmentService.createAppointment(dto);
-        return ResponseEntity.ok(result);
+        try {
+            Map<String, Object> result = appointmentService.createAppointment(dto);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage() != null ? e.getMessage() : "Đặt lịch hẹn thất bại. Vui lòng kiểm tra lại thông tin!"
+            ));
+        }
     }
 
     @PostMapping("/doctor/{doctorId}/reject/{appointmentId}")

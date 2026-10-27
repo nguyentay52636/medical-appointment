@@ -18,12 +18,14 @@ public class KafkaProducerService {
     }
 
     public void sendMessage(String topic, Map<String, String> message) {
-        try {
-            String jsonMessage = objectMapper.writeValueAsString(message);
-            kafkaTemplate.send(topic, jsonMessage);
-            System.out.println("Sent Kafka message: " + jsonMessage);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                String jsonMessage = objectMapper.writeValueAsString(message);
+                kafkaTemplate.send(topic, jsonMessage);
+                System.out.println("Sent Kafka message: " + jsonMessage);
+            } catch (Exception e) {
+                System.err.println("Kafka skipped/error (broker offline): " + e.getMessage());
+            }
+        });
     }
 }

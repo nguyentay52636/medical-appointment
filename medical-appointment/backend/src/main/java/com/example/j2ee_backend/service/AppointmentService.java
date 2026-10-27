@@ -159,26 +159,42 @@ public class AppointmentService {
 
     // Tạo lịch hẹn
     @Transactional
-    public Map<String, String> createAppointment(AppointmentDTO dto) {
+    public Map<String, Object> createAppointment(AppointmentDTO dto) {
+        if (dto.getBookableSlotId() == null) {
+            throw new RuntimeException("Vui lòng chọn khung giờ khám khả dụng!");
+        }
+        if (dto.getPatientId() == null) {
+            throw new RuntimeException("Thiếu thông tin bệnh nhân. Vui lòng đăng nhập lại!");
+        }
+
         // Lấy slot
         BookableSlot slot = slotRepo.findById(dto.getBookableSlotId())
-                .orElseThrow(() -> new RuntimeException("Slot không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Khung giờ khám không tồn tại hoặc đã bị hủy!"));
 
         if (!"available".equalsIgnoreCase(slot.getStatus())) {
-            throw new RuntimeException("Slot đã được đặt");
+            throw new RuntimeException("Khung giờ này vừa có người đặt. Vui lòng chọn khung giờ khác!");
         }
 
         // Lấy bệnh nhân
         Patient patient = patientRepo.findById(dto.getPatientId())
-                .orElseThrow(() -> new RuntimeException("Patient không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Hồ sơ bệnh nhân không tồn tại trên hệ thống!"));
 
-        // Tạo mã appointment
+        // Tạo mã appointment an toàn
         String lastCode = appointmentRepository.findTopByOrderByIdDesc()
                 .map(Appointment::getAppointmentCode)
                 .orElse("APT000");
-        int number = Integer.parseInt(lastCode.substring(3)) + 1;
+        int number = 1;
+        if (lastCode != null && lastCode.length() > 3) {
+            try {
+                number = Integer.parseInt(lastCode.substring(3).replaceAll("\\D+", "")) + 1;
+            } catch (Exception ignored) {
+                number = (int) (appointmentRepository.count() + 1);
+            }
+        }
         String newCode = String.format("APT%03d", number);
-        Integer price = slot.getDoctor().getPricePerAppointment();
+        Integer price = (slot.getDoctor() != null && slot.getDoctor().getPricePerAppointment() != null)
+                ? slot.getDoctor().getPricePerAppointment()
+                : (dto.getPrice() != null ? dto.getPrice() : 200000);
 
         // Tạo appointment
         Appointment app = new Appointment();
@@ -189,7 +205,7 @@ public class AppointmentService {
         app.setAppointmentCode(newCode);
         app.setPrice(price);
         app.setStatus("pending");
-        app.setPaymentMethod(dto.getPaymentMethod());
+        app.setPaymentMethod(dto.getPaymentMethod() != null ? dto.getPaymentMethod() : "offline");
 
         if ("online".equalsIgnoreCase(dto.getPaymentMethod())) {
             app.setPaymentStatus("pending");
@@ -203,53 +219,77 @@ public class AppointmentService {
         // Lưu appointment
         Appointment saved = appointmentRepository.save(app);
 
+        // Tạo notification cho bác sĩ an toàn
         if (saved.getPatient() != null && saved.getBookableSlot() != null) {
-            Date date = slot.getSlotDate();
-            SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM"); // định dạng ngày
-            String message = "Bệnh nhân " + patient.getFullName()
-                    + " đã đặt lịch khám vào ngày " + dateFormatter.format(date)
-                    + " lúc " + slot.getStartTime() + " đến " + slot.getEndTime();
+            try {
+                Date date = slot.getSlotDate();
+                SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
+                String dateStr = date != null ? dateFormatter.format(date) : "";
+                String startTimeStr = slot.getStartTime() != null ? slot.getStartTime().toString().substring(0, 5) : "";
+                String endTimeStr = slot.getEndTime() != null ? slot.getEndTime().toString().substring(0, 5) : "";
 
-            // --- Tạo notification cho bác sĩ ---
-            Notification notification = new Notification();
-            notification.setDoctor(slot.getDoctor());
-            notification.setPatient(patient);
-            notification.setTitle("Lịch hẹn mới");
-            notification.setMessage(message);
-            notification.setRead(false); // chưa đọc
-            notification.setCreatedAt(LocalDateTime.now());
+                String message = "Bệnh nhân " + patient.getFullName()
+                        + " đã đặt lịch khám vào ngày " + dateStr
+                        + " lúc " + startTimeStr + " đến " + endTimeStr;
 
-            notificationRepo.save(notification);
+                Notification notification = new Notification();
+                notification.setDoctor(slot.getDoctor());
+                notification.setPatient(patient);
+                notification.setTitle("Lịch hẹn mới: " + saved.getAppointmentCode());
+                notification.setMessage(message);
+                notification.setRead(false);
+                notification.setCreatedAt(LocalDateTime.now());
+
+                notificationRepo.save(notification);
+            } catch (Exception ex) {
+                System.err.println("Lỗi tạo thông báo bác sĩ: " + ex.getMessage());
+            }
         }
 
-        Map<String, String> result = new HashMap<>();
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("id", saved.getId());
+        result.put("appointmentId", saved.getId());
         result.put("appointmentCode", saved.getAppointmentCode());
+        result.put("doctorName", slot.getDoctor() != null ? slot.getDoctor().getFullName() : "");
+        result.put("specialtyName", (slot.getDoctor() != null && slot.getDoctor().getSpecialty() != null)
+                ? slot.getDoctor().getSpecialty().getSpecialtyName() : "");
+        result.put("slotDate", slot.getSlotDate() != null ? slot.getSlotDate().toString() : "");
+        result.put("startTime", slot.getStartTime() != null ? slot.getStartTime().toString().substring(0, 5) : "");
+        result.put("endTime", slot.getEndTime() != null ? slot.getEndTime().toString().substring(0, 5) : "");
+        result.put("price", saved.getPrice());
+        result.put("paymentMethod", saved.getPaymentMethod());
+        result.put("paymentStatus", saved.getPaymentStatus());
+        result.put("message", "Đặt lịch khám thành công!");
 
         if ("online".equalsIgnoreCase(dto.getPaymentMethod())) {
             try {
                 String paymentUrl = paymentService.createPaymentUrl(saved, saved.getPrice());
                 result.put("paymentUrl", paymentUrl);
-                // slot chưa booked, chờ thanh toán thành công
             } catch (Exception ex) {
-                // tạo payment URL thất bại
                 saved.setPaymentStatus("failed");
                 appointmentRepository.save(saved);
-                throw new RuntimeException("Không thể tạo thanh toán online");
+                throw new RuntimeException("Không thể tạo liên kết thanh toán online VNPay: " + ex.getMessage());
             }
         }
 
-        // Kafka
-        Map<String, String> kafkaMsg = new HashMap<>();
-        kafkaMsg.put("patientName", patient.getFullName());
-        kafkaMsg.put("patientEmail", patient.getEmail());
-        kafkaMsg.put("doctorName", slot.getDoctor().getFullName());
-        kafkaMsg.put("doctorEmail", slot.getDoctor().getEmail());
-        kafkaMsg.put("appointmentCode", saved.getAppointmentCode());
-        kafkaMsg.put("slotDate", slot.getSlotDate().toString());
-        kafkaMsg.put("slotStartTime", slot.getStartTime().toString());
-        kafkaMsg.put("slotEndTime", slot.getEndTime().toString());
-
-        kafkaProducer.sendMessage("appointments", kafkaMsg);
+        // Kafka an toàn không làm crash flow chính
+        try {
+            if (kafkaProducer != null && slot.getDoctor() != null) {
+                Map<String, String> kafkaMsg = new HashMap<>();
+                kafkaMsg.put("patientName", patient.getFullName());
+                kafkaMsg.put("patientEmail", patient.getEmail());
+                kafkaMsg.put("doctorName", slot.getDoctor().getFullName());
+                kafkaMsg.put("doctorEmail", slot.getDoctor().getEmail());
+                kafkaMsg.put("appointmentCode", saved.getAppointmentCode());
+                kafkaMsg.put("slotDate", slot.getSlotDate() != null ? slot.getSlotDate().toString() : "");
+                kafkaMsg.put("slotStartTime", slot.getStartTime() != null ? slot.getStartTime().toString() : "");
+                kafkaMsg.put("slotEndTime", slot.getEndTime() != null ? slot.getEndTime().toString() : "");
+                kafkaProducer.sendMessage("appointments", kafkaMsg);
+            }
+        } catch (Exception ex) {
+            System.err.println("Lỗi gửi tin nhắn Kafka: " + ex.getMessage());
+        }
 
         return result;
     }

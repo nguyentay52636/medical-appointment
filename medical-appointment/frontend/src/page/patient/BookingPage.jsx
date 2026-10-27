@@ -5,6 +5,7 @@ import { specialtyService } from "../../service/specialtyService";
 import { appointmentService } from "../../service/appointmentService";
 import { bookableSlotService } from "../../service/bookableSlotService";
 import { PatientContext } from "../../context/PatientContext";
+import BookingSuccessModal from "../../component/common/BookingSuccessModal";
 
 const BookingSidebar = () => (
     <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 h-full">
@@ -75,6 +76,10 @@ export default function BookingPage() {
     const [doctorScheduleSummary, setDoctorScheduleSummary] = useState(null);
     const [dateWarningMessage, setDateWarningMessage] = useState('');
     const [suggestedDates, setSuggestedDates] = useState([]);
+    const [createdAppointment, setCreatedAppointment] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitErrorMessage, setSubmitErrorMessage] = useState('');
     const navigate = useNavigate();
 
     const { patient } = useContext(PatientContext);
@@ -293,14 +298,20 @@ export default function BookingPage() {
     // Khi nhấn xác nhận
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitErrorMessage('');
 
         if (!formData.bookableSlotId) {
-            alert("Vui lòng chọn giờ khám.");
+            setSubmitErrorMessage("Vui lòng chọn khung giờ khám phù hợp.");
             return;
         }
 
         if (!patient || !patient.id) {
-            alert("Thông tin bệnh nhân chưa đầy đủ.");
+            setSubmitErrorMessage("Thông tin bệnh nhân chưa đầy đủ hoặc phiên đăng nhập đã hết hạn.");
+            return;
+        }
+
+        if (!formData.paymentMethod) {
+            setSubmitErrorMessage("Vui lòng chọn phương thức thanh toán.");
             return;
         }
 
@@ -310,9 +321,11 @@ export default function BookingPage() {
             reason: formData.reason?.trim() || "",
             note: formData.note?.trim() || "",
             paymentMethod: formData.paymentMethod,
-            paymentStatus: formData.paymentStatus,
+            paymentStatus: formData.paymentStatus || "pending",
             price: formData.price
         };
+
+        setIsSubmitting(true);
 
         try {
             const res = await appointmentService.createAppointment(appointmentData);
@@ -320,13 +333,40 @@ export default function BookingPage() {
             if (appointmentData.paymentMethod === "online" && res.paymentUrl) {
                 navigate("/patient/payment", {
                     state: {
-                        appointmentId: res.id,
-                        formData: { ...formData, price: appointmentData.price },
+                        appointmentId: res.id || res.appointmentId,
+                        formData: {
+                            ...formData,
+                            price: res.price || appointmentData.price,
+                            doctorName: res.doctorName || formData.doctorName,
+                            specialtyName: res.specialtyName || formData.specialtyName
+                        },
                         paymentUrl: res.paymentUrl
                     }
                 });
             } else {
-                alert("Đặt lịch thành công! Bạn sẽ thanh toán khi đến khám.");
+                // Đặt lịch trực tiếp thành công (Offline hoặc hoàn tất)
+                const chosenSlot = availableSlots.find(s => s.id === formData.bookableSlotId);
+
+                setCreatedAppointment({
+                    id: res.id || res.appointmentId,
+                    appointmentId: res.id || res.appointmentId,
+                    appointmentCode: res.appointmentCode,
+                    doctorName: res.doctorName || formData.doctorName,
+                    specialtyName: res.specialtyName || formData.specialtyName,
+                    slotDate: res.slotDate || formData.date,
+                    startTime: res.startTime || (chosenSlot?.startTime?.substring(0, 5) || ''),
+                    endTime: res.endTime || (chosenSlot?.endTime?.substring(0, 5) || ''),
+                    price: res.price || appointmentData.price,
+                    paymentMethod: res.paymentMethod || formData.paymentMethod || 'offline',
+                    fullName: formData.fullName,
+                    phoneNumber: formData.phoneNumber,
+                    email: formData.email,
+                    address: formData.address,
+                    reason: formData.reason,
+                    note: formData.note
+                });
+
+                setShowSuccessModal(true);
 
                 // Xoá slot vừa đặt khỏi danh sách giờ trống
                 setAvailableSlots(prev => prev.filter(slot => slot.id !== formData.bookableSlotId));
@@ -341,7 +381,10 @@ export default function BookingPage() {
             }
         } catch (error) {
             console.error("Lỗi đặt lịch:", error);
-            alert("Đặt lịch thất bại! Vui lòng kiểm tra lại thông tin.");
+            const errorMsg = error.response?.data?.message || error.message || "Đặt lịch thất bại! Vui lòng kiểm tra lại thông tin.";
+            setSubmitErrorMessage(errorMsg);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -527,14 +570,44 @@ export default function BookingPage() {
                                 <option value="online">Thanh toán trực tuyến</option>
                             </select>
 
-                            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg md:col-span-2 mt-4 cursor-pointer">
-                                XÁC NHẬN
+                            {/* Error Banner when booking fails */}
+                            {submitErrorMessage && (
+                                <div className="md:col-span-2 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-start gap-3 shadow-xs">
+                                    <i className="fas fa-exclamation-triangle text-rose-600 text-base mt-0.5 shrink-0"></i>
+                                    <div className="space-y-1">
+                                        <strong className="block font-bold text-rose-900 text-sm">Đặt lịch chưa thành công</strong>
+                                        <p className="leading-relaxed">{submitErrorMessage}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-3.5 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all md:col-span-2 mt-3 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin"></i> Đang xử lý đặt lịch...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-calendar-check"></i> XÁC NHẬN ĐẶT LỊCH KHÁM
+                                    </>
+                                )}
                             </button>
 
                         </form>
                     </div>
                 </div>
             </div>
+
+            {/* Booking Confirmation Voucher Modal */}
+            <BookingSuccessModal
+                isOpen={showSuccessModal}
+                appointment={createdAppointment}
+                onClose={() => setShowSuccessModal(false)}
+            />
         </div>
     );
 }
