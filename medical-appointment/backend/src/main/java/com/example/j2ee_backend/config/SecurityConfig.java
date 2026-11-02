@@ -28,6 +28,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(formLogin -> formLogin.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép request 'thăm dò' (OPTIONS)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -39,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/patient/login").permitAll()
                         .requestMatchers("/api/patient/register").permitAll()
                         .requestMatchers("/api/specialty/**").permitAll()
+                        .requestMatchers("/api/medical-record/**").permitAll()
                         .requestMatchers("/swagger-ui/index.html").permitAll()
 
                         // Mọi request khác (tạm thời, sau này nên đổi thành .authenticated())

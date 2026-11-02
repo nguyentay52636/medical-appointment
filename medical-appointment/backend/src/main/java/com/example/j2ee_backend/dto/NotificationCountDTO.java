@@ -5,8 +5,21 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class NotificationCountDTO {
     private int notifications;  // số thông báo chưa đọc
+
+    public NotificationCountDTO() {
+    }
+
+    public NotificationCountDTO(int notifications) {
+        this.notifications = notifications;
+    }
+
+    public int getNotifications() {
+        return notifications;
+    }
+
+    public void setNotifications(int notifications) {
+        this.notifications = notifications;
+    }
 }

@@ -479,6 +479,37 @@ public class AppointmentService {
     }
 
     @Transactional
+    public void doctorHandleAction(Integer appointmentId, Integer doctorId, String action) {
+        if (action == null) {
+            throw new IllegalArgumentException("Hành động không hợp lệ");
+        }
+        String act = action.trim().toLowerCase();
+        if ("reject".equals(act) || "cancel".equals(act) || "cancelled".equals(act)) {
+            rejectAppointment(appointmentId, doctorId);
+            return;
+        }
+
+        Appointment appointment = appointmentRepository.findByIdAndDoctor(appointmentId, doctorId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn phù hợp với bác sĩ này."));
+
+        if ("confirm".equals(act) || "confirmed".equals(act)) {
+            appointment.setStatus("confirmed");
+        } else if ("start".equals(act) || "in_progress".equals(act)) {
+            appointment.setStatus("in_progress");
+        } else if ("complete".equals(act) || "completed".equals(act)) {
+            appointment.setStatus("completed");
+            if ("offline".equalsIgnoreCase(appointment.getPaymentMethod())) {
+                appointment.setPaymentStatus("paid");
+            }
+        } else {
+            appointment.setStatus(act);
+        }
+        appointment.setUpdateAt(Timestamp.valueOf(LocalDateTime.now()));
+        appointmentRepository.save(appointment);
+    }
+
+
+    @Transactional
     public void confirmAppointment(Integer appointmentId, Integer doctorId) {
         Appointment appointment = appointmentRepository.findByIdAndDoctor(appointmentId, doctorId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn phù hợp với bác sĩ này."));

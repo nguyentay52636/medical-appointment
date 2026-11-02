@@ -431,6 +431,38 @@ ALTER TABLE `doctor_availability`
 ALTER TABLE `notification`
   ADD CONSTRAINT `notification_ibfk_1` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `notification_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`) ON DELETE SET NULL;
+--
+-- Các ràng buộc cho bảng `medical_record`
+--
+CREATE TABLE IF NOT EXISTS `medical_record` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `appointment_id` int(11) NOT NULL,
+  `patient_id` int(11) NOT NULL,
+  `doctor_id` int(11) NOT NULL,
+  `examination_type` varchar(100) DEFAULT 'Khám tổng quát',
+  `status` varchar(20) NOT NULL DEFAULT 'completed',
+  `blood_pressure` varchar(20) DEFAULT NULL,
+  `heart_rate` int(11) DEFAULT NULL,
+  `temperature` decimal(4,1) DEFAULT NULL,
+  `weight` decimal(5,2) DEFAULT NULL,
+  `height` decimal(5,2) DEFAULT NULL,
+  `clinical_symptoms` text DEFAULT NULL,
+  `diagnosis` text NOT NULL,
+  `lab_results` text DEFAULT NULL,
+  `prescriptions` longtext DEFAULT NULL,
+  `doctor_advice` text DEFAULT NULL,
+  `follow_up_date` date DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_appointment_record` (`appointment_id`),
+  KEY `fk_record_patient` (`patient_id`),
+  KEY `fk_record_doctor` (`doctor_id`),
+  CONSTRAINT `fk_record_appointment` FOREIGN KEY (`appointment_id`) REFERENCES `appointment` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_record_patient` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_record_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

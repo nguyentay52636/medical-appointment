@@ -29,8 +29,8 @@ public class DoctorDTO {
     private Double lat;
     private Double lng;
 
-    // dùng contructor để map dữ liệu từ entity sang dto
     public DoctorDTO(Doctor doctor) {
+        if (doctor == null) return;
         this.id = doctor.getId();
         this.fullName = doctor.getFullName();
         this.email = doctor.getEmail();
@@ -44,10 +44,51 @@ public class DoctorDTO {
         this.lat = doctor.getLat();
         this.lng = doctor.getLng();
 
-        // Nếu specialty có thể null, kiểm tra trước khi lấy tên
         if (doctor.getSpecialty() != null) {
             this.specialtyId = doctor.getSpecialty().getId();
             this.specialtyName = doctor.getSpecialty().getSpecialtyName();
         }
     }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
+    public Integer getSpecialtyId() { return specialtyId; }
+    public void setSpecialtyId(Integer specialtyId) { this.specialtyId = specialtyId; }
+
+    public String getSpecialtyName() { return specialtyName; }
+    public void setSpecialtyName(String specialtyName) { this.specialtyName = specialtyName; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public Integer getExperienceYears() { return experienceYears; }
+    public void setExperienceYears(Integer experienceYears) { this.experienceYears = experienceYears; }
+
+    public Integer getPricePerAppointment() { return pricePerAppointment; }
+    public void setPricePerAppointment(Integer pricePerAppointment) { this.pricePerAppointment = pricePerAppointment; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public Timestamp getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public Double getLat() { return lat; }
+    public void setLat(Double lat) { this.lat = lat; }
+
+    public Double getLng() { return lng; }
+    public void setLng(Double lng) { this.lng = lng; }
 }

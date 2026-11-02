@@ -553,8 +553,64 @@ export default function BookingPage() {
                                 </div>
                             )}
 
-                            <textarea name="reason" placeholder="Lý do khám (không bắt buộc)" rows="4" value={formData.reason} onChange={handleChange} className="border rounded-xl p-3 w-full" />
-                            <textarea name="note" placeholder="Triệu chứng hoặc lịch sử bệnh án (nếu có)" rows="4" value={formData.note} onChange={handleChange} className="border rounded-xl p-3 w-full" />
+                            {/* Chọn hình thức khám bệnh */}
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="block text-xs font-bold text-gray-700 uppercase">
+                                    Hình thức / Nhu cầu khám bệnh
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                reason: prev.reason ? prev.reason : "Khám sức khỏe tổng quát định kỳ (đo sinh hiệu toàn diện)"
+                                            }));
+                                        }}
+                                        className="p-3 rounded-xl border border-blue-200 hover:border-blue-400 bg-blue-50/50 hover:bg-blue-50 text-left transition cursor-pointer text-xs space-y-0.5"
+                                    >
+                                        <p className="font-bold text-blue-900 flex items-center gap-1.5">
+                                            <i className="fas fa-heartbeat text-blue-600"></i> Khám Tổng Quát
+                                        </p>
+                                        <p className="text-[11px] text-gray-500">Khám toàn diện, đo sinh hiệu & kê đơn</p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                reason: prev.reason ? prev.reason : "Khám chuyên khoa theo triệu chứng bệnh lý"
+                                            }));
+                                        }}
+                                        className="p-3 rounded-xl border border-indigo-200 hover:border-indigo-400 bg-indigo-50/50 hover:bg-indigo-50 text-left transition cursor-pointer text-xs space-y-0.5"
+                                    >
+                                        <p className="font-bold text-indigo-900 flex items-center gap-1.5">
+                                            <i className="fas fa-stethoscope text-indigo-600"></i> Khám Chuyên Khoa
+                                        </p>
+                                        <p className="text-[11px] text-gray-500">Chẩn đoán theo triệu chứng cụ thể</p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                reason: prev.reason ? prev.reason : "Tái khám theo lịch hẹn bác sĩ"
+                                            }));
+                                        }}
+                                        className="p-3 rounded-xl border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left transition cursor-pointer text-xs space-y-0.5"
+                                    >
+                                        <p className="font-bold text-teal-900 flex items-center gap-1.5">
+                                            <i className="fas fa-calendar-check text-teal-600"></i> Tái Khám Định Kỳ
+                                        </p>
+                                        <p className="text-[11px] text-gray-500">Kiểm tra lại phác đồ điều trị</p>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <textarea name="reason" placeholder="Lý do khám (ví dụ: Khám tổng quát, Đau đầu, Sốt, Đau dạ dày...)" rows="3" value={formData.reason} onChange={handleChange} className="border rounded-xl p-3 w-full text-sm" />
+                            <textarea name="note" placeholder="Triệu chứng hoặc tiền sử bệnh lý (nếu có)" rows="3" value={formData.note} onChange={handleChange} className="border rounded-xl p-3 w-full text-sm" />
 
                             <select
                                 name="paymentMethod"

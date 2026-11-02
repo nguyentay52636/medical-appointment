@@ -137,6 +137,21 @@ public class AppointmentController {
                     .body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PostMapping("/doctor/{doctorId}/appointments/{appointmentId}/action")
+    public ResponseEntity<?> handleDoctorAppointmentAction(
+            @PathVariable Integer doctorId,
+            @PathVariable Integer appointmentId,
+            @RequestBody Map<String, String> body) {
+        try {
+            String action = body != null ? body.get("action") : null;
+            appointmentService.doctorHandleAction(appointmentId, doctorId, action);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Cập nhật ca khám thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
    //kết quả cho biểu đồ tròn
     @GetMapping(
             value = "/statistics/status", produces = "application/json")

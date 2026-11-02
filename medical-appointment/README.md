@@ -356,3 +356,6 @@ Dự án được phân phối dưới giấy phép **MIT License**. Chi tiết 
 <div align="center">
   <sub>Xây dựng với cả tấm huyết dành cho Đồ án Chuyên ngành Công Nghệ Thông Tin 🩺💻</sub>
 </div>
+
+ $ cd /Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/backend
+./mvnw spring-boot:run

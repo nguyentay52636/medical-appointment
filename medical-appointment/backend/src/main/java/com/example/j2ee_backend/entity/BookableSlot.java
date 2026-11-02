@@ -38,4 +38,25 @@ public class BookableSlot {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "availability_id", nullable = false)
     private DoctorAvailability doctorAvailability;
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public Doctor getDoctor() { return doctor; }
+    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
+
+    public Date getSlotDate() { return slotDate; }
+    public void setSlotDate(Date slotDate) { this.slotDate = slotDate; }
+
+    public Time getStartTime() { return startTime; }
+    public void setStartTime(Time startTime) { this.startTime = startTime; }
+
+    public Time getEndTime() { return endTime; }
+    public void setEndTime(Time endTime) { this.endTime = endTime; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public DoctorAvailability getDoctorAvailability() { return doctorAvailability; }
+    public void setDoctorAvailability(DoctorAvailability doctorAvailability) { this.doctorAvailability = doctorAvailability; }
 }

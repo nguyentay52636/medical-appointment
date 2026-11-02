@@ -30,11 +30,12 @@ public class AppointmentDTO {
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private String paymentMethod; // "online" hoặc "offline"
-    private String paymentStatus; // "peding" hoặc "paid" hoặc "failed"
+    private String paymentStatus; // "pending" hoặc "paid" hoặc "failed"
     private Integer price;
     private String vnpTxnRef;
 
     public AppointmentDTO(Appointment appointment) {
+        if (appointment == null) return;
         this.id = appointment.getId();
         this.appointmentCode = appointment.getAppointmentCode();
         this.status = appointment.getStatus();
@@ -69,4 +70,67 @@ public class AppointmentDTO {
             }
         }
     }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getAppointmentCode() { return appointmentCode; }
+    public void setAppointmentCode(String appointmentCode) { this.appointmentCode = appointmentCode; }
+
+    public Integer getPatientId() { return patientId; }
+    public void setPatientId(Integer patientId) { this.patientId = patientId; }
+
+    public Integer getDoctorId() { return doctorId; }
+    public void setDoctorId(Integer doctorId) { this.doctorId = doctorId; }
+
+    public Integer getBookableSlotId() { return bookableSlotId; }
+    public void setBookableSlotId(Integer bookableSlotId) { this.bookableSlotId = bookableSlotId; }
+
+    public String getPatientName() { return patientName; }
+    public void setPatientName(String patientName) { this.patientName = patientName; }
+
+    public String getDoctorName() { return doctorName; }
+    public void setDoctorName(String doctorName) { this.doctorName = doctorName; }
+
+    public String getPatientPhone() { return patientPhone; }
+    public void setPatientPhone(String patientPhone) { this.patientPhone = patientPhone; }
+
+    public String getPatientEmail() { return patientEmail; }
+    public void setPatientEmail(String patientEmail) { this.patientEmail = patientEmail; }
+
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
+
+    public String getTime() { return time; }
+    public void setTime(String time) { this.time = time; }
+
+    public String getEndTime() { return endTime; }
+    public void setEndTime(String endTime) { this.endTime = endTime; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+
+    public Timestamp getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public Timestamp getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+
+    public Integer getPrice() { return price; }
+    public void setPrice(Integer price) { this.price = price; }
+
+    public String getVnpTxnRef() { return vnpTxnRef; }
+    public void setVnpTxnRef(String vnpTxnRef) { this.vnpTxnRef = vnpTxnRef; }
 }

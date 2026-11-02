@@ -62,4 +62,43 @@ public class Appointment {
             createdAt = new Timestamp(System.currentTimeMillis());
         }
     }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getAppointmentCode() { return appointmentCode; }
+    public void setAppointmentCode(String appointmentCode) { this.appointmentCode = appointmentCode; }
+
+    public Patient getPatient() { return patient; }
+    public void setPatient(Patient patient) { this.patient = patient; }
+
+    public BookableSlot getBookableSlot() { return bookableSlot; }
+    public void setBookableSlot(BookableSlot bookableSlot) { this.bookableSlot = bookableSlot; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getReasonForVisit() { return reasonForVisit; }
+    public void setReasonForVisit(String reasonForVisit) { this.reasonForVisit = reasonForVisit; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+
+    public Timestamp getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public Integer getPrice() { return price; }
+    public void setPrice(Integer price) { this.price = price; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+
+    public String getVnpTxnRef() { return vnpTxnRef; }
+    public void setVnpTxnRef(String vnpTxnRef) { this.vnpTxnRef = vnpTxnRef; }
+
+    public Timestamp getUpdateAt() { return updateAt; }
+    public void setUpdateAt(Timestamp updateAt) { this.updateAt = updateAt; }
 }

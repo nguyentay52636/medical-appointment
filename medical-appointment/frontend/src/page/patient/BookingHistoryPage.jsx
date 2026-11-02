@@ -4,6 +4,8 @@ import { appointmentService } from "../../service/appointmentService";
 import { fetchAllDoctor, fetchScheduleSummary } from "../../service/doctorService";
 import { bookableSlotService } from "../../service/bookableSlotService";
 import { reportService } from "../../service/reportService";
+import { medicalRecordService } from "../../service/medicalRecordService";
+import MedicalRecordModal from "../../component/common/MedicalRecordModal";
 
 export default function BookingHistory() {
   const { patient } = useContext(PatientContext);
@@ -25,6 +27,12 @@ export default function BookingHistory() {
   const [filterDate, setFilterDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterDoctor, setFilterDoctor] = useState('');
+
+  // Hồ sơ bệnh án
+  const [activeMedicalRecord, setActiveMedicalRecord] = useState(null);
+  const [selectedRecordAppt, setSelectedRecordAppt] = useState(null);
+  const [showMedicalRecordModal, setShowMedicalRecordModal] = useState(false);
+  const [recordLoading, setRecordLoading] = useState(false);
 
   // Phân trang
   const [currentPage, setCurrentPage] = useState(1);
@@ -239,6 +247,25 @@ export default function BookingHistory() {
     }
   };
 
+  const handleViewMedicalRecord = async (appt) => {
+    setRecordLoading(true);
+    setSelectedRecordAppt(appt);
+    try {
+      const res = await medicalRecordService.getMedicalRecordByAppointment(appt.id);
+      if (res?.success && res?.data) {
+        setActiveMedicalRecord(res.data);
+        setShowMedicalRecordModal(true);
+      } else {
+        alert("Bác sĩ chưa xuất bệnh án cho ca khám này hoặc đang trong quá trình cập nhật.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Không thể tải hồ sơ bệnh án. Vui lòng liên hệ phòng khám.");
+    } finally {
+      setRecordLoading(false);
+    }
+  };
+
   if (loading) return <div className="p-6">Đang tải...</div>;
   if (error) return <div className="p-6 text-red-500">{error}</div>;
 
@@ -366,17 +393,29 @@ export default function BookingHistory() {
                         <td className={`font-semibold ${getStatus(appt.status).color}`}>
                           {getStatus(appt.status).label}
                         </td>
-                        <td>
+                        <td className="space-x-1.5 whitespace-nowrap">
                           <button
                             onClick={() => setSelectedAppt(appt)}
                             className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                            title="Xem chi tiết"
                           >
                             Xem
                           </button>
+                          {appt.status === "completed" && (
+                            <button
+                              onClick={() => handleViewMedicalRecord(appt)}
+                              className="px-2.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                              title="Xem hồ sơ bệnh án & toa thuốc"
+                            >
+                              <i className="fas fa-file-prescription"></i>
+                              <span>Bệnh án</span>
+                            </button>
+                          )}
                           {appt.status === "pending" && (
                             <button
                               onClick={() => handleRescheduleClick(appt)}
-                              className="ml-2 p-2 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white cursor-pointer"
+                              className="p-2 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white cursor-pointer"
+                              title="Dời lịch hẹn"
                             >
                               Dời lịch
                             </button>
@@ -456,6 +495,19 @@ export default function BookingHistory() {
                   className="px-6 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 cursor-pointer"
                 >
                   Dời lịch
+                </button>
+              )}
+              {selectedAppt.status === "completed" && (
+                <button
+                  onClick={() => {
+                    const target = selectedAppt;
+                    setSelectedAppt(null);
+                    handleViewMedicalRecord(target);
+                  }}
+                  className="px-5 py-2 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <i className="fas fa-file-prescription"></i>
+                  <span>Xem Bệnh Án</span>
                 </button>
               )}
               <button
@@ -613,6 +665,16 @@ export default function BookingHistory() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Xem Bệnh Án Điện Tử */}
+      {showMedicalRecordModal && activeMedicalRecord && (
+        <MedicalRecordModal
+          isOpen={showMedicalRecordModal}
+          onClose={() => setShowMedicalRecordModal(false)}
+          record={activeMedicalRecord}
+          appointment={selectedRecordAppt}
+        />
       )}
     </div>
   );

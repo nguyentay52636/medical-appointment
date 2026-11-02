@@ -72,15 +72,16 @@ public class DoctorService {
     public List<DoctorDTO> getRagDataDoctor() {
         return doctorRepository.findAll()
                 .stream()
-                .map(d -> DoctorDTO.builder()
-                        .id(d.getId())
-                        .fullName(d.getFullName())
-                        .specialtyName(d.getSpecialty() != null ? d.getSpecialty().getSpecialtyName() : null)
-                        .phoneNumber(d.getPhoneNumber())
-                        .bio(d.getBio())
-                        .address(d.getAddress())
-                        .build() // <- build the DTO here
-                )
+                .map(d -> {
+                    DoctorDTO dto = new DoctorDTO();
+                    dto.setId(d.getId());
+                    dto.setFullName(d.getFullName());
+                    dto.setSpecialtyName(d.getSpecialty() != null ? d.getSpecialty().getSpecialtyName() : null);
+                    dto.setPhoneNumber(d.getPhoneNumber());
+                    dto.setBio(d.getBio());
+                    dto.setAddress(d.getAddress());
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
     public List<DoctorDTO> getDoctorsBySpecialtyId(Integer specialtyId) {

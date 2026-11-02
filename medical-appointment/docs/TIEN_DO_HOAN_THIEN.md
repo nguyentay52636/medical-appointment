@@ -158,3 +158,46 @@ Thay vì nhồi nhét mã nguồn vào các file lớn (trước đây `AdminDoc
 7. `AppointmentTable.jsx`: Bảng quản lý lịch hẹn toàn viện, hiển thị trạng thái và dropdown đổi trạng thái trực tiếp.
 8. `PatientTable.jsx`: Bảng danh bạ hồ sơ bệnh nhân kèm thao tác xóa và tìm kiếm.
 
+---
+
+## 7. PHÂN HỆ HỒ SƠ BỆNH ÁN & TOA THUỐC ĐIỆN TỬ (ELECTRONIC HEALTH RECORD - EHR)
+
+> **Cập nhật ngày 02/11/2026**: Hoàn thành toàn diện luồng nghiệp vụ từ Người dùng Đặt lịch -> Bác sĩ Khám bệnh toàn diện -> Lưu Hồ Sơ Bệnh Án -> Bệnh nhân & Bác sĩ Xem/In Bệnh án & Đơn thuốc.
+
+### 7.1. Cơ sở dữ liệu MySQL (`medical_record`)
+- Đã tạo bảng `medical_record` liên kết 1-1 với `appointment(id)` và khóa ngoại tới `patient(id)`, `doctor(id)`.
+- Các trường chuẩn hóa y khoa:
+  - **Chỉ số sinh hiệu**: `blood_pressure` (Huyết áp), `heart_rate` (Nhịp tim), `temperature` (Thân nhiệt), `weight` (Cân nặng), `height` (Chiều cao), `clinical_symptoms` (Triệu chứng lâm sàng).
+  - **Chẩn đoán y khoa**: `diagnosis` (Chẩn đoán chính), `lab_results` (Kết quả xét nghiệm / Cận lâm sàng).
+  - **Đơn thuốc điều trị**: `prescriptions` (JSON array: Tên thuốc, số lượng, đơn vị, liều dùng, ghi chú uống thuốc).
+  - **Lời dặn & Tái khám**: `doctor_advice` (Lời dặn dò dinh dưỡng, sinh hoạt), `follow_up_date` (Ngày hẹn tái khám).
+  - **Trạng thái & Thời gian**: `status` (`completed` / `draft`), `created_at`, `updated_at`.
+
+### 7.2. Backend Spring Boot (REST API)
+- Entity: `MedicalRecord.java`
+- DTO: `MedicalRecordDTO.java`
+- Repository: `MedicalRecordRepository.java`
+- Service: `MedicalRecordService.java` (Tự động cập nhật `appointment.status = 'completed'` và đánh dấu thanh toán `paid` khi hoàn tất bệnh án).
+- Controller: `MedicalRecordController.java` (`/api/medical-record`):
+  - `POST /api/medical-record`: Lưu hoặc cập nhật bệnh án.
+  - `GET /api/medical-record/appointment/{appointmentId}`: Lấy bệnh án theo ca khám.
+  - `GET /api/medical-record/patient/{patientId}`: Lấy lịch sử bệnh án của bệnh nhân.
+  - `GET /api/medical-record/doctor/{doctorId}`: Lấy danh sách bệnh án do bác sĩ phụ trách.
+
+### 7.3. Frontend (Giao diện Bệnh nhân & Bác sĩ)
+1. **Bệnh nhân Đặt Lịch (`BookingPage.jsx`)**:
+   - Thêm nút lựa chọn hình thức khám: **Khám Tổng Quát** (đầy đủ sinh hiệu & kiểm tra toàn diện), **Khám Chuyên Khoa**, **Tái Khám Định Kỳ**.
+2. **Bác sĩ Khám Bệnh (`AppointmentDetailPage.jsx`)**:
+   - Phân hệ khám bệnh đa năng 4 bước chuẩn y khoa:
+     - *Bước 1*: Nhập sinh hiệu (Huyết áp, Mạch, Thân nhiệt, Cân nặng, Chiều cao) -> **Tự động tính BMI & phân loại màu sắc real-time**.
+     - *Bước 2*: Nhập kết quả xét nghiệm / Cận lâm sàng & Kết luận Chẩn đoán bệnh.
+     - *Bước 3*: Kê đơn thuốc tương tác linh hoạt: Thêm/xóa thuốc, chọn nhanh từ kho thuốc thông dụng (Paracetamol, Amoxicillin, Omeprazole, Vitamin C, Alpha Choay...).
+     - *Bước 4*: Lời dặn dò dinh dưỡng & Chọn ngày hẹn tái khám.
+   - Thao tác: **"Hoàn Thành Ca Khám & Lưu Bệnh Án"** hoặc **"Lưu Nháp"**.
+3. **Xem & In Bệnh Án Điện Tử (`MedicalRecordModal.jsx`)**:
+   - Modal hiển thị bệnh án chuẩn quốc tế với huy hiệu phân loại BMI, bảng sinh hiệu trực quan, bảng đơn thuốc chi tiết và chữ ký bác sĩ.
+   - Tích hợp tính năng In bệnh án / Xuất phiếu khám chuẩn giấy A4 (`window.print()`).
+4. **Bệnh nhân Xem Lịch Sử Khám (`BookingHistoryPage.jsx`)**:
+   - Bổ sung nút **"Bệnh án"** tại bảng lịch sử cho mọi ca khám đã hoàn thành (`completed`).
+   - Mở trực tiếp Modal Hồ Sơ Bệnh Án & Toa Thuốc cho bệnh nhân xem lại phác đồ điều trị và in mang ra nhà thuốc.
+
