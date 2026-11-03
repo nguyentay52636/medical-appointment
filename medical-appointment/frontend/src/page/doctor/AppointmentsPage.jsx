@@ -33,10 +33,29 @@ function Appointments() {
         fetchAppointments();
     }, [doctor]);
 
+    const [actionLoadingId, setActionLoadingId] = useState(null);
+
+    // Xử lý xác nhận nhanh lịch hẹn trực tiếp từ danh sách
+    const handleQuickConfirm = async (e, appointmentId) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!window.confirm("Bác sĩ có chắc chắn muốn xác nhận lịch khám này không?")) return;
+        setActionLoadingId(appointmentId);
+        try {
+            await axios.post(`http://localhost:8080/api/doctor/${doctor.id}/appointments/${appointmentId}/action`, { action: 'confirm' });
+            alert("Đã tiếp nhận và xác nhận lịch hẹn thành công!");
+            fetchAppointments();
+        } catch (err) {
+            alert(`Lỗi xác nhận: ${err.response?.data?.message || err.message}`);
+        } finally {
+            setActionLoadingId(null);
+        }
+    };
+
     const getStatusStyles = (status) => {
         switch (status) {
-            case 'confirmed': return 'bg-emerald-100 text-emerald-800';
-            case 'pending': return 'bg-amber-100 text-amber-800';
+            case 'confirmed': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+            case 'pending': return 'bg-amber-100 text-amber-900 border border-amber-300 font-bold animate-pulse';
             case 'completed': return 'bg-gray-100 text-gray-700';
             case 'missed': return 'bg-gray-100 text-gray-700 border-gray-300';
             case 'cancelled': return 'bg-red-100 text-red-800';
@@ -132,6 +151,31 @@ function Appointments() {
                 </button>
             </div>
 
+            {/* Banner thông báo các ca khám mới chờ Bác sĩ xác nhận */}
+            {appointments.filter(a => a.status === 'pending').length > 0 && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-950 text-xs shadow-2xs">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-base font-bold flex-shrink-0">
+                            <i className="fas fa-bell animate-bounce"></i>
+                        </div>
+                        <div>
+                            <div className="font-bold text-sm text-amber-900">
+                                Có {appointments.filter(a => a.status === 'pending').length} lịch hẹn mới đang chờ Bác sĩ xác nhận!
+                            </div>
+                            <p className="text-slate-600 mt-0.5">
+                                Bệnh nhân đã đăng ký khám (thanh toán tại quầy). Bác sĩ có thể bấm <strong>"Xác nhận"</strong> ngay trên danh sách hoặc xem chi tiết ca khám.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setFilterStatus('pending')}
+                        className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs transition cursor-pointer self-start sm:self-auto flex-shrink-0 shadow-xs"
+                    >
+                        Lọc danh sách chờ duyệt ({appointments.filter(a => a.status === 'pending').length})
+                    </button>
+                </div>
+            )}
+
             {loading ? (
                 <div className="text-center py-10 text-gray-500">Đang tải...</div>
             ) : (
@@ -162,12 +206,23 @@ function Appointments() {
                                         </span>
                                     </div>
 
-                                    <div className="col-span-1 flex justify-end">
+                                    <div className="col-span-1 flex items-center justify-end gap-2">
+                                        {appt.status === 'pending' && (
+                                            <button
+                                                onClick={(e) => handleQuickConfirm(e, appt.id)}
+                                                disabled={actionLoadingId === appt.id}
+                                                className="text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                title="Tiếp nhận và xác nhận lịch hẹn ngay"
+                                            >
+                                                <i className={`fas ${actionLoadingId === appt.id ? 'fa-spinner fa-spin' : 'fa-check'}`}></i>
+                                                <span className="hidden sm:inline">{actionLoadingId === appt.id ? 'Đang duyệt...' : 'Xác nhận'}</span>
+                                            </button>
+                                        )}
                                         <Link
                                             to={`/doctor/appointment/${appt.id}`}
-                                            className={`text-white bg-${PRIMARY_COLOR}-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-${PRIMARY_COLOR}-700 transition-colors shadow-md flex items-center`}
+                                            className={`text-white bg-${PRIMARY_COLOR}-600 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold hover:bg-${PRIMARY_COLOR}-700 transition-colors shadow-md flex items-center`}
                                         >
-                                            Chi tiết <i className="fas fa-arrow-right ml-2 text-xs"></i>
+                                            Chi tiết <i className="fas fa-arrow-right ml-1.5 text-xs"></i>
                                         </Link>
                                     </div>
                                 </li>

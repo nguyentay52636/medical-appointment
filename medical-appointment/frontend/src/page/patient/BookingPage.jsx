@@ -626,6 +626,47 @@ export default function BookingPage() {
                                 <option value="online">Thanh toán trực tuyến</option>
                             </select>
 
+                            {/* Thông báo quy trình Bác sĩ tiếp nhận và xác nhận khi chọn Thanh toán khi đến khám */}
+                            {formData.paymentMethod === 'offline' && (
+                                <div className="md:col-span-2 p-4 bg-amber-50/90 border border-amber-200 rounded-2xl text-amber-950 text-xs space-y-2 animate-fadeIn shadow-2xs">
+                                    <div className="flex items-center gap-2 font-bold text-sm text-amber-900">
+                                        <i className="fas fa-bell text-amber-600"></i>
+                                        <span>Quy trình Tiếp nhận & Xác nhận Lịch khám</span>
+                                    </div>
+                                    <p className="leading-relaxed text-slate-700">
+                                        Khi chọn hình thức <strong>"Thanh toán khi đến khám"</strong>, hệ thống sẽ gửi thông báo lịch hẹn trực tiếp đến <strong>Bác sĩ phụ trách</strong> để tiếp nhận và xác nhận lịch khám cho bạn.
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                        <div className="flex items-center gap-2 bg-white/80 p-2.5 rounded-xl border border-amber-200">
+                                            <i className="fas fa-user-clock text-blue-600 text-sm"></i>
+                                            <div>
+                                                <div className="font-bold text-slate-800">Trạng thái: Chờ bác sĩ xác nhận</div>
+                                                <div className="text-[11px] text-slate-500">Bác sĩ sẽ kiểm tra và xác nhận lịch hẹn</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-white/80 p-2.5 rounded-xl border border-amber-200">
+                                            <i className="fas fa-money-bill-wave text-emerald-600 text-sm"></i>
+                                            <div>
+                                                <div className="font-bold text-slate-800">Thanh toán tại quầy tiếp đón</div>
+                                                <div className="text-[11px] text-slate-500">Đến trước 10-15 phút để làm thủ tục</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.paymentMethod === 'online' && (
+                                <div className="md:col-span-2 p-4 bg-blue-50/80 border border-blue-200 rounded-2xl text-blue-950 text-xs space-y-1.5 animate-fadeIn shadow-2xs">
+                                    <div className="flex items-center gap-2 font-bold text-sm text-blue-900">
+                                        <i className="fas fa-credit-card text-blue-600"></i>
+                                        <span>Thanh toán Trực tuyến Qua VNPay</span>
+                                    </div>
+                                    <p className="leading-relaxed text-slate-700">
+                                        Sau khi bấm xác nhận, hệ thống sẽ chuyển hướng bạn đến cổng thanh toán VNPay. Lịch khám sẽ được tự động xác nhận ngay sau khi giao dịch thành công.
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Error Banner when booking fails */}
                             {submitErrorMessage && (
                                 <div className="md:col-span-2 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-start gap-3 shadow-xs">

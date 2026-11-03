@@ -165,6 +165,19 @@ export default function BookingSuccessModal({ isOpen, appointment, onClose }) {
                             </span>
                         </div>
 
+                        <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                            <span className="font-semibold text-slate-500 flex items-center gap-1.5">
+                                <i className="fas fa-shield-alt text-blue-600"></i> Trạng thái tiếp nhận:
+                            </span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${
+                                appointment.paymentMethod === 'online'
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                    : 'bg-amber-100 text-amber-800 border border-amber-200'
+                            }`}>
+                                {appointment.paymentMethod === 'online' ? 'Đã xác nhận' : 'Chờ bác sĩ xác nhận'}
+                            </span>
+                        </div>
+
                         <div className="flex justify-between items-center pt-1">
                             <span className="font-semibold text-slate-500 flex items-center gap-1.5">
                                 <i className="fas fa-money-bill-wave text-emerald-600"></i> Giá khám:
@@ -176,10 +189,16 @@ export default function BookingSuccessModal({ isOpen, appointment, onClose }) {
                     </div>
 
                     {/* Notice */}
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-[11px] text-amber-900">
-                        <i className="fas fa-info-circle text-amber-600 mt-0.5 shrink-0"></i>
-                        <p>
-                            Quý khách vui lòng có mặt tại <strong>Phòng khám Klinik (273 An Dương Vương, P.4, Q.5, TP.HCM)</strong> trước giờ khám 15 phút và cung cấp mã <strong>{appointment.appointmentCode}</strong> tại quầy lễ tân.
+                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5 text-[11px] text-amber-950">
+                        <div className="font-bold flex items-center gap-1.5 text-amber-900">
+                            <i className="fas fa-info-circle text-amber-600"></i>
+                            {appointment.paymentMethod === 'online' ? 'Thông tin tới phòng khám' : 'Thông báo tiếp nhận & xác nhận từ Bác sĩ'}
+                        </div>
+                        <p className="leading-relaxed text-slate-700">
+                            {appointment.paymentMethod === 'online'
+                                ? `Lịch hẹn đã được xác nhận tự động. Quý khách vui lòng có mặt tại Phòng khám Klinik (273 An Dương Vương, P.4, Q.5, TP.HCM) trước giờ khám 15 phút và cung cấp mã ${appointment.appointmentCode} tại quầy lễ tân.`
+                                : `Hệ thống đã gửi thông báo đến Bác sĩ phụ trách để tiếp nhận và xác nhận lịch hẹn của bạn. Quý khách vui lòng có mặt trước giờ khám 15 phút, cung cấp mã ${appointment.appointmentCode} tại quầy lễ tân để thanh toán viện phí và vào khám.`
+                            }
                         </p>
                     </div>
 

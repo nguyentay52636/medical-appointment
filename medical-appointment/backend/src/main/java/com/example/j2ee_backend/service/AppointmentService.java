@@ -228,14 +228,19 @@ public class AppointmentService {
                 String startTimeStr = slot.getStartTime() != null ? slot.getStartTime().toString().substring(0, 5) : "";
                 String endTimeStr = slot.getEndTime() != null ? slot.getEndTime().toString().substring(0, 5) : "";
 
+                String paymentNote = "offline".equalsIgnoreCase(dto.getPaymentMethod())
+                        ? " (Thanh toán tại quầy). Vui lòng tiếp nhận và xác nhận lịch hẹn."
+                        : " (Đã thanh toán trực tuyến).";
+
                 String message = "Bệnh nhân " + patient.getFullName()
                         + " đã đặt lịch khám vào ngày " + dateStr
-                        + " lúc " + startTimeStr + " đến " + endTimeStr;
+                        + " lúc " + startTimeStr + " đến " + endTimeStr
+                        + paymentNote;
 
                 Notification notification = new Notification();
                 notification.setDoctor(slot.getDoctor());
                 notification.setPatient(patient);
-                notification.setTitle("Lịch hẹn mới: " + saved.getAppointmentCode());
+                notification.setTitle("Lịch hẹn mới cần xác nhận: " + saved.getAppointmentCode());
                 notification.setMessage(message);
                 notification.setRead(false);
                 notification.setCreatedAt(LocalDateTime.now());
@@ -525,6 +530,20 @@ public class AppointmentService {
         slot.setStatus("booked");
         slotRepo.save(slot);
 
+        // Tạo thông báo xác nhận thành công
+        try {
+            Notification notification = new Notification();
+            notification.setDoctor(slot.getDoctor());
+            notification.setPatient(appointment.getPatient());
+            notification.setTitle("Đã xác nhận ca khám: " + appointment.getAppointmentCode());
+            notification.setMessage("Bác sĩ " + (slot.getDoctor() != null ? slot.getDoctor().getFullName() : "")
+                    + " đã tiếp nhận và xác nhận lịch hẹn của bệnh nhân "
+                    + (appointment.getPatient() != null ? appointment.getPatient().getFullName() : "") + ".");
+            notification.setRead(true);
+            notification.setCreatedAt(LocalDateTime.now());
+            notificationRepo.save(notification);
+        } catch (Exception ignored) {
+        }
     }
 
     @Transactional

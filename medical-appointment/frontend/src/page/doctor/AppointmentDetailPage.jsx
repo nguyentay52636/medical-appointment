@@ -304,6 +304,33 @@ function AppointmentDetail() {
                 </div>
             </div>
 
+            {/* Banner Tiếp nhận & Xác nhận lịch hẹn dành cho Bác sĩ */}
+            {isPending && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-950 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg flex-shrink-0">
+                            <i className="fas fa-bell"></i>
+                        </div>
+                        <div>
+                            <div className="font-bold text-sm text-amber-900">
+                                Yêu cầu lịch khám mới cần Bác sĩ xác nhận ({appointment.paymentMethod === 'online' ? 'Đã thanh toán online' : 'Thanh toán tại quầy'})
+                            </div>
+                            <div className="text-slate-600 mt-0.5">
+                                Bệnh nhân đã đăng ký ca khám này. Vui lòng kiểm tra thông tin và nhấn "Xác Nhận Lịch Hẹn" để tiếp nhận ca khám.
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => handleAction('confirm')}
+                        disabled={isProcessing}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer flex-shrink-0 shadow-sm"
+                    >
+                        <i className="fas fa-check-circle"></i>
+                        <span>Tiếp Nhận & Xác Nhận Ngay</span>
+                    </button>
+                </div>
+            )}
+
             {/* Grid 2 Cột: Thông tin Bệnh Nhân & Thao Tác Nhanh */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 

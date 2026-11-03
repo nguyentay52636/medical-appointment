@@ -27,7 +27,12 @@ function DashboardHeader({ avatarUrl }) {
 
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState([]);
-    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const navigate = useNavigate();
+
+    const handleNotificationClick = (n) => {
+        setShowNotifDropdown(false);
+        navigate('/doctor/appointment');
+    };
 
     const fetchNotifications = async () => {
         try {
@@ -93,9 +98,20 @@ function DashboardHeader({ avatarUrl }) {
                             <div className="max-h-64 overflow-y-auto">
                                 {notifications.length === 0 && <div className="p-3 text-gray-500">Không có thông báo</div>}
                                 {notifications.map((n) => (
-                                    <div key={n.id} className={`p-3 border-b cursor-pointer ${!n.isRead ? 'bg-blue-50 font-semibold' : ''}`}>
-                                        <div className="text-gray-800">{n.title} {n.patientName ? `- ${n.patientName}` : ''}</div>
-                                        <div className="text-gray-500 text-sm">{n.message}</div>
+                                    <div
+                                        key={n.id}
+                                        onClick={() => handleNotificationClick(n)}
+                                        className={`p-3 border-b hover:bg-slate-50 transition cursor-pointer ${!n.isRead ? 'bg-blue-50/80 font-semibold' : ''}`}
+                                    >
+                                        <div className="text-gray-900 text-xs font-bold flex items-center justify-between">
+                                            <span>{n.title} {n.patientName ? `- ${n.patientName}` : ''}</span>
+                                            {!n.isRead && <span className="w-2 h-2 rounded-full bg-blue-600"></span>}
+                                        </div>
+                                        <div className="text-gray-600 text-[11px] mt-0.5 line-clamp-2 leading-relaxed">{n.message}</div>
+                                        <div className="text-[10px] text-blue-600 mt-1 font-medium flex items-center gap-1">
+                                            <i className="fas fa-calendar-check text-[9px]"></i>
+                                            <span>Xem & tiếp nhận lịch hẹn →</span>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
