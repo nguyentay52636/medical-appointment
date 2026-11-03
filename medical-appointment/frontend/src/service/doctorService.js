@@ -74,7 +74,16 @@ export const fetchAllDoctor = {
   getAllDoctors: async () => {
     const res = await axios.get(`${API_ENDPOINT}/api/doctor/all`);
     return res.data;
+  },
+  getDoctorById: async (id) => {
+    const res = await axios.get(`${API_ENDPOINT}/api/doctor/${id}`);
+    return res.data;
   }
+};
+
+export const fetchDoctorById = async (id) => {
+  const res = await axios.get(`${API_ENDPOINT}/api/doctor/${id}`);
+  return res.data;
 };
 
 export const fetchDoctorsBySpecialtyId = {

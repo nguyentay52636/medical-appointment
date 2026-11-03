@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import useVietMap from "../../hook/useVietMap";
 import useFetch from "../../hook/useFetch";
 import ALL_DISTRICTS_HCM from "../../constants/allDistricts";
@@ -286,28 +286,63 @@ export default function DoctorsPage() {
           )}
 
           {currentItems.map((d, i) => (
-            <div key={i} className="bg-white rounded-xl flex flex-col lg:flex-row gap-6 p-6 shadow hover:shadow-lg transition">
+            <div key={i} className="bg-white rounded-2xl flex flex-col lg:flex-row gap-6 p-6 shadow-sm hover:shadow-md transition border border-slate-100">
               {/* Hình ảnh */}
-              <img src={d.imageUrl || DEFAULT_DOCTOR_IMAGE} alt={d.fullName} className="w-full lg:w-64 h-64 object-cover rounded-lg shadow" />
+              <Link to={`/patient/doctor/${d.id}`} className="shrink-0 overflow-hidden rounded-xl group" title={`Xem chi tiết hồ sơ ${d.fullName}`}>
+                <img
+                  src={d.imageUrl || DEFAULT_DOCTOR_IMAGE}
+                  alt={d.fullName}
+                  className="w-full lg:w-64 h-64 object-cover rounded-xl shadow group-hover:scale-105 transition duration-300"
+                />
+              </Link>
 
               {/* Thông tin */}
               <div className="flex-1 flex flex-col justify-between">
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-2xl font-bold text-blue-700">{d.fullName}</h2>
-                  <p className="mt-2 text-gray-700"><strong>Kinh nghiệm:</strong> {d.experienceYears} năm</p>
-                  <p className="text-gray-700"><strong>Chuyên khoa:</strong> {d.specialtyName}</p>
-                  <p className="text-gray-700"><strong>Địa chỉ:</strong> {d.address}</p>
-                  <p className="text-gray-700"><strong>Email:</strong> {d.email}</p>
-                  <p className="text-gray-700"><strong>Số điện thoại:</strong> {d.phoneNumber}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                      {d.specialtyName}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {d.experienceYears} năm kinh nghiệm
+                    </span>
+                  </div>
+                  <Link to={`/patient/doctor/${d.id}`} className="text-2xl font-bold text-slate-900 hover:text-blue-600 transition tracking-tight">
+                    {d.fullName}
+                  </Link>
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                    {d.bio || `Bác sĩ chuyên khoa ${d.specialtyName} tại Phòng khám Đa khoa Quốc tế Klinik.`}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-600 pt-1">
+                    <p><i className="fas fa-map-marker-alt text-rose-500 mr-1.5 w-4"></i>{d.address || "273 An Dương Vương, Q.5"}</p>
+                    <p><i className="fas fa-phone text-blue-600 mr-1.5 w-4"></i>{d.phoneNumber || "(+84) 846 777 901"}</p>
+                    <p><i className="fas fa-envelope text-slate-400 mr-1.5 w-4"></i>{d.email}</p>
+                    <p><i className="fas fa-tag text-emerald-600 mr-1.5 w-4"></i>{(d.pricePerAppointment || 250000).toLocaleString('vi-VN')} đ / ca</p>
+                  </div>
                 </div>
 
                 {/* Nút hành động */}
-                <div className="flex gap-4 mt-4">
-                  <button onClick={() => handleBookingClick(d)} className="px-6 py-2 border border-blue-700 text-blue-700 rounded-lg hover:bg-blue-100 cursor-pointer">
-                    ĐẶT LỊCH KHÁM
+                <div className="flex flex-wrap items-center gap-2.5 mt-4 pt-3 border-t border-slate-100">
+                  <Link
+                    to={`/patient/doctor/${d.id}`}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                  >
+                    <i className="fas fa-user-doctor"></i>
+                    <span>Xem Hồ Sơ Chi Tiết</span>
+                  </Link>
+                  <button
+                    onClick={() => handleBookingClick(d)}
+                    className="px-4 py-2 border border-blue-600 text-blue-700 hover:bg-blue-50 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <i className="fas fa-calendar-check"></i>
+                    <span>Đặt Lịch Ngay</span>
                   </button>
-                  <button onClick={() => handleToggleSchedule(d.id)} className="px-4 py-2 border border-gray-400 text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer">
-                    {doctorSchedules[d.id]?.open ? "ẨN LỊCH" : "XEM LỊCH"}
+                  <button
+                    onClick={() => handleToggleSchedule(d.id)}
+                    className="px-3.5 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <i className="far fa-clock text-slate-400"></i>
+                    <span>{doctorSchedules[d.id]?.open ? "Ẩn lịch trực" : "Xem ca trực"}</span>
                   </button>
                 </div>
 

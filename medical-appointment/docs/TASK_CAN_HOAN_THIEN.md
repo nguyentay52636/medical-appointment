@@ -245,10 +245,11 @@ CREATE TABLE IF NOT EXISTS `medical_record` (
 | **[TASK 7.2]** | Backend Spring Boot `MedicalTriageService` & API `/api/ai/triage-consult` | Backend | ✅ Đã hoàn thành (03/11/2026) |
 | **[TASK 7.3]** | Nâng cấp giao diện Trợ lý AI Tư vấn Sàng lọc & Phân Luồng Chuyên Khoa (`AssistantAI.jsx`) | Frontend | ✅ Đã hoàn thành (03/11/2026) |
 | **[TASK 7.4]** | Thêm mục "🤖 Tư Vấn AI" trên Header/NavBar và Banner CTA Trang chủ | Frontend | ✅ Đã hoàn thành (03/11/2026) |
+| **[TASK 4.1]** | Trang Chi tiết Hồ sơ Bác sĩ chuyên sâu & Chọn Slot đặt lịch (`/patient/doctor/:id`) | Frontend (Patient) | ✅ Đã hoàn thành (03/11/2026) |
+| **[TASK 8.1]** | Hệ thống Thông báo Y tế Toast Notification & Modal Xác nhận chuẩn toàn diện | Toàn hệ thống | ✅ Đã hoàn thành (03/11/2026) |
 | **[TASK 2.1]** | Widget bong bóng Chatbot AI nổi ở góc dưới các trang | Frontend | ⬜ Đang triển khai |
 | **[TASK 3.1]** | Backend API CRUD Chuyên khoa (`SpecialtyController`) | Backend | ⬜ Chờ triển khai |
 | **[TASK 3.2]** | Trang Quản lý Chuyên khoa cho Admin (`AdminSpecialties.jsx`) | Frontend (Admin) | ⬜ Chờ triển khai |
-| **[TASK 4.1]** | Trang Chi tiết Hồ sơ Bác sĩ chuyên sâu (`/patient/doctor/:id`) | Frontend (Patient) | ⬜ Chờ triển khai |
 | **[TASK 5.1]** | Hệ thống Đánh giá & Chấm sao Bác sĩ sau khi khám hoàn tất | Toàn hệ thống | ⬜ Chờ triển khai |
 | **[TASK 6.1]** | Tính năng đăng ký ngày nghỉ phép đột xuất của Bác sĩ | Cổng Bác sĩ | ⬜ Chờ triển khai |
 

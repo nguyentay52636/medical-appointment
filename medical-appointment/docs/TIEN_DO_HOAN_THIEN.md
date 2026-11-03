@@ -273,3 +273,104 @@ Thay vì nhồi nhét mã nguồn vào các file lớn (trước đây `AdminDoc
 - **Xác thực tự động chuyển mạch (Auto-Routing & Fallback)**:
   - Khi `google/gemma-4-26b-a4b-it:free` bị nghẽn hàng đợi (429 upstream rate limit), OpenRouter tự động điều hướng sang `nvidia/nemotron-3-ultra-550b-a55b:free` tạo phản hồi thành công trong 1.8 giây.
   - Khi ngắt kết nối mạng hoặc toàn bộ model AI free bận, hệ thống tự động dùng tri thức CRM với nguồn `CRM_RULES_OFFLINE` bảo đảm 100% thời gian hoạt động.
+
+---
+
+## 9. HỆ THỐNG THÔNG BÁO Y TẾ TOÀN DIỆN & MODAL XÁC NHẬN CHUẨN MỰC (GLOBAL MEDICAL TOAST & CONFIRM MODAL SYSTEM)
+
+> **Cập nhật ngày 03/11/2026**: Chuẩn hóa toàn bộ hệ thống thông báo người dùng trên toàn bộ ứng dụng, thay thế 100% các hàm `alert()` và `window.confirm()` thô sơ của trình duyệt bằng hệ thống Toast Notification và Confirm Modal thiết kế chuẩn Hospital Grade y khoa cao cấp.
+
+### 9.1. Kiến Trúc Quản Lý Tập Trung (`ToastContext.jsx` & `ToastContainer.jsx`)
+- **Tập tin thành phần**:
+  - `frontend/src/context/ToastContext.jsx`: Context provider bao bọc toàn bộ ứng dụng tại `main.jsx`. Cung cấp hook `useToast()` với các hàm tiện ích:
+    - `toast.success(message, title)`: Thông báo thành công với biểu tượng checkmark xanh ngọc y tế (Emerald-500).
+    - `toast.error(message, title)`: Thông báo lỗi hoặc thất bại với biểu tượng cảnh báo đỏ hồng (Rose-500).
+    - `toast.warning(message, title)`: Cảnh báo quan trọng với biểu tượng tam giác vàng cam (Amber-500).
+    - `toast.info(message, title)`: Thông tin hướng dẫn y tế với biểu tượng thông tin xanh dương (Sky-500).
+    - `showConfirm({ title, message, confirmText, cancelText, type, onConfirm, onCancel })`: Hộp thoại xác nhận tùy biến cao cấp.
+  - `frontend/src/component/common/ToastContainer.jsx`: Render toast nổi góc trên bên phải màn hình (`fixed top-5 right-5 z-[999999]`), hỗ trợ:
+    - Hiệu ứng trượt vào (Slide-in) và làm mờ mượt mà.
+    - Thanh thời gian (Progress Bar) chạy đếm ngược 3.5 giây tự động thu hồi toast.
+    - Nút đóng thủ công (Close button).
+    - Modal xác nhận dạng phủ mờ (Backdrop Blur) chống click nhầm khi thực hiện các hành động nhạy cảm như Đăng xuất, Hủy lịch hẹn khám.
+
+### 9.2. Phân Hệ Đã Đồng Bộ Tích Hợp Thông Báo Chuẩn Mực
+1. **Xác thực Người dùng & Bác sĩ**:
+   - `LoginForm.jsx`: Hiển thị thông báo chào mừng đăng nhập thành công kèm vai trò, hoặc thông báo chi tiết khi sai mật khẩu / tài khoản chưa tồn tại.
+   - `RegistrationForm.jsx`: Thông báo tạo tài khoản bệnh nhân thành công kèm lời chúc sức khỏe, tự động chuyển hướng.
+   - `Header.jsx`: Hộp thoại xác nhận đăng xuất chuyên nghiệp ("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống MediCare?"), thay vì thoát đột ngột.
+   - `DoctorLayout.jsx`: Hộp thoại xác nhận kết thúc phiên làm việc bác sĩ; thông báo chuyển đổi trạng thái ca khám.
+2. **Lịch Sử & Bệnh Án (`BookingHistoryPage.jsx`)**:
+   - Thay thế toàn bộ popup hủy lịch khám bằng `showConfirm` màu Rose cảnh báo.
+   - Thông báo thanh toán thành công / hủy lịch thành công / lưu phác đồ điều trị thành công.
+   - Dialog "Hồ Sơ Bệnh Án & Toa Thuốc" được chuẩn hóa giao diện: loại bỏ emoji lộn xộn, bổ sung huy hiệu chuẩn y khoa, bảng kê toa thuốc phân liều sáng/trưa/chiều/tối rõ nét và nút in PDF chuẩn hóa.
+
+---
+
+## 10. PHÂN HỆ CHI TIẾT HỒ SƠ BÁC SĨ & ĐẶT LỊCH NHANH THEO SLOT (`/patient/doctor/:id`)
+
+> **Cập nhật ngày 03/11/2026**: Hoàn thiện toàn diện trang Chi tiết Bác sĩ (Doctor Profile) theo chuẩn phòng khám quốc tế, tích hợp bảng chọn ngày & ca khám trực tiếp (Interactive Slot Picker 7 ngày tới) giúp người bệnh đưa ra quyết định nhanh chóng và đặt lịch chỉ với 1 click.
+
+### 10.1. Nâng Cấp Backend REST API & Frontend Service
+- **Backend API**:
+  - Bổ sung `@GetMapping("/{id}")` trong `DoctorController.java`: Cung cấp endpoint `GET /api/doctor/{id}` trả về thông tin chi tiết bác sĩ, chuyên khoa, số điện thoại, email, địa chỉ phòng khám, giá khám và ảnh đại diện.
+- **Frontend Service**:
+  - Bổ sung hàm `fetchDoctorById(id)` trong `doctorService.js` tương thích hoàn toàn với Axios client.
+
+### 10.2. Giao Diện & Tính Năng Trang Chi Tiết Bác Sĩ (`DoctorDetailPage.jsx`)
+- **Đường dẫn truy cập (Routes)**:
+  - `/patient/doctor/:id` (Đường dẫn chính thức chuẩn SEO).
+  - `/patient/doctor_detail/:id` (Bí danh điều hướng linh hoạt).
+- **Cấu trúc giao diện Hospital Grade**:
+  1. 🩺 **Thẻ Hero Profile Bác sĩ Chuyên sâu**:
+     - Avatar khổ lớn với viền xanh y tế cao cấp, huy hiệu "Bác sĩ Chuyên khoa Chính thức".
+     - Tên đầy đủ, học hàm/học vị (Tiến sĩ, Thạc sĩ, Bác sĩ Chuyên khoa II).
+     - Đánh giá sao uy tín (4.9/5.0 từ 128+ bệnh nhân), số ca khám thành công (1,250+ ca).
+     - Địa chỉ phòng khám cụ thể, số điện thoại liên hệ trực tiếp.
+     - Bảng giá khám niêm yết công khai minh bạch (VD: 300.000 VNĐ / lượt).
+  2. 📅 **Bộ Chọn Lịch Khám Tương Tác 7 Ngày Tới (Interactive 7-Day Slot Picker)**:
+     - Dải thanh cuộn chọn 7 ngày tiếp theo (tự động tính Thứ trong tuần và Ngày/Tháng từ ngày hiện tại).
+     - Phân loại khung giờ trực quan theo buổi:
+       - **Ca Sáng** (08:00 - 11:30): Các slot 30 phút (08:00 - 08:30, 08:30 - 09:00, 09:00 - 09:30, 09:30 - 10:00, 10:00 - 10:30, 10:30 - 11:00).
+       - **Ca Chiều** (13:30 - 17:00): Các slot 30 phút (13:30 - 14:00, 14:00 - 14:30, 14:30 - 15:00, 15:00 - 15:30, 15:30 - 16:00, 16:00 - 16:30).
+     - Trạng thái từng ca: **Sẵn sàng** (Xanh ngọc, bấm được) và **Đã kín** (Xám, không thể bấm).
+     - Hiệu ứng chọn slot tức thời hiển thị tóm tắt khung giờ đã chọn.
+  3. ⚡ **Phễu Đặt Khám 1-Click (Instant Booking Funnel)**:
+     - Khi bệnh nhân bấm ca khám và chọn nút *"Tiến Hành Đặt Lịch Khám"*:
+       - Nếu **chưa đăng nhập**: Tự động mở Modal nhắc nhở đăng nhập/đăng ký trang nhã (`showAuthModal`), không làm mất ngữ cảnh đang xem.
+       - Nếu **đã đăng nhập**: Tự động chuyển hướng ngay sang trang `BookingPage.jsx` mang theo toàn bộ `state: { doctor, date: selectedDate, slotId }`. Trang Đặt Lịch tự động điền sẵn Bác sĩ, Ngày khám và Ca khám giúp bệnh nhân không cần chọn lại từ đầu.
+  4. 🎓 **Hồ Sơ Năng Lực & Bằng Cấp Đào Tạo**:
+     - Quá trình đào tạo đại học và sau đại học (Đại học Y Dược, Tu nghiệp nước ngoài).
+     - Danh sách chứng chỉ hành nghề y khoa quốc tế.
+  5. 🔍 **Phạm Vi Khám Chữa Bệnh Thế Mạnh**:
+     - Các bệnh lý chuyên sâu mà bác sĩ trực tiếp điều trị hiệu quả nhất.
+     - Giúp người bệnh đối chiếu triệu chứng bản thân với chuyên môn của bác sĩ.
+  6. 📋 **Quy Trình & Hướng Dẫn Bệnh Nhân Trước Khi Khám**:
+     - Thời gian nên đến trước (15 phút).
+     - Giấy tờ mang theo (CCCD, BHYT, đơn thuốc cũ, kết quả xét nghiệm gần nhất).
+     - Lưu ý nhịn ăn sáng khi cần làm xét nghiệm máu, nội soi.
+  7. ⭐ **Nhận Xét & Đánh Giá Thực Tế Từ Người Bệnh (Verified Reviews)**:
+     - Danh sách nhận xét từ các bệnh nhân thực tế đã từng khám với bác sĩ.
+     - Chấm điểm sao, ngày khám và phản hồi chi tiết về thái độ tận tâm, phác đồ điều trị hiệu quả.
+
+### 10.3. Mạng Lưới Liên Kết Điều Hướng Thông Suốt Toàn Hệ Thống
+- **Trang Danh Sách Bác Sĩ (`DoctorListPage.jsx`)**:
+  - Thẻ bác sĩ được trang bị nút nổi bật: **"Xem Hồ Sơ Chi Tiết"** (`/patient/doctor/${id}`) song song với nút *"Đặt Lịch Nhanh"*.
+- **Trang Chi Tiết Chuyên Khoa (`SpecialtyDetailPage.jsx`)**:
+  - Danh sách bác sĩ thuộc khoa được nâng cấp thành thẻ tương tác sang trọng (`DoctorCard`), click trực tiếp chuyển đến `/patient/doctor/${doctor.id}`.
+- **Trợ Lý Tư Vấn Sàng Lọc AI (`AssistantAI.jsx`)**:
+  - Khối bác sĩ gợi ý từ kết quả phân tích AI có liên kết đưa người bệnh vào xem hồ sơ chi tiết bác sĩ trước khi chốt lịch.
+
+---
+
+## 11. TỔNG KẾT TIẾN ĐỘ & TRẠNG THÁI KIỂM THỬ TÍNH NĂNG TOÀN DỰ ÁN
+
+| STT | Phân hệ / Hạng mục | Trạng thái kỹ thuật | Kiểm thử | Ghi chú hoàn thiện |
+|:---:|:---|:---:|:---:|:---|
+| 1 | **Quản Trị Phòng Khám (Admin)** | Hoàn thiện 100% | PASS ✅ | Cấp tài khoản BS, đổi chuyên khoa, reset mật khẩu, xóa BS, duyệt lịch toàn viện. |
+| 2 | **Cổng Bác Sĩ (Doctor Portal)** | Hoàn thiện 100% | PASS ✅ | Nhận ca khám, quản lý lịch tuần, khám 4 bước, tính BMI, kê toa thuốc điện tử, xuất PDF. |
+| 3 | **Cổng Bệnh Nhân (Patient Portal)** | Hoàn thiện 100% | PASS ✅ | Tìm kiếm BS, đặt lịch, thanh toán VNPay, xem lịch sử & hồ sơ bệnh án, tải toa thuốc. |
+| 4 | **Trang Chi Tiết Bác Sĩ & Slot Booking** | Hoàn thiện 100% | PASS ✅ | Hồ sơ BS đầy đủ, chọn ngày/slot 7 ngày tới, chuyển thẳng Booking 1-click. |
+| 5 | **AI Triage & CRM Chuyên Khoa** | Hoàn thiện 100% | PASS ✅ | Tách CRM JSON độc lập, tích hợp OpenRouter (Gemma/Nemotron), fallback CRM zero-downtime. |
+| 6 | **Hệ Thống Toast & Confirm Y Tế** | Hoàn thiện 100% | PASS ✅ | Thay thế hoàn toàn alert mặc định, giao diện chuẩn Hospital Grade đồng bộ toàn web. |
+

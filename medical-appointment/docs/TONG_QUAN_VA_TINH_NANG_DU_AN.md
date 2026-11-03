@@ -305,6 +305,17 @@ Toàn bộ phân hệ Admin được tái cấu trúc theo mô hình **Clean Arc
   * 📄 **"Xem Lịch Sử Hẹn"**: Chuyển thẳng về trang `/patient/booking-history`.
   * 🖨️ **"In Phiếu (PDF)"**: Gọi `reportService.downloadAppointment(id)` tải ngay file PDF về thiết bị.
 
+### 6.8. Trang Chi tiết Hồ sơ Bác sĩ & Đặt lịch nhanh theo Khung giờ (`/patient/doctor/:id`)
+* **Hồ sơ chuyên môn đầy đủ**: Hiển thị avatar lớn, học hàm/học vị (Tiến sĩ, Thạc sĩ, BSCKII), số năm kinh nghiệm, đánh giá sao, địa chỉ phòng khám và giá khám niêm yết.
+* **Bộ chọn lịch 7 ngày tới**: Bệnh nhân lướt chọn ngày và xem trực tiếp các ca trống buổi sáng (08:00 - 11:30) và ca chiều (13:30 - 17:00).
+* **Phễu đặt khám 1-click**: Chọn khung giờ và bấm đặt lịch chuyển thẳng sang `BookingPage.jsx` với thông tin Bác sĩ, Ngày và Ca khám đã điền sẵn; có Auth Modal nhắc đăng nhập nếu chưa đăng nhập.
+* **Thông tin y khoa toàn diện**: Bổ sung quá trình đào tạo, chứng chỉ, phạm vi điều trị chuyên sâu, hướng dẫn chuẩn bị trước khi khám và phản hồi đánh giá thực tế từ người bệnh.
+
+### 6.9. Hệ thống Thông báo Y tế Toàn diện & Modal Xác nhận Chuẩn mực (`ToastContext`)
+* Thay thế hoàn toàn các hàm `alert()` và `window.confirm()` thô sơ của trình duyệt.
+* Cung cấp các loại thông báo: Thành công (Emerald), Báo lỗi (Rose), Cảnh báo (Amber), Hướng dẫn (Sky).
+* Tích hợp đồng bộ toàn hệ thống: Đăng nhập/Đăng xuất, Quản lý lịch sử khám, Hủy lịch hẹn, Lưu hồ sơ bệnh án.
+
 ---
 
 ## 7. BẢNG TỔNG HỢP API ENDPOINTS TOÀN DIỆN

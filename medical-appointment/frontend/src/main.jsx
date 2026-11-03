@@ -33,6 +33,7 @@ import InfoPage from './page/patient/InfoPage';
 import UserList from './page/UserList';
 import DoctorSuggestPage from './page/patient/DoctorSuggestPage.jsx';
 import AsistantAI from './page/patient/AsistantAI.jsx';
+import DoctorDetailPage from './page/patient/DoctorDetailPage.jsx';
 
 // ------------------ Doctor Pages ------------------
 import DoctorLayout from './page/layout/DoctorLayout';
@@ -90,6 +91,8 @@ ReactDOM.createRoot(root).render(
                 <Route path="specialty_detail" element={<SpecialtyDetailPage />} />
                 <Route path="contact" element={<ContactPage />} />
                 <Route path="doctor_list" element={<DoctorListPage />} />
+                <Route path="doctor/:id" element={<DoctorDetailPage />} />
+                <Route path="doctor_detail/:id" element={<DoctorDetailPage />} />
                 <Route path="payment" element={<OnlinePaymentPage />} />
                 <Route path="payment_result" element={<OnlinePaymentResultPage />} />
                 <Route path="info" element={<InfoPage />} />

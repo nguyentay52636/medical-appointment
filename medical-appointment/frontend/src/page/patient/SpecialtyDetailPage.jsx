@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import useFetch from "../../hook/useFetch";
 import { fetchDoctorsBySpecialtyId } from '../../service/doctorService';
 
@@ -85,13 +85,24 @@ const allSpecialtyDetails = {
 // --- COMPONENTS ---
 
 const DoctorCard = (props) => (
-    <div className="flex items-center space-x-4 p-4 bg-blue-50/70 rounded-lg transition duration-300 hover:shadow-md">
-        <img src={props.image} alt={props.name} className="w-16 h-16 rounded-full object-cover border-2 border-blue-400" />
-        <div>
-            <p className="font-bold text-gray-800">{props.name}</p>
-            <p className="text-sm text-blue-600 italic">{props.specialty}</p>
+    <Link
+        to={props.id ? `/patient/doctor/${props.id}` : '#'}
+        className="flex items-center justify-between p-3.5 bg-blue-50/70 hover:bg-blue-100/80 rounded-xl transition-all duration-200 border border-blue-100 group cursor-pointer shadow-sm hover:shadow"
+    >
+        <div className="flex items-center space-x-3 min-w-0">
+            <img src={props.image} alt={props.name} className="w-14 h-14 rounded-full object-cover border-2 border-blue-400 shrink-0 shadow-sm" />
+            <div className="min-w-0">
+                <p className="font-bold text-gray-800 group-hover:text-blue-600 transition truncate text-sm">{props.name}</p>
+                <p className="text-xs text-blue-600 font-medium truncate">{props.specialty}</p>
+                <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Xem chi tiết & lịch
+                </span>
+            </div>
         </div>
-    </div>
+        <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition shrink-0 ml-2">
+            <i className="fa-solid fa-chevron-right text-xs"></i>
+        </div>
+    </Link>
 );
 
 // Component cho thẻ chuyên khoa khác (dùng trong thanh lướt)
@@ -253,6 +264,7 @@ export default function SpecialtyDetailPage() {
                                 {doctors?.map((doctor) => (
                                     <DoctorCard
                                         key={doctor.id}
+                                        id={doctor.id}
                                         name={doctor.fullName}
                                         specialty={doctor.specialtyName}
                                         image={doctor.imageUrl}

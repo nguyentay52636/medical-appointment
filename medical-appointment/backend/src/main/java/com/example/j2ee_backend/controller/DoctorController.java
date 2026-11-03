@@ -77,6 +77,16 @@ public class DoctorController {
         return doctorServices.getAllDoctors();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDoctorById(@PathVariable("id") Integer id) {
+        try {
+            Doctor doctor = doctorServices.findById(id);
+            return ResponseEntity.ok(new DoctorDTO(doctor));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @GetMapping("/specialty/{id}")
     public ResponseEntity<List<DoctorDTO>> getDoctorsBySpecialty(@PathVariable("id") Integer specialtyId) {
         List<DoctorDTO> doctors = doctorServices.getDoctorsBySpecialtyId(specialtyId);
