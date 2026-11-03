@@ -7,6 +7,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google'; //
 // ------------------ Context ------------------
 import { PatientProvider } from './context/PatientContext';
 import { DoctorProvider } from './context/DoctorContext';
+import { ToastProvider } from './context/ToastContext';
 
 // ------------------ Auth Pages ------------------
 import LoginForm from './page/auth/LoginForm';
@@ -66,7 +67,8 @@ ReactDOM.createRoot(root).render(
       {/* Đặt Provider bọc toàn bộ app */}
       <PatientProvider>
         <DoctorProvider>
-          <BrowserRouter>
+          <ToastProvider>
+            <BrowserRouter>
             <Routes>
               {/* Trang chủ mặc định chuyển hướng về /patient */}
               <Route path="/" element={<Navigate to="/patient" replace />} />
@@ -146,6 +148,7 @@ ReactDOM.createRoot(root).render(
               />
             </Routes>
           </BrowserRouter>
+          </ToastProvider>
         </DoctorProvider>
       </PatientProvider>
     </GoogleOAuthProvider>

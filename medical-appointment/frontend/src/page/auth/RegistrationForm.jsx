@@ -4,9 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import doctorImg from "../../assets/doctor.webp";
 import { PatientContext } from '../../context/PatientContext.jsx';
 
+import { useToast } from '../../context/ToastContext';
+
 const API_REGISTER_URL = 'http://localhost:8080/api/patient/register';
 
 function RegistrationForm({ role }) {
+  const { success: showSuccess, error: showToastError } = useToast();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -45,11 +48,13 @@ function RegistrationForm({ role }) {
 
     if (formData.password !== formData.confirmPassword) {
       setError("Mật khẩu không khớp!");
+      showToastError("Đăng ký thất bại", "Mật khẩu xác nhận không khớp. Vui lòng thử lại!");
       return;
     }
 
     if (formData.password.length < 6) {
       setError("Mật khẩu phải >= 6 ký tự!");
+      showToastError("Đăng ký thất bại", "Mật khẩu bảo mật phải có ít nhất 6 ký tự!");
       return;
     }
 
@@ -64,21 +69,27 @@ function RegistrationForm({ role }) {
         password: formData.password,
       });
 
-      window.alert(`${res.data.message} Bạn vui lòng đăng nhập để đặt lịch.`);
+      showSuccess(
+        "Đăng ký thành công!",
+        `${res.data.message || 'Tài khoản đã được tạo thành công!'} Bạn vui lòng đăng nhập để bắt đầu đặt lịch khám.`
+      );
       setError("");
 
-      setTimeout(() => navigate("/patient/login"), 1000);
+      setTimeout(() => navigate("/patient/login"), 1200);
 
     } catch (err) {
-      if (err.response?.status === 409 || err.response?.data?.message.includes("email")) {
-        setError("Email này đã tồn tại. Vui lòng sử dụng email khác.");
+      let errMsg = "Lỗi hệ thống khi đăng ký!";
+      if (err.response?.status === 409 || err.response?.data?.message?.includes("email")) {
+        errMsg = "Email này đã được sử dụng. Vui lòng chọn một email khác.";
       }
-      else if (err.response?.status === 409 || err.response?.data?.message.includes("phoneNumber")) {
-        setError("Số điện thoại này đã tồn tại. Vui lòng sử dụng số điện thoại khác.");
+      else if (err.response?.status === 409 || err.response?.data?.message?.includes("phoneNumber")) {
+        errMsg = "Số điện thoại này đã được đăng ký trong hệ thống.";
       }
       else {
-        setError(err.response?.data?.message || "Lỗi hệ thống!");
+        errMsg = err.response?.data?.message || "Không thể hoàn tất đăng ký. Vui lòng kiểm tra lại thông tin.";
       }
+      setError(errMsg);
+      showToastError("Đăng ký thất bại", errMsg);
     } finally {
       setIsLoading(false);
     }

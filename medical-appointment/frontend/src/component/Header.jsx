@@ -1,17 +1,26 @@
 import React, { useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { PatientContext } from "../context/PatientContext.jsx";
+import { useToast } from "../context/ToastContext";
 
 export default function Header() {
     const { patient, logout } = useContext(PatientContext);
+    const { confirm, logoutSuccess } = useToast();
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        const confirmLogout = window.confirm("Bạn có chắc muốn đăng xuất không?");
-        if (confirmLogout) {
-            logout();
-            navigate("/patient/home");
-        }
+        confirm({
+            title: "Xác nhận đăng xuất",
+            message: `Bạn có chắc chắn muốn đăng xuất khỏi tài khoản ${patient?.fullName || "bệnh nhân"} không?`,
+            confirmText: "Đăng xuất ngay",
+            cancelText: "Ở lại",
+            type: "danger",
+            onConfirm: () => {
+                logout();
+                logoutSuccess("patient");
+                navigate("/patient/home");
+            },
+        });
     };
 
     const fullName = patient?.fullName || "";

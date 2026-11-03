@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { DoctorContext } from '../../context/DoctorContext';
+import { useToast } from '../../context/ToastContext';
 import { getUnreadNotificationCount, getAllNotifications, markAllNotificationsAsRead } from '../../service/notificationService';
 
 const navItems = [
@@ -144,6 +145,7 @@ function DoctorLayout({ avatarUrl }) {
     const currentDoctor = doctor || storedDoctor;
     const finalAvatar = avatarUrl || currentDoctor?.imageUrl || "https://i.pravatar.cc/150?img=5";
     const navigate = useNavigate();
+    const { confirm, logoutSuccess } = useToast();
 
     // Bảo vệ tuyến đường Doctor: chưa đăng nhập thì tự động đẩy về trang /doctor/login
     useEffect(() => {
@@ -153,8 +155,18 @@ function DoctorLayout({ avatarUrl }) {
     }, [currentDoctor, navigate]);
 
     const handleLogout = () => {
-        logout();
-        navigate("/doctor/login");
+        confirm({
+            title: "Xác nhận đăng xuất Bác sĩ",
+            message: `Bác sĩ ${currentDoctor?.fullName || ""} có chắc chắn muốn đăng xuất khỏi hệ thống phòng khám Klinik không?`,
+            confirmText: "Đăng xuất",
+            cancelText: "Hủy",
+            type: "danger",
+            onConfirm: () => {
+                logout();
+                logoutSuccess("doctor");
+                navigate("/doctor/login");
+            },
+        });
     };
 
     if (!currentDoctor) {

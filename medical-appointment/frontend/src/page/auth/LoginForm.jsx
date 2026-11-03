@@ -6,7 +6,10 @@ import { PatientContext } from '../../context/PatientContext.jsx';
 import { DoctorContext } from '../../context/DoctorContext.jsx';
 import { GoogleLogin } from '@react-oauth/google';
 
+import { useToast } from '../../context/ToastContext';
+
 function LoginForm({ role }) {
+    const { authSuccess, error: showToastError } = useToast();
     const patientContext = useContext(PatientContext);
     const doctorContext = useContext(DoctorContext);
 
@@ -50,10 +53,12 @@ function LoginForm({ role }) {
 
             if (login) login(loggedUser);
 
+            authSuccess(loggedUser?.fullName, role);
             navigate(role === "patient" ? "/patient/booking" : "/doctor/dashboard");
-            alert(role === "patient" ? "Đăng nhập thành công!" : response.data.message);
         } catch (err) {
-            setError(err.response?.data?.message || 'Sai email hoặc mật khẩu');
+            const errMsg = err.response?.data?.message || 'Sai email hoặc mật khẩu. Vui lòng kiểm tra lại!';
+            setError(errMsg);
+            showToastError('Đăng nhập thất bại', errMsg);
             console.error(err);
         } finally {
             setIsLoading(false);
@@ -62,7 +67,7 @@ function LoginForm({ role }) {
 
     // --- Login Google OAuth2 (bác sĩ) ---
     const handleGoogleLoginSuccess = async (credentialResponse) => {
-        const googleToken = credentialResponse.credential; // ID token của Google
+        const googleToken = credentialResponse.credential;
         try {
             const res = await axios.post('http://localhost:8080/api/doctor/google-login', { idToken: googleToken });
 
@@ -71,17 +76,18 @@ function LoginForm({ role }) {
             sessionStorage.setItem('token', res.data.token);
 
             if (doctorContext?.login) doctorContext.login(loggedDoctor);
-            alert(res.data.message);
+            authSuccess(loggedDoctor?.fullName, 'doctor');
             navigate("/doctor/dashboard");
         } catch (err) {
-            alert(err.response?.data?.message || 'Đăng nhập Google thất bại');
+            const errMsg = err.response?.data?.message || 'Đăng nhập Google thất bại';
+            showToastError('Đăng nhập Google thất bại', errMsg);
             console.error(err);
         }
     };
 
     const handleGoogleLoginFailure = (err) => {
         console.error(err);
-        alert("Đăng nhập Google thất bại");
+        showToastError('Đăng nhập Google thất bại', 'Không thể kết nối với dịch vụ xác thực Google');
     };
 
     return (
