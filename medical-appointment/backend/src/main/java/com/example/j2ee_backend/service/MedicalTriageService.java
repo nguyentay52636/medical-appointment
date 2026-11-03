@@ -190,7 +190,7 @@ public class MedicalTriageService {
         // Chuẩn bị kết quả mặc định từ CRM Rules
         String analysis = primaryMatch.analysisTemplate;
         if (isEmergency && emergencyReason != null) {
-            analysis = "⚠️ CẢNH BÁO DẤU HIỆU CẤP CỨU: Phát hiện dấu hiệu nghiêm trọng (" + emergencyReason + "). " + analysis;
+            analysis = "Dấu hiệu cấp cứu cần lưu ý đặc biệt: Phát hiện triệu chứng nghiêm trọng (" + emergencyReason + "). " + analysis;
         }
 
         List<String> actionSteps = new ArrayList<>(primaryMatch.actionSteps);
@@ -202,13 +202,14 @@ public class MedicalTriageService {
         // 2. KẾT HỢP CHAT AI: Gọi OpenRouter API kết hợp CRM
         // Trong trường hợp hàng đợi các model free AI bị quá tải (429/503), tự động chuyển sang CRM Rules
         OpenRouterResult aiResult = callOpenRouterWithFallback(userMessage, primaryMatch);
-        if (aiResult.isSuccess()) {
-            analysis = aiResult.getContent();
+        if (aiResult != null && aiResult.isSuccess()) {
+            analysis = cleanClinicalText(aiResult.getContent());
             consultationSource = "AI_LLM_ONLINE";
             aiModelUsed = aiResult.getModel();
             log.info("AI Triage successfully generated via online model: {}", aiModelUsed);
         } else {
             log.info("AI online models busy/queued/error -> Seamlessly using CRM Knowledge Base rules.");
+            analysis = cleanClinicalText(analysis);
             consultationSource = "CRM_RULES_OFFLINE";
         }
 
@@ -243,14 +244,18 @@ public class MedicalTriageService {
                     "dots-studio/dots-3-note-preview:free"
             );
 
-            String systemPrompt = "Bạn là Trợ lý AI Bác sĩ Sàng lọc Y khoa (Triage Consultant) tại Phòng khám MediCare.\n" +
-                    "Nhiệm vụ: Dựa trên triệu chứng và tri thức chuyên khoa CRM được cung cấp, hãy phân tích 2-3 câu ngắn gọn về nguyên nhân khả dĩ và đưa ra lời khuyên y khoa ân cần. Không kê đơn thuốc cụ thể. Trả lời bằng tiếng Việt.";
+            String systemPrompt = "Bạn là Trợ lý Sàng lọc Y khoa chuyên nghiệp tại Phòng khám MediCare.\n" +
+                    "Nhiệm vụ: Dựa trên triệu chứng bệnh nhân mô tả và thông tin chuyên khoa từ hệ thống CRM, hãy viết 2-3 câu ngắn gọn phân tích nguyên nhân khả dĩ và đưa ra lời khuyên y khoa ân cần, súc tích. Không kê đơn thuốc cụ thể.\n" +
+                    "Quy định nghiêm ngặt về định dạng:\n" +
+                    "1. Tuyệt đối KHÔNG sử dụng ký tự Markdown như ** (dấu sao kép), * (dấu sao đơn), # (tiêu đề), hoặc các ký tự gạch đầu dòng (*, -, +).\n" +
+                    "2. Tuyệt đối KHÔNG chèn bất kỳ biểu tượng cảm xúc (emoji) nào trong nội dung phản hồi.\n" +
+                    "3. Trình bày bằng tiếng Việt văn xuôi chuẩn mực, ngôn từ y khoa lịch thiệp, dễ hiểu, liền mạch và gãy gọn.";
 
             String userPrompt = String.format(
                     "Người dùng hỏi: \"%s\"\n" +
                     "Chuyên khoa phù hợp nhất từ CRM: %s (Mã: %s).\n" +
                     "Triệu chứng ghi nhận: %s.\n" +
-                    "Hãy phân tích nguyên nhân tiềm ẩn và lời khuyên y tế súc tích.",
+                    "Hãy phân tích nguyên nhân tiềm ẩn và lời khuyên y tế súc tích, văn xuôi thuần túy, không có dấu sao ** và không có emoji.",
                     userMessage, primaryMatch.name, primaryMatch.code, String.join(", ", primaryMatch.matchedWords)
             );
 
@@ -288,7 +293,7 @@ public class MedicalTriageService {
                         content = msg.path("reasoning").asText();
                     }
                     if (content != null && !content.trim().isEmpty() && !content.equals("null")) {
-                        return new OpenRouterResult(true, content.trim(), returnedModel);
+                        return new OpenRouterResult(true, cleanClinicalText(content.trim()), returnedModel);
                     }
                 }
             } else {
@@ -299,6 +304,35 @@ public class MedicalTriageService {
         }
 
         return new OpenRouterResult(false, null, null);
+    }
+
+    /**
+     * Tiền xử lý và làm sạch văn bản y khoa:
+     * - Loại bỏ hoàn toàn các ký tự markdown như **, *, #, backticks
+     * - Loại bỏ emoji/ký tự cảm xúc gây rối mắt
+     * - Chuẩn hóa văn phong liền mạch, sạch sẽ, chuẩn y khoa
+     */
+    private String cleanClinicalText(String text) {
+        if (text == null) return "";
+        // 1. Loại bỏ các cặp dấu sao markdown: **từ khóa** -> từ khóa, *từ khóa* -> từ khóa
+        String cleaned = text.replaceAll("\\*\\*(.*?)\\*\\*", "$1")
+                             .replaceAll("\\*(.*?)\\*", "$1")
+                             .replaceAll("__(.*?)__", "$1")
+                             .replaceAll("_(.*?)_", "$1");
+        // 2. Loại bỏ các tiêu đề markdown #, ##, ### ở đầu dòng
+        cleaned = cleaned.replaceAll("(?m)^#{1,6}\\s*", "");
+        // 3. Chuẩn hóa gạch đầu dòng markdown (* , - , + )
+        cleaned = cleaned.replaceAll("(?m)^[\\*\\-\\+]\\s+", "");
+        // 4. Loại bỏ backticks
+        cleaned = cleaned.replace("`", "");
+        // 5. Loại bỏ emoji Unicode
+        cleaned = cleaned.replaceAll("[\\p{So}\\p{Cn}]", "");
+        cleaned = cleaned.replaceAll("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF]", "");
+        // 6. Chuẩn hóa khoảng trắng và ngắt dòng
+        cleaned = cleaned.replaceAll("[ \\t]+", " ")
+                         .replaceAll("(\\r?\\n){3,}", "\n\n")
+                         .trim();
+        return cleaned;
     }
 
     private MatchedSpecialtyScore getDefaultSpecialty() {
