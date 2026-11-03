@@ -11,6 +11,8 @@ public class TriageConsultResponseDTO {
     private String urgencyLevel;
     private List<String> matchedKeywords = new ArrayList<>();
     private List<DoctorDTO> suggestedDoctors = new ArrayList<>();
+    private String consultationSource; // "AI_LLM_ONLINE" or "CRM_RULES_OFFLINE"
+    private String aiModelUsed;
 
     public TriageConsultResponseDTO() {}
 
@@ -25,6 +27,23 @@ public class TriageConsultResponseDTO {
         this.urgencyLevel = urgencyLevel;
         this.matchedKeywords = matchedKeywords;
         this.suggestedDoctors = suggestedDoctors;
+        this.consultationSource = "CRM_RULES_OFFLINE";
+        this.aiModelUsed = null;
+    }
+
+    public TriageConsultResponseDTO(String analysis, List<SpecialtyRecommendationDTO> recommendedSpecialties,
+                                   List<String> actionSteps, List<String> followUpQuestions,
+                                   String urgencyLevel, List<String> matchedKeywords,
+                                   List<DoctorDTO> suggestedDoctors, String consultationSource, String aiModelUsed) {
+        this.analysis = analysis;
+        this.recommendedSpecialties = recommendedSpecialties;
+        this.actionSteps = actionSteps;
+        this.followUpQuestions = followUpQuestions;
+        this.urgencyLevel = urgencyLevel;
+        this.matchedKeywords = matchedKeywords;
+        this.suggestedDoctors = suggestedDoctors;
+        this.consultationSource = consultationSource;
+        this.aiModelUsed = aiModelUsed;
     }
 
     public String getAnalysis() {
@@ -81,5 +100,21 @@ public class TriageConsultResponseDTO {
 
     public void setSuggestedDoctors(List<DoctorDTO> suggestedDoctors) {
         this.suggestedDoctors = suggestedDoctors;
+    }
+
+    public String getConsultationSource() {
+        return consultationSource;
+    }
+
+    public void setConsultationSource(String consultationSource) {
+        this.consultationSource = consultationSource;
+    }
+
+    public String getAiModelUsed() {
+        return aiModelUsed;
+    }
+
+    public void setAiModelUsed(String aiModelUsed) {
+        this.aiModelUsed = aiModelUsed;
     }
 }

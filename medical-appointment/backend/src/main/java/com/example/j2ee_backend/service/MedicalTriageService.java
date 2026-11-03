@@ -10,11 +10,17 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.*;
 
 @Service
@@ -25,6 +31,13 @@ public class MedicalTriageService {
     private final DoctorService doctorService;
     private final ChatModel chatModel;
     private final ObjectMapper objectMapper;
+    private final HttpClient httpClient;
+
+    @Value("${spring.ai.openai.api-key:}")
+    private String openrouterApiKey;
+
+    @Value("${spring.ai.openai.chat.options.model:google/gemma-4-26b-a4b-it:free}")
+    private String primaryModel;
 
     private String rawCrmJson = "";
     private JsonNode crmRootNode = null;
@@ -33,6 +46,9 @@ public class MedicalTriageService {
         this.doctorService = doctorService;
         this.chatModel = chatModel;
         this.objectMapper = objectMapper;
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
     }
 
     @PostConstruct
@@ -135,7 +151,7 @@ public class MedicalTriageService {
         // Sắp xếp chuyên khoa theo điểm phù hợp giảm dần
         scoredList.sort((a, b) -> Integer.compare(b.score, a.score));
 
-        // Trường hợp không có từ khóa khớp cụ thể -> Mặc định gợi ý Nội khoa (Đa khoa / Thần kinh)
+        // Trường hợp không có từ khóa khớp cụ thể -> Mặc định gợi ý Nội khoa
         if (scoredList.isEmpty()) {
             MatchedSpecialtyScore defaultScore = getDefaultSpecialty();
             scoredList.add(defaultScore);
@@ -162,7 +178,6 @@ public class MedicalTriageService {
         try {
             suggestedDoctors = doctorService.getDoctorsBySpecialtyId(primaryMatch.id);
             if (suggestedDoctors.isEmpty()) {
-                // Fallback nếu chuyên khoa chưa có bác sĩ cụ thể
                 suggestedDoctors = doctorService.getAllDoctors().stream().limit(3).toList();
             }
         } catch (Exception e) {
@@ -172,7 +187,7 @@ public class MedicalTriageService {
         // Thiết lập mức độ khẩn cấp (Urgency Level)
         String urgencyLevel = isEmergency ? "EMERGENCY" : (primaryMatch.score >= 80 ? "ATTENTION" : "NORMAL");
 
-        // Chuẩn bị kết quả mặc định từ CRM Rules (đảm bảo 100% chuẩn xác không bị lỗi)
+        // Chuẩn bị kết quả mặc định từ CRM Rules
         String analysis = primaryMatch.analysisTemplate;
         if (isEmergency && emergencyReason != null) {
             analysis = "⚠️ CẢNH BÁO DẤU HIỆU CẤP CỨU: Phát hiện dấu hiệu nghiêm trọng (" + emergencyReason + "). " + analysis;
@@ -181,30 +196,20 @@ public class MedicalTriageService {
         List<String> actionSteps = new ArrayList<>(primaryMatch.actionSteps);
         List<String> followUpQuestions = new ArrayList<>(primaryMatch.screeningQuestions);
 
-        // Thử gọi Spring AI để cá nhân hóa phân tích và câu hỏi hỏi thêm (nếu model hoạt động)
-        try {
-            String aiRefinedPrompt = String.format(
-                "Bạn là Trợ lý AI Bác sĩ Sàng lọc Y khoa (Triage Consultant) tại Phòng khám MediCare.\n" +
-                "Người dùng hỏi: \"%s\"\n" +
-                "Chuyên khoa phù hợp nhất được hệ thống CRM phân loại là: %s (Mã: %s).\n" +
-                "Các triệu chứng ghi nhận: %s.\n\n" +
-                "Hãy phân tích ngắn gọn theo 4 phần chuẩn:\n" +
-                "1. AI phân tích vấn đề: Phân tích 1-2 câu ngắn gọn về nguyên nhân khả dĩ (rối loạn giấc ngủ, căng thẳng, đau đầu...).\n" +
-                "2. Đề xuất chuyên khoa: Nêu rõ nên khám chuyên khoa %s.\n" +
-                "3. 3 hướng xử lý: Đưa ra đúng 3 gạch đầu dòng hướng dẫn chăm sóc/theo dõi tại nhà.\n" +
-                "4. AI hỏi thêm: Đưa ra 1-2 câu hỏi ngắn để làm rõ thêm triệu chứng.\n" +
-                "Yêu cầu: Không kê đơn thuốc cụ thể. Văn phong ân cần, y khoa chuẩn mực.",
-                userMessage, primaryMatch.name, primaryMatch.code, String.join(", ", primaryMatch.matchedWords)
-            );
+        String consultationSource = "CRM_RULES_OFFLINE";
+        String aiModelUsed = null;
 
-            // Chỉ gọi nếu ChatModel không ném lỗi
-            String aiResponseText = chatModel.call(aiRefinedPrompt);
-            if (aiResponseText != null && !aiResponseText.trim().isEmpty()) {
-                // Sử dụng phân tích linh hoạt từ AI nếu phản hồi tốt
-                analysis = parseAiAnalysis(aiResponseText, primaryMatch.analysisTemplate);
-            }
-        } catch (Exception e) {
-            log.info("Spring AI chatModel not available or error ({}), smoothly falling back to CRM Knowledge Base rules.", e.getMessage());
+        // 2. KẾT HỢP CHAT AI: Gọi OpenRouter API kết hợp CRM
+        // Trong trường hợp hàng đợi các model free AI bị quá tải (429/503), tự động chuyển sang CRM Rules
+        OpenRouterResult aiResult = callOpenRouterWithFallback(userMessage, primaryMatch);
+        if (aiResult.isSuccess()) {
+            analysis = aiResult.getContent();
+            consultationSource = "AI_LLM_ONLINE";
+            aiModelUsed = aiResult.getModel();
+            log.info("AI Triage successfully generated via online model: {}", aiModelUsed);
+        } else {
+            log.info("AI online models busy/queued/error -> Seamlessly using CRM Knowledge Base rules.");
+            consultationSource = "CRM_RULES_OFFLINE";
         }
 
         return new TriageConsultResponseDTO(
@@ -214,25 +219,86 @@ public class MedicalTriageService {
                 followUpQuestions,
                 urgencyLevel,
                 matchedKeywordsTotal,
-                suggestedDoctors
+                suggestedDoctors,
+                consultationSource,
+                aiModelUsed
         );
     }
 
-    private String parseAiAnalysis(String aiResponseText, String defaultAnalysis) {
+    private OpenRouterResult callOpenRouterWithFallback(String userMessage, MatchedSpecialtyScore primaryMatch) {
+        String apiKey = this.openrouterApiKey;
+        if (apiKey == null || apiKey.trim().isEmpty() || apiKey.contains("dummy")) {
+            apiKey = System.getenv("OPENROUTER_API_KEY");
+        }
+        if (apiKey == null || apiKey.trim().isEmpty() || apiKey.contains("dummy")) {
+            log.info("Khong tim thay OPENROUTER_API_KEY hop le, chuyen sang che do CRM Offline Rules.");
+            return null;
+        }
+
         try {
-            if (aiResponseText.contains("AI phân tích vấn đề") || aiResponseText.contains("phân tích vấn đề")) {
-                String[] parts = aiResponseText.split("(?i)(AI đề xuất|3 hướng xử lý|hướng xử lý|đề xuất chuyên khoa)");
-                if (parts.length > 0) {
-                    String part0 = parts[0].replaceAll("(?i)(###|\\*\\*|AI phân tích vấn đề:?|Phân tích vấn đề:?)", "").trim();
-                    if (!part0.isEmpty()) {
-                        return part0;
+            // Danh sách tối đa 3 model theo quy định của OpenRouter API (Primary: google/gemma-4-26b-a4b-it:free)
+            List<String> fallbackModels = Arrays.asList(
+                    "google/gemma-4-26b-a4b-it:free",
+                    "nvidia/nemotron-3-ultra-550b-a55b:free",
+                    "dots-studio/dots-3-note-preview:free"
+            );
+
+            String systemPrompt = "Bạn là Trợ lý AI Bác sĩ Sàng lọc Y khoa (Triage Consultant) tại Phòng khám MediCare.\n" +
+                    "Nhiệm vụ: Dựa trên triệu chứng và tri thức chuyên khoa CRM được cung cấp, hãy phân tích 2-3 câu ngắn gọn về nguyên nhân khả dĩ và đưa ra lời khuyên y khoa ân cần. Không kê đơn thuốc cụ thể. Trả lời bằng tiếng Việt.";
+
+            String userPrompt = String.format(
+                    "Người dùng hỏi: \"%s\"\n" +
+                    "Chuyên khoa phù hợp nhất từ CRM: %s (Mã: %s).\n" +
+                    "Triệu chứng ghi nhận: %s.\n" +
+                    "Hãy phân tích nguyên nhân tiềm ẩn và lời khuyên y tế súc tích.",
+                    userMessage, primaryMatch.name, primaryMatch.code, String.join(", ", primaryMatch.matchedWords)
+            );
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("models", fallbackModels);
+            payload.put("messages", Arrays.asList(
+                    Map.of("role", "system", "content", systemPrompt),
+                    Map.of("role", "user", "content", userPrompt)
+            ));
+            payload.put("max_tokens", 350);
+            payload.put("temperature", 0.7);
+
+            String requestBody = objectMapper.writeValueAsString(payload);
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://openrouter.ai/api/v1/chat/completions"))
+                    .header("Authorization", "Bearer " + apiKey.trim())
+                    .header("Content-Type", "application/json")
+                    .header("HTTP-Referer", "http://localhost:5173")
+                    .header("X-Title", "MediCare AI Consultant")
+                    .timeout(Duration.ofSeconds(12))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                JsonNode root = objectMapper.readTree(response.body());
+                String returnedModel = root.path("model").asText("OpenRouter AI");
+                JsonNode choices = root.path("choices");
+                if (choices.isArray() && choices.size() > 0) {
+                    JsonNode msg = choices.get(0).path("message");
+                    String content = msg.path("content").asText();
+                    if (content == null || content.trim().isEmpty() || content.equals("null")) {
+                        content = msg.path("reasoning").asText();
+                    }
+                    if (content != null && !content.trim().isEmpty() && !content.equals("null")) {
+                        return new OpenRouterResult(true, content.trim(), returnedModel);
                     }
                 }
+            } else {
+                log.warn("OpenRouter API returned status {} (free model busy/queued): {}", response.statusCode(), response.body());
             }
-            return defaultAnalysis;
         } catch (Exception e) {
-            return defaultAnalysis;
+            log.warn("OpenRouter API call exception (queue/rate limit/timeout): {}", e.getMessage());
         }
+
+        return new OpenRouterResult(false, null, null);
     }
 
     private MatchedSpecialtyScore getDefaultSpecialty() {
@@ -283,6 +349,30 @@ public class MedicalTriageService {
             this.analysisTemplate = analysisTemplate;
             this.actionSteps = actionSteps;
             this.screeningQuestions = screeningQuestions;
+        }
+    }
+
+    private static class OpenRouterResult {
+        private final boolean success;
+        private final String content;
+        private final String model;
+
+        public OpenRouterResult(boolean success, String content, String model) {
+            this.success = success;
+            this.content = content;
+            this.model = model;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public String getModel() {
+            return model;
         }
     }
 }

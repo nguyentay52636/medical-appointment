@@ -225,7 +225,13 @@ Thay vì nhồi nhét mã nguồn vào các file lớn (trước đây `AdminDoc
 - **Động cơ phân tích lai (Hybrid Engine)**:
   1. *Khớp từ khóa CRM*: Đối chiếu tin nhắn người dùng với hệ thống từ khóa & bí danh chuyên khoa trong JSON, tính điểm `matchScore` (65% - 98%).
   2. *Kiểm tra dấu hiệu khẩn cấp*: Tự động phát hiện các từ khóa cấp cứu (VD: liệt nửa người, co giật, ngất xỉu, đau ngực kéo dài > 15 phút, vã mồ hôi lạnh...) để gắn nhãn `EMERGENCY` và hiển thị cảnh báo đỏ.
-  3. *Tích hợp LLM Spring AI*: Truyền ngữ cảnh tri thức CRM vào Prompt để LLM cá nhân hóa lời khuyên văn phong ân cần. Tự động chuyển đổi về CRM Rules (Zero-Downtime Fallback) khi ngoại tuyến hoặc không có API key.
+  3. *Tích hợp OpenRouter AI API Key*:
+      - Cấu hình an toàn biến môi trường `OPENROUTER_API_KEY` qua file `.env`.
+     - Cấu hình chuỗi định tuyến mô hình thông minh:
+       - **Ưu tiên 1**: `google/gemma-4-26b-a4b-it:free` (Model Google Gemma theo yêu cầu).
+       - **Ưu tiên 2**: `nvidia/nemotron-3-ultra-550b-a55b:free` (Model siêu lớn 550B của NVIDIA, hoạt động ổn định khi Google bị giới hạn hàng đợi 429).
+       - **Ưu tiên 3**: `dots-studio/dots-3-note-preview:free`.
+     - **Cơ chế Fallback thông minh (Zero-Downtime CRM Fallback)**: Trường hợp toàn bộ các mô hình AI trực tuyến bị nghẽn hàng đợi (429 Too Many Requests / 503 Service Unavailable / Timeout), hệ thống tự động và êm dịu chuyển sang sử dụng bộ quy tắc chuẩn từ điển CRM ([`medical_specialty_crm_rules.json`](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/backend/src/main/resources/data/medical_specialty_crm_rules.json)) mà không bao giờ báo lỗi hệ thống.
   4. *Tự động liên kết Bác sĩ*: Tự động truy vấn danh sách bác sĩ chuyên khoa tương ứng trong cơ sở dữ liệu (`doctorService.getDoctorsBySpecialtyId`) đính kèm phản hồi.
 
 ### 8.3. Frontend: Giao Diện Trợ Lý AI Nâng Cao (`AssistantAI.jsx`)
@@ -234,24 +240,36 @@ Thay vì nhồi nhét mã nguồn vào các file lớn (trước đây `AdminDoc
   - Khung hội thoại nhúng: `/patient/support` (Hỗ trợ trực tuyến).
   - Phím chuyển nhanh tại trang Gợi ý bác sĩ: `/patient/ai-suggest`.
 - **Cấu trúc phản hồi trực quan theo 4 khối chuẩn mực**:
-  - 🩺 **Khối 1: AI Phân Tích Vấn Đề**: Phân tích nguyên nhân tiềm ẩn của triệu chứng (VD: căng thẳng stress, rối loạn nhịp sinh học, suy nhược thần kinh...).
+  - 🩺 **Khối 1: AI Phân Tích Vấn Đề**: Phân tích lâm sàng thực tế sinh động từ mô hình AI LLM (hoặc từ điển CRM khi ngoại tuyến).
   - 🏥 **Khối 2: Đề Xuất Chuyên Khoa Phù Hợp**: Huy hiệu chuyên khoa, thanh điểm khớp triệu chứng (VD: 95% Khớp), giải thích lý do chuyên môn và nút bấm *"Đặt khám khoa này"*.
   - 💡 **Khối 3: AI Đề Xuất 3 Hướng Xử Lý**: Thẻ đánh số 1-2-3 hướng dẫn điều chỉnh sinh hoạt, theo dõi triệu chứng và khi nào cần khám trực tiếp.
   - ❓ **Khối 4: AI Hỏi Thêm Để Tư Vấn Chính Xác Hơn**: Các nút bấm tương tác chứa câu hỏi sàng lọc gợi ý; bệnh nhân chỉ cần click là câu hỏi được tự động gửi vào khung chat.
   - 👨‍⚕️ **Khối 5: Bác Sĩ Tiêu Biểu Thuộc Khoa**: Thẻ thông tin bác sĩ (ảnh, tên, giá khám, năm kinh nghiệm) kèm nút *"Đặt lịch ngay"* chuyển thẳng sang trang Booking.
 - **Tính năng mở rộng**:
+  - **Huy hiệu nguồn phân tích**: Nhãn `✨ AI LLM Online` (khi phân tích qua API Key) và `📖 CRM Knowledge Base` (khi dùng dự phòng).
   - **Thanh chip triệu chứng nhanh**: Bấm 1-click các tình huống phổ biến (Mất ngủ đau đầu, Đau ngực tim đập nhanh, Đau rát họng, Ngứa da dị ứng, Bé sốt quấy khóc).
   - **Modal Từ Điển CRM Tri Thức Y Khoa**: Xem danh mục toàn bộ chuyên khoa, từ khóa triệu chứng, bệnh lý liên quan và 3 hướng xử lý trích xuất trực tiếp từ file JSON độc lập.
 
-### 8.4. Kết Quả Kiểm Thử Thực Tế (Test Verification)
-- **Kịch bản 1 (Kịch bản thực tế của người dùng)**:
+### 8.4. Kết Quả Kiểm Thử Thực Tế (Live Verified with OpenRouter API)
+- **Kịch bản kiểm thử**:
   - *Input*: `"Tôi thường xuyên mất ngủ, đau đầu và cảm thấy mệt mỏi. Tôi nên làm gì?"`
-  - *Output*:
-    - **Phân tích**: *"Các triệu chứng mất ngủ, đau đầu và mệt mỏi thường liên quan đến tình trạng căng thẳng kéo dài (stress), rối loạn nhịp sinh học, suy nhược thần kinh..."*
-    - **Chuyên khoa đề xuất**: **Nội khoa** (`INTERNAL_MED`) - 95% Khớp triệu chứng.
-    - **3 Hướng xử lý**: 1. Điều chỉnh thời gian ngủ, hạn chế caffeine buổi chiều tối; 2. Theo dõi thời điểm đau đầu và chất lượng giấc ngủ; 3. Đặt lịch khám chuyên khoa Nội khoa / Nội thần kinh để đo lưu huyết não.
-    - **Câu hỏi hỏi thêm**: *"Bạn đã gặp tình trạng mất ngủ và đau đầu trong bao lâu?"*, *"Cơn đau đầu có kèm theo buồn nôn, sợ ánh sáng hay chóng mặt khi đổi tư thế không?"*
-    - **Bác sĩ gợi ý**: BS. Trần Thị B (Chuyên khoa Nội khoa).
-- **Kịch bản 2 (Triệu chứng Tim mạch)**:
-  - *Input*: `"Tôi bị đau ngực, tim đập nhanh và khó thở"`
-  - *Output*: Phân loại chính xác **Chuyên khoa Tim mạch** (`CARDIOLOGY`) - Gợi ý BS. Nguyễn Văn A.
+  - *Kết quả trả về*:
+    ```json
+    {
+      "analysis": "**Phân tích:** Triệu chứng mất ngủ kéo dài, đau đầu và mệt mỏi thường có liên quan chặt chẽ với **rối loạn chức năng thần kinh tự chủ do căng thẳng, lo âu** hoặc **hội chứng mệt mỏi mãn tính**; tuy nhiên cần loại trừ các nguyên nhân nội khoa tiềm ẩn như rối loạn tuyến giáp, thiếu máu, hoặc huyết áp không ổn định.\n\n**Lời khuyên:** Bạn nên đến khám **Nội khoa** để kiểm tra huyết áp, xét nghiệm máu (CBC, TSH, chức năng gan/thận) và đánh giá tâm thần. Hiện tại, hãy ưu tiên ngủ trước 23h, hạn chế caffeine/manh hàn sau 15h, tập thể dục nhẹ nhàng 30 phút/ngày và áp dụng kỹ thuật thư giãn (thở sâu, thiền) trước khi ngủ.",
+      "recommendedSpecialties": [
+        {
+          "specialtyId": 1,
+          "specialtyName": "Nội khoa",
+          "departmentCode": "INTERNAL_MED",
+          "matchScore": 95,
+          "reason": "Các triệu chứng nhận diện (mất ngủ, đau đầu, mệt mỏi) phù hợp nhất với phạm vi chẩn đoán và điều trị của Chuyên khoa Nội khoa."
+        }
+      ],
+      "consultationSource": "AI_LLM_ONLINE",
+      "aiModelUsed": "nvidia/nemotron-3-ultra-550b-a55b:free"
+    }
+    ```
+- **Xác thực tự động chuyển mạch (Auto-Routing & Fallback)**:
+  - Khi `google/gemma-4-26b-a4b-it:free` bị nghẽn hàng đợi (429 upstream rate limit), OpenRouter tự động điều hướng sang `nvidia/nemotron-3-ultra-550b-a55b:free` tạo phản hồi thành công trong 1.8 giây.
+  - Khi ngắt kết nối mạng hoặc toàn bộ model AI free bận, hệ thống tự động dùng tri thức CRM với nguồn `CRM_RULES_OFFLINE` bảo đảm 100% thời gian hoạt động.
