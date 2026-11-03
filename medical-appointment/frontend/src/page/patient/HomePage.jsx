@@ -218,12 +218,55 @@ export default function HomePage() {
         </div>
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {services.map((svc, index) => (
-            <div key={index} className="bg-white p-6 rounded-xl shadow-xl border-t-4 border-blue-600 transition transform hover:shadow-2xl hover:-translate-y-1 text-center">
+            <div
+              key={index}
+              onClick={() => {
+                if (index === 3) navigate('/patient/ai-consult');
+                else if (index === 0) navigate('/patient/specialty');
+              }}
+              className={`bg-white p-6 rounded-xl shadow-xl border-t-4 border-blue-600 transition transform hover:shadow-2xl hover:-translate-y-1 text-center ${
+                index === 3 || index === 0 ? 'cursor-pointer hover:border-indigo-600' : ''
+              }`}
+            >
               <i className={`${svc.icon} text-4xl text-blue-600 mb-4`}></i>
               <h4 className="text-xl font-bold text-gray-900 mb-3">{svc.title}</h4>
               <p className="text-gray-500">{svc.description}</p>
+              {index === 3 && (
+                <span className="inline-block mt-3 text-xs font-semibold text-blue-600 hover:underline">
+                  Trải nghiệm ngay →
+                </span>
+              )}
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* AI Triage Consultation CTA Banner */}
+      <section className="py-6 px-4 lg:px-16">
+        <div className="max-w-6xl mx-auto bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-900 rounded-3xl p-8 lg:p-12 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-4 max-w-2xl z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-blue-200">
+              <span>✨ Công nghệ AI Sàng Lọc Y Khoa</span>
+            </div>
+            <h3 className="text-2xl lg:text-3xl font-extrabold leading-tight">
+              Bạn đang có triệu chứng bất thường nhưng chưa biết nên khám khoa nào?
+            </h3>
+            <p className="text-blue-100 text-sm lg:text-base leading-relaxed">
+              Mô tả triệu chứng như mất ngủ, đau đầu, mệt mỏi, tức ngực hay phát ban... Trợ lý AI sẽ đối chiếu từ điển CRM bệnh lý để tư vấn chuyên khoa chính xác, đề xuất 3 hướng xử lý và gợi ý bác sĩ giỏi.
+            </p>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <button
+                onClick={() => navigate('/patient/ai-consult')}
+                className="px-6 py-3.5 bg-white text-blue-800 hover:bg-blue-50 font-bold rounded-xl shadow-lg transition transform hover:scale-105 flex items-center gap-2 cursor-pointer"
+              >
+                <span>🤖 Tư vấn Phân luồng Chuyên khoa với AI</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+          <div className="w-36 h-36 lg:w-48 lg:h-48 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-6xl lg:text-7xl shadow-inner z-10 flex-shrink-0">
+            🩺
+          </div>
         </div>
       </section>
 

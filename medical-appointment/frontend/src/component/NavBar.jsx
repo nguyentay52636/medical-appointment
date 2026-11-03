@@ -36,6 +36,7 @@ export default function NavBar() {
         { to: "about", label: "Về Chúng Tôi" },
         { to: "specialty", label: "Chuyên Khoa" },
         { to: "doctor_list", label: "Đội ngũ bác sĩ" },
+        { to: "ai-consult", label: "🤖 Tư Vấn AI" },
         { to: "contact", label: "Liên Hệ" },
         { to: "support", label: "Hỗ Trợ" },
         { to: "condition", label: "Điều Khoản" },

@@ -1,11 +1,10 @@
 package com.example.j2ee_backend.controller;
 
-import com.example.j2ee_backend.dto.ChatRequest;
-import com.example.j2ee_backend.dto.ChatResponse;
-import com.example.j2ee_backend.dto.DoctorDTO;
-import com.example.j2ee_backend.dto.DoctorSuggestRequest;
+import com.example.j2ee_backend.dto.*;
 import com.example.j2ee_backend.service.AiService;
+import com.example.j2ee_backend.service.MedicalTriageService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +16,11 @@ import java.util.List;
 public class AiController {
 
     private final AiService aiService;
+    private final MedicalTriageService medicalTriageService;
 
-    public AiController(AiService aiService) {
+    public AiController(AiService aiService, MedicalTriageService medicalTriageService) {
         this.aiService = aiService;
+        this.medicalTriageService = medicalTriageService;
     }
 
     @PostMapping("/suggest-doctors")
@@ -35,11 +36,24 @@ public class AiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi gọi dịch vụ AI: " + e.getMessage());
         }
     }
+
     @PostMapping("/chat")
     public ChatResponse getChatResponse(@RequestBody ChatRequest request) {
-
         String aiAnswer = aiService.chat(request.getSessionId(), request.getMessage(), request.getHistory());
-
         return new ChatResponse(aiAnswer);
+    }
+
+    @PostMapping("/triage-consult")
+    public ResponseEntity<TriageConsultResponseDTO> triageConsult(@RequestBody TriageConsultRequestDTO request) {
+        if (request.getMessage() == null || request.getMessage().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        TriageConsultResponseDTO response = medicalTriageService.triageConsult(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping(value = "/crm-rules", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getCrmRules() {
+        return ResponseEntity.ok(medicalTriageService.getCrmRulesRawJson());
     }
 }

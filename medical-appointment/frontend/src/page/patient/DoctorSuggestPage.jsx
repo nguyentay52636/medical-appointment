@@ -56,8 +56,26 @@ export default function DoctorsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-white via-blue-50 to-gray-100 px-4 lg:px-24 py-10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">
+            Tìm Kiếm & Gợi Ý Bác Sĩ
+          </h1>
+          <p className="text-sm text-gray-500">
+            Tìm kiếm theo địa điểm và triệu chứng hoặc tham vấn chuyên sâu cùng AI
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/patient/ai-consult')}
+          className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs md:text-sm font-semibold shadow-md hover:from-blue-700 hover:to-indigo-700 transition flex items-center gap-2 cursor-pointer flex-shrink-0"
+        >
+          <span>🤖 Trợ Lý AI Phân Luồng Chuyên Khoa</span>
+          <span>→</span>
+        </button>
+      </div>
+
       <div className="bg-white rounded-xl shadow p-6 mb-12 border border-blue-600">
-        <label htmlFor="">Nhập vị trí muốn tìm bác sĩ</label>
+        <label htmlFor="" className="block font-medium text-gray-700 mb-1">Nhập vị trí muốn tìm bác sĩ</label>
         <input
           type="text"
           value={address}

@@ -93,6 +93,7 @@ ReactDOM.createRoot(root).render(
                 <Route path="info" element={<InfoPage />} />
                 <Route path="sample-user-list" element={<UserList />} />
                 <Route path="ai-suggest" element={<DoctorSuggestPage />} />
+                <Route path="ai-consult" element={<AsistantAI embedded={false} />} />
               </Route>
 
               {/* -------------------- DOCTOR ROUTES -------------------- */}

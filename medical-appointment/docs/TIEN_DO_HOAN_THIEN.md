@@ -201,3 +201,57 @@ Thay vì nhồi nhét mã nguồn vào các file lớn (trước đây `AdminDoc
    - Bổ sung nút **"Bệnh án"** tại bảng lịch sử cho mọi ca khám đã hoàn thành (`completed`).
    - Mở trực tiếp Modal Hồ Sơ Bệnh Án & Toa Thuốc cho bệnh nhân xem lại phác đồ điều trị và in mang ra nhà thuốc.
 
+---
+
+## 8. PHÂN HỆ AI TƯ VẤN SÀNG LỌC & PHÂN LUỒNG CHUYÊN KHOA THÔNG MINH (AI CLINICAL TRIAGE & SPECIALTY CRM)
+
+> **Cập nhật ngày 03/11/2026**: Hoàn thiện toàn diện trợ lý AI tư vấn sức khỏe, tự động phân tích triệu chứng lâm sàng, khuyến nghị chuyên khoa cần khám, đưa ra 3 hướng xử lý chuẩn y khoa và câu hỏi sàng lọc; toàn bộ từ khóa bệnh lý và quy tắc điều hướng được tách thành tệp JSON CRM độc lập.
+
+### 8.1. Tệp Tri Thức JSON CRM Độc Lập
+- **Vị trí tệp**:
+  - Backend: `backend/src/main/resources/data/medical_specialty_crm_rules.json`
+  - Frontend: `frontend/src/data/medicalSpecialtyDictionary.json`
+- **Ý nghĩa kiến trúc**: Tách biệt hoàn toàn tri thức bệnh lý, từ khóa triệu chứng và các câu hỏi sàng lọc ra khỏi mã nguồn nghiệp vụ. Cho phép đội ngũ y tế hoặc quản trị viên mở rộng từ khóa, bổ sung chuyên khoa mới mà không cần biên dịch lại mã nguồn hệ thống.
+- **Dữ liệu chuẩn hóa gồm 5 chuyên khoa cốt lõi**:
+  1. `Nội khoa` (Mã: `INTERNAL_MED`): Từ khóa mất ngủ, khó ngủ, đau đầu, migraine, mệt mỏi, suy nhược, chóng mặt, tiền đình, sốt nhẹ, tê bì tay chân...
+  2. `Tim mạch` (Mã: `CARDIOLOGY`): Từ khóa đau ngực, tức ngực, hồi hộp, đánh trống ngực, tim đập nhanh, khó thở, tăng huyết áp, phù chân...
+  3. `Tai Mũi Họng` (Mã: `ENT`): Từ khóa đau họng, rát họng, nuốt đau, ho khan, ho đờm, nghẹt mũi, viêm mũi, đau xoang, ù tai...
+  4. `Da liễu` (Mã: `DERMATOLOGY`): Từ khóa ngứa da, mề đay, dị ứng da, phát ban, nổi mụn, mụn bọc, chàm, vảy nến, zona...
+  5. `Nhi khoa` (Mã: `PEDIATRICS`): Từ khóa trẻ em, bé sốt, sốt ở trẻ, lười ăn, biếng ăn, nôn trớ, quấy khóc, thở khò khè, tay chân miệng...
+
+### 8.2. Backend Spring Boot (`MedicalTriageService` & `AiController`)
+- **Tập tin tạo mới**: `MedicalTriageService.java`, `TriageConsultRequestDTO.java`, `TriageConsultResponseDTO.java`, `SpecialtyRecommendationDTO.java`.
+- **Cập nhật**: `AiController.java` (`POST /api/ai/triage-consult` và `GET /api/ai/crm-rules`).
+- **Động cơ phân tích lai (Hybrid Engine)**:
+  1. *Khớp từ khóa CRM*: Đối chiếu tin nhắn người dùng với hệ thống từ khóa & bí danh chuyên khoa trong JSON, tính điểm `matchScore` (65% - 98%).
+  2. *Kiểm tra dấu hiệu khẩn cấp*: Tự động phát hiện các từ khóa cấp cứu (VD: liệt nửa người, co giật, ngất xỉu, đau ngực kéo dài > 15 phút, vã mồ hôi lạnh...) để gắn nhãn `EMERGENCY` và hiển thị cảnh báo đỏ.
+  3. *Tích hợp LLM Spring AI*: Truyền ngữ cảnh tri thức CRM vào Prompt để LLM cá nhân hóa lời khuyên văn phong ân cần. Tự động chuyển đổi về CRM Rules (Zero-Downtime Fallback) khi ngoại tuyến hoặc không có API key.
+  4. *Tự động liên kết Bác sĩ*: Tự động truy vấn danh sách bác sĩ chuyên khoa tương ứng trong cơ sở dữ liệu (`doctorService.getDoctorsBySpecialtyId`) đính kèm phản hồi.
+
+### 8.3. Frontend: Giao Diện Trợ Lý AI Nâng Cao (`AssistantAI.jsx`)
+- **Đường dẫn truy cập**:
+  - Trang độc lập: `/patient/ai-consult` (đã gắn liên kết nổi bật `🤖 Tư Vấn AI` trên NavBar và Banner CTA Trang chủ).
+  - Khung hội thoại nhúng: `/patient/support` (Hỗ trợ trực tuyến).
+  - Phím chuyển nhanh tại trang Gợi ý bác sĩ: `/patient/ai-suggest`.
+- **Cấu trúc phản hồi trực quan theo 4 khối chuẩn mực**:
+  - 🩺 **Khối 1: AI Phân Tích Vấn Đề**: Phân tích nguyên nhân tiềm ẩn của triệu chứng (VD: căng thẳng stress, rối loạn nhịp sinh học, suy nhược thần kinh...).
+  - 🏥 **Khối 2: Đề Xuất Chuyên Khoa Phù Hợp**: Huy hiệu chuyên khoa, thanh điểm khớp triệu chứng (VD: 95% Khớp), giải thích lý do chuyên môn và nút bấm *"Đặt khám khoa này"*.
+  - 💡 **Khối 3: AI Đề Xuất 3 Hướng Xử Lý**: Thẻ đánh số 1-2-3 hướng dẫn điều chỉnh sinh hoạt, theo dõi triệu chứng và khi nào cần khám trực tiếp.
+  - ❓ **Khối 4: AI Hỏi Thêm Để Tư Vấn Chính Xác Hơn**: Các nút bấm tương tác chứa câu hỏi sàng lọc gợi ý; bệnh nhân chỉ cần click là câu hỏi được tự động gửi vào khung chat.
+  - 👨‍⚕️ **Khối 5: Bác Sĩ Tiêu Biểu Thuộc Khoa**: Thẻ thông tin bác sĩ (ảnh, tên, giá khám, năm kinh nghiệm) kèm nút *"Đặt lịch ngay"* chuyển thẳng sang trang Booking.
+- **Tính năng mở rộng**:
+  - **Thanh chip triệu chứng nhanh**: Bấm 1-click các tình huống phổ biến (Mất ngủ đau đầu, Đau ngực tim đập nhanh, Đau rát họng, Ngứa da dị ứng, Bé sốt quấy khóc).
+  - **Modal Từ Điển CRM Tri Thức Y Khoa**: Xem danh mục toàn bộ chuyên khoa, từ khóa triệu chứng, bệnh lý liên quan và 3 hướng xử lý trích xuất trực tiếp từ file JSON độc lập.
+
+### 8.4. Kết Quả Kiểm Thử Thực Tế (Test Verification)
+- **Kịch bản 1 (Kịch bản thực tế của người dùng)**:
+  - *Input*: `"Tôi thường xuyên mất ngủ, đau đầu và cảm thấy mệt mỏi. Tôi nên làm gì?"`
+  - *Output*:
+    - **Phân tích**: *"Các triệu chứng mất ngủ, đau đầu và mệt mỏi thường liên quan đến tình trạng căng thẳng kéo dài (stress), rối loạn nhịp sinh học, suy nhược thần kinh..."*
+    - **Chuyên khoa đề xuất**: **Nội khoa** (`INTERNAL_MED`) - 95% Khớp triệu chứng.
+    - **3 Hướng xử lý**: 1. Điều chỉnh thời gian ngủ, hạn chế caffeine buổi chiều tối; 2. Theo dõi thời điểm đau đầu và chất lượng giấc ngủ; 3. Đặt lịch khám chuyên khoa Nội khoa / Nội thần kinh để đo lưu huyết não.
+    - **Câu hỏi hỏi thêm**: *"Bạn đã gặp tình trạng mất ngủ và đau đầu trong bao lâu?"*, *"Cơn đau đầu có kèm theo buồn nôn, sợ ánh sáng hay chóng mặt khi đổi tư thế không?"*
+    - **Bác sĩ gợi ý**: BS. Trần Thị B (Chuyên khoa Nội khoa).
+- **Kịch bản 2 (Triệu chứng Tim mạch)**:
+  - *Input*: `"Tôi bị đau ngực, tim đập nhanh và khó thở"`
+  - *Output*: Phân loại chính xác **Chuyên khoa Tim mạch** (`CARDIOLOGY`) - Gợi ý BS. Nguyễn Văn A.

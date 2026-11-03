@@ -1,0 +1,168 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "system": "MediCare AI Clinical Triage & Specialty CRM Knowledge Base",
+    "updatedAt": "2026-11-03",
+    "description": "Từ điển tri thức Y khoa & Phân luồng Chuyên khoa phòng khám. Quản lý từ khóa triệu chứng, bệnh lý và quy tắc điều hướng chuyên khoa."
+  },
+  "specialties": [
+    {
+      "id": 1,
+      "specialtyName": "Nội khoa",
+      "departmentCode": "INTERNAL_MED",
+      "aliases": ["Nội tổng quát", "Nội thần kinh", "Đa khoa", "Thần kinh"],
+      "description": "Chẩn đoán và điều trị các bệnh lí bên trong cơ thể, rối loạn thần kinh chức năng, giấc ngủ, đau đầu, chuyển hóa và huyết áp.",
+      "keywords": [
+        "mất ngủ", "khó ngủ", "thức giấc", "chập chờn", "không ngủ được",
+        "đau đầu", "nhức đầu", "đau nửa đầu", "migraine", "căng đầu", "nặng đầu",
+        "mệt mỏi", "uể oải", "kiệt sức", "suy nhược", "đuối sức",
+        "chóng mặt", "hoa mắt", "choáng váng", "tiền đình", "mất thăng bằng",
+        "sốt nhẹ", "ớn lạnh", "khô miệng", "tê bì tay chân", "run tay", "đau nhức mình mẩy"
+      ],
+      "commonConditions": [
+        "Rối loạn giấc ngủ nguyên phát / thứ phát",
+        "Suy nhược thần kinh & Căng thẳng quá độ (Stress)",
+        "Hội chứng tiền đình ốc tai",
+        "Thiếu máu não cục bộ thoáng qua / Huyết áp bất thường"
+      ],
+      "analysisTemplate": "Các triệu chứng mất ngủ, đau đầu và mệt mỏi thường liên quan đến tình trạng căng thẳng kéo dài (stress), rối loạn nhịp sinh học, suy nhược thần kinh hoặc rối loạn tuần hoàn não. Hiện chưa đủ thông tin lâm sàng để kết luận chính xác nguyên nhân thực thể.",
+      "standardHandlingDirections": [
+        "Điều chỉnh thời gian ngủ và hạn chế caffeine, trà đậm hoặc thiết bị điện tử vào buổi chiều tối.",
+        "Theo dõi thời điểm đau đầu, mức độ mệt mỏi và chất lượng giấc ngủ trong 3 - 5 ngày.",
+        "Đặt lịch khám chuyên khoa Nội khoa / Nội thần kinh nếu triệu chứng kéo dài hoặc ảnh hưởng sinh hoạt để đo lưu huyết não và kiểm tra tổng quát."
+      ],
+      "screeningQuestions": [
+        "Bạn đã gặp tình trạng mất ngủ và đau đầu trong bao lâu (vài ngày, vài tuần hay vài tháng)?",
+        "Cơn đau đầu có kèm theo buồn nôn, sợ ánh sáng hay chóng mặt khi đổi tư thế không?",
+        "Gần đây bạn có đang trải qua giai đoạn áp lực công việc, học tập hoặc stress kéo dài không?"
+      ],
+      "emergencyWarningKeywords": ["liệt nửa người", "méo miệng", "nói đớ", "nói ngọng", "đau đầu sét đánh", "co giật", "ngất xỉu"]
+    },
+    {
+      "id": 2,
+      "specialtyName": "Tim mạch",
+      "departmentCode": "CARDIOLOGY",
+      "aliases": ["Tim và mạch máu", "Nội tim mạch", "Huyết áp"],
+      "description": "Chuyên điều trị bệnh lý tim, mạch vành, rối loạn nhịp tim và hệ tuần hoàn huyết áp.",
+      "keywords": [
+        "đau ngực", "tức ngực", "nặng ngực", "đau thắt ngực", "nhói ngực",
+        "hồi hộp", "đánh trống ngực", "tim đập nhanh", "loạn nhịp", "hụt hẫng ở tim", "bồn chồn lồng ngực",
+        "khó thở khi gắng sức", "khó thở khi nằm", "thở dốc", "hụt hơi",
+        "huyết áp cao", "tăng huyết áp", "tụt huyết áp", "huyết áp thấp",
+        "phù chân", "sưng mắt cá", "tím tái môi", "tím đầu chi"
+      ],
+      "commonConditions": [
+        "Tăng huyết áp vô căn / Bệnh tăng huyết áp giai đoạn I - II",
+        "Rối loạn nhịp tim (nhịp nhanh xoang, ngoại tâm thu)",
+        "Thiếu máu cơ tim cục bộ / Bệnh động mạch vành",
+        "Suy tim giai đoạn sớm"
+      ],
+      "analysisTemplate": "Các triệu chứng đau tức ngực, hồi hộp, tim đập nhanh hoặc khó thở là những dấu hiệu cảnh báo của hệ tim mạch và tuần hoàn máu. Cần theo dõi cẩn trọng để loại trừ bệnh thiếu máu cơ tim hoặc rối loạn huyết áp.",
+      "standardHandlingDirections": [
+        "Ngồi nghỉ ngơi ngay ở tư thế nửa nằm nửa ngồi, nới lỏng cổ áo và giữ nhịp thở sâu đều đặn.",
+        "Đo huyết áp và đếm nhịp tim lúc nghỉ ngơi, ghi lại chỉ số để cung cấp cho bác sĩ.",
+        "Đến chuyên khoa Tim mạch để thực hiện đo điện tâm đồ (ECG) và siêu âm tim tầm soát kịp thời."
+      ],
+      "screeningQuestions": [
+        "Cơn đau tức ngực có lan lên hàm, vai hoặc mặt trong cánh tay trái không?",
+        "Bạn có tiền sử huyết áp cao, mỡ máu cao hoặc gia đình có người mắc bệnh tim mạch không?",
+        "Khó thở xảy ra khi bạn vận động thể lực, leo cầu thang hay ngay cả lúc đang ngồi nghỉ?"
+      ],
+      "emergencyWarningKeywords": ["đau ngực dữ dội kéo dài trên 15 phút", "vã mồ hôi lạnh", "ngất xỉu", "khó thở dữ dội", "tím tái môi"]
+    },
+    {
+      "id": 3,
+      "specialtyName": "Tai Mũi Họng",
+      "departmentCode": "ENT",
+      "aliases": ["Tai - Mũi - Họng", "Họng - Thanh quản", "Xoang mũi"],
+      "description": "Chẩn đoán và điều trị các bệnh lý tai, mũi, họng, xoang trán và thanh quản.",
+      "keywords": [
+        "đau họng", "rát họng", "viêm họng", "nuốt đau", "vướng họng", "khô họng",
+        "ho khan", "ho có đờm", "ho kéo dài", "khản tiếng", "mất tiếng",
+        "nghẹt mũi", "sổ mũi", "chảy nước mũi", "ngạt mũi", "hắt xì", "viêm mũi",
+        "đau xoang", "nhức vùng trán", "nhức hốc mắt", "nhức cánh mũi",
+        "ù tai", "chảy mủ tai", "nghe kém", "đau tai", "ngứa tai"
+      ],
+      "commonConditions": [
+        "Viêm họng cấp tính / Viêm amidan hốc mủ",
+        "Viêm mũi xoang dị ứng / Viêm xoang cấp",
+        "Viêm thanh quản / Trào ngược dạ dày thực quản gây viêm họng",
+        "Viêm tai giữa cấp / Rối loạn vòi nhĩ"
+      ],
+      "analysisTemplate": "Các triệu chứng đau rát họng, nghẹt mũi, ho hoặc ù tai thường do nhiễm vi khuẩn, virus đường hô hấp trên hoặc viêm dị ứng xoang mũi. Cần nội soi để đánh giá mức độ tổn thương niêm mạc.",
+      "standardHandlingDirections": [
+        "Súc họng bằng nước muối sinh lý ấm 0.9% 3 - 4 lần mỗi ngày và uống nhiều nước ấm.",
+        "Giữ ấm vùng cổ ngực, tránh tiếp xúc gió lùa, bụi bẩn, khói thuốc lá và phòng máy lạnh quá lạnh.",
+        "Đặt lịch khám chuyên khoa Tai Mũi Họng để được nội soi niêm mạc họng, xoang và dùng thuốc kháng viêm an toàn nếu kéo dài > 4 ngày."
+      ],
+      "screeningQuestions": [
+        "Bạn có bị sốt cao kèm theo nuốt đau buốt hay thấy có đốm trắng ở amidan không?",
+        "Dịch mũi của bạn chảy ra trong loãng hay đặc quánh màu vàng/xanh?",
+        "Triệu chứng này xuất hiện sau khi thay đổi thời tiết, dầm mưa hay bắt đầu từ khi nào?"
+      ],
+      "emergencyWarningKeywords": ["khó thở do phù thanh quản", "nuốt nghẹn hoàn toàn", "ho ra máu tươi"]
+    },
+    {
+      "id": 4,
+      "specialtyName": "Da liễu",
+      "departmentCode": "DERMATOLOGY",
+      "aliases": ["Da liễu - Thẩm mỹ", "Bệnh ngoài da"],
+      "description": "Khám và điều trị bệnh lý da, lông tóc, móng, dị ứng mẩn ngứa và thẩm mỹ da.",
+      "keywords": [
+        "ngứa da", "ngứa ngáy", "nổi mề đay", "dị ứng da", "phát ban",
+        "nổi mẩn đỏ", "nổi mụn", "mụn bọc", "mụn viêm", "viêm da cơ địa",
+        "bong tróc", "khô nứt da", "vảy nến", "chàm da", "nấm da", "lang ben",
+        "rụng tóc", "nấm móng", "sẹo lồi", "bỏng rát da", "zona", "giời leo", "mụn nước"
+      ],
+      "commonConditions": [
+        "Viêm da dị ứng / Mề đay tiếp xúc cấp tính",
+        "Viêm da cơ địa (Eczema) / Vảy nến",
+        "Mụn trứng cá bội nhiễm",
+        "Nhiễm nấm da / Zona thần kinh (Herpes Zoster)"
+      ],
+      "analysisTemplate": "Các triệu chứng ngứa ngáy, mẩn đỏ, nổi mụn hay bong tróc da phản ánh phản ứng miễn dịch dị ứng, viêm da tiếp xúc hoặc nhiễm khuẩn/nấm ngoài da. Cần tránh tự ý bôi thuốc chứa corticoid bừa bãi.",
+      "standardHandlingDirections": [
+        "Tránh cào gãi mạnh làm trầy xước tổn thương, ngưng ngay các loại mỹ phẩm, xà phòng lạ mới sử dụng.",
+        "Tắm rửa nhẹ nhàng bằng nước ấm vừa phải, giữ vùng da tổn thương sạch sẽ và thông thoáng.",
+        "Đến chuyên khoa Da liễu để bác sĩ soi da, xác định đúng căn nguyên và chỉ định phác đồ bôi/uống an toàn."
+      ],
+      "screeningQuestions": [
+        "Nốt mẩn ngứa xuất hiện đột ngột sau khi ăn hải sản, uống thuốc hoặc tiếp xúc hóa chất lạ nào không?",
+        "Vùng da bị tổn thương có xuất hiện bọng nước đau rát, mưng mủ hay lây lan nhanh không?",
+        "Bạn đã tự thoa loại thuốc hoặc lá cây dân gian nào lên da chưa?"
+      ],
+      "emergencyWarningKeywords": ["sưng phù môi mắt", "khó thở sau dị ứng", "bong tróc da diện rộng toàn thân", "sốc phản vệ"]
+    },
+    {
+      "id": 5,
+      "specialtyName": "Nhi khoa",
+      "departmentCode": "PEDIATRICS",
+      "aliases": ["Trẻ em", "Khám nhi", "Sơ sinh"],
+      "description": "Chăm sóc sức khỏe toàn diện, tiêm chủng và điều trị bệnh lý cho trẻ sơ sinh và trẻ nhỏ dưới 16 tuổi.",
+      "keywords": [
+        "trẻ em", "bé sơ sinh", "trẻ nhỏ", "con nít", "bé con",
+        "bé sốt", "sốt ở trẻ", "trẻ sốt cao", "co giật do sốt", "bé nóng đầu",
+        "bé lười ăn", "biếng ăn", "chậm tăng cân", "nôn trớ", "tiêu chảy ở bé",
+        "trẻ quấy khóc", "thở khò khè ở trẻ", "trẻ nổi ban", "sởi trẻ em", "tay chân miệng", "rát miệng ở trẻ"
+      ],
+      "commonConditions": [
+        "Sốt siêu vi / Sốt phát ban trẻ em",
+        "Nhiễm khuẩn hô hấp trên / Viêm tiểu phế quản",
+        "Rối loạn tiêu hóa trẻ em / Tiêu chảy cấp do Rotavirus",
+        "Bệnh tay chân miệng hoặc thủy đậu"
+      ],
+      "analysisTemplate": "Triệu chứng ở trẻ em thường tiến triển nhanh do hệ miễn dịch còn non nớt. Cần theo dõi chặt chẽ thân nhiệt, mức độ tỉnh táo và khả năng bú/uống của bé để xử trí kịp thời.",
+      "standardHandlingDirections": [
+        "Theo dõi thân nhiệt của bé bằng nhiệt kế mỗi 2 giờ, lau mát nách/bẹn bằng nước ấm nếu sốt trên 38.5°C.",
+        "Bù nước và điện giải bằng dung dịch Oresol theo cân nặng, chia nhỏ các cữ sữa và bữa ăn lỏng.",
+        "Đưa bé đến chuyên khoa Nhi khám ngay nếu sốt cao liên tục không hạ, bé li bì, thở co rút lồng ngực hoặc bỏ bú."
+      ],
+      "screeningQuestions": [
+        "Bé hiện tại mấy tháng/tuổi và nhiệt độ cao nhất đo được là bao nhiêu độ C?",
+        "Bé có nôn ói mọi thứ, bỏ bú hoặc ngủ li bì khó đánh thức không?",
+        "Trong vòm họng, lòng bàn tay hay bàn chân của bé có nổi các nốt mụn nước nhỏ không?"
+      ],
+      "emergencyWarningKeywords": ["trẻ co giật", "tím tái môi đầu chi", "thở lõm ngực", "ngủ li bì gọi không tỉnh", "bỏ bú hoàn toàn"]
+    }
+  ]
+}
