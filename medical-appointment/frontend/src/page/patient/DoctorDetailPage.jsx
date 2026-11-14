@@ -1,7 +1,9 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchDoctorById, fetchScheduleSummary } from '../../service/doctorService';
 import { bookableSlotService } from '../../service/bookableSlotService';
+import { reviewService } from '../../service/reviewService';
+import DoctorReviewModal from '../../component/common/DoctorReviewModal';
 import { PatientContext } from '../../context/PatientContext';
 import { useToast } from '../../context/ToastContext';
 import DEFAULT_DOCTOR_IMAGE from '../../assets/doctor.webp';
@@ -15,6 +17,12 @@ export default function DoctorDetailPage() {
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [scheduleSummary, setScheduleSummary] = useState(null);
+
+  // Đánh giá Bác sĩ thật từ Backend
+  const [reviewSummary, setReviewSummary] = useState(null);
+  const [userReview, setUserReview] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // Chọn ngày khám & Slot
   const [selectedDate, setSelectedDate] = useState('');
@@ -37,6 +45,50 @@ export default function DoctorDetailPage() {
     }
     return days;
   })();
+
+  // Lấy ID bệnh nhân hiện tại đang đăng nhập
+  const currentPatientId = patient?.id || (() => {
+    try {
+      const p = sessionStorage.getItem('patient');
+      return p ? JSON.parse(p)?.id : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  // Nạp danh sách & tóm tắt đánh giá thật từ backend
+  const loadReviews = useCallback(async () => {
+    if (!id) return;
+    setReviewsLoading(true);
+    try {
+      const res = await reviewService.getDoctorReviews(id);
+      if (res?.success && res?.data) {
+        setReviewSummary(res.data);
+      }
+    } catch (err) {
+      console.error('Lỗi tải đánh giá bác sĩ:', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [id]);
+
+  // Kiểm tra xem bệnh nhân hiện tại đã từng đánh giá bác sĩ này chưa
+  const checkUserReview = useCallback(async () => {
+    if (!id || !currentPatientId) {
+      setUserReview(null);
+      return;
+    }
+    try {
+      const res = await reviewService.getPatientReviewForDoctor(id, currentPatientId);
+      if (res?.success && res?.data) {
+        setUserReview(res.data);
+      } else {
+        setUserReview(null);
+      }
+    } catch (err) {
+      console.error('Lỗi kiểm tra đánh giá của người dùng:', err);
+    }
+  }, [id, currentPatientId]);
 
   // Nạp dữ liệu Bác Sĩ & Lịch trực
   useEffect(() => {
@@ -64,7 +116,12 @@ export default function DoctorDetailPage() {
     };
 
     loadData();
-  }, [id]);
+    loadReviews();
+  }, [id, loadReviews]);
+
+  useEffect(() => {
+    checkUserReview();
+  }, [checkUserReview]);
 
   // Nạp Slot khả dụng khi ngày được chọn thay đổi
   useEffect(() => {
@@ -153,8 +210,12 @@ export default function DoctorDetailPage() {
   // Dữ liệu tiểu sử mẫu y khoa chuẩn hóa nếu DB còn trống
   const degree = doctor.experienceYears >= 10 ? 'ThS. BSCKII' : doctor.experienceYears >= 5 ? 'ThS. BSCKI' : 'Bác sĩ';
   const displayPrice = doctor.pricePerAppointment || 250000;
-  const ratingScore = '4.9';
-  const totalReviews = 120 + ((doctor.id * 17) % 80);
+  const ratingScore = reviewSummary?.averageRating != null
+    ? Number(reviewSummary.averageRating).toFixed(1)
+    : (doctor.averageRating != null ? Number(doctor.averageRating).toFixed(1) : '5.0');
+  const totalReviews = reviewSummary?.totalReviews != null
+    ? reviewSummary.totalReviews
+    : (doctor.totalReviews ?? 0);
   const totalCompleted = 850 + ((doctor.id * 93) % 600);
 
   return (
@@ -546,53 +607,179 @@ export default function DoctorDetailPage() {
             </div>
 
             {/* 4. Đánh giá của bệnh nhân */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 md:p-7 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 md:p-7 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm">
                     <i className="fas fa-star"></i>
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-                    Đánh Giá Từ Bệnh Nhân Đã Khám ({totalReviews})
-                  </h3>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+                      Đánh Giá & Nhận Xét Từ Người Bệnh ({totalReviews})
+                    </h3>
+                    <p className="text-[11px] text-slate-500">Phản hồi thực tế từ các ca khám hoàn tất</p>
+                  </div>
                 </div>
-                <span className="text-xs font-bold text-amber-600">⭐ {ratingScore} / 5.0</span>
+
+                {/* Nút Viết / Sửa đánh giá */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                    ⭐ {ratingScore} / 5.0
+                  </span>
+                  {userReview ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowReviewModal(true)}
+                      className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <i className="fas fa-edit text-amber-600"></i>
+                      <span>Sửa Đánh Giá Của Bạn</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!currentPatientId) {
+                          setShowAuthModal(true);
+                        } else {
+                          setShowReviewModal(true);
+                        }
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm shadow-blue-500/20 cursor-pointer"
+                    >
+                      <i className="fas fa-pen text-blue-200"></i>
+                      <span>Viết Đánh Giá</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-3.5">
-                {/* Review 1 */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">
-                        H
-                      </div>
-                      <span className="font-bold text-slate-900">Hoàng Thị Mai</span>
-                      <span className="text-[10px] text-slate-400">Đã khám ngày 28/10/2026</span>
-                    </div>
-                    <span className="text-amber-500 text-[11px]">⭐⭐⭐⭐⭐</span>
+              {/* Thẻ Thống kê điểm số & Phân bố sao */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl items-center">
+                <div className="md:col-span-4 text-center md:border-r md:border-slate-200/80 md:pr-4 space-y-1">
+                  <div className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">
+                    {ratingScore} <span className="text-sm font-normal text-slate-400">/ 5.0</span>
                   </div>
-                  <p className="text-slate-700 leading-relaxed">
-                    Bác sĩ {doctor.fullName} khám rất tỉ mỉ và ân cần. Giải thích kỹ từng chỉ số xét nghiệm và giải đáp tận tình mọi câu hỏi của người bệnh. Uống thuốc theo toa 3 ngày là đỡ hẳn.
+                  <div className="text-amber-400 text-sm flex items-center justify-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <i
+                        key={star}
+                        className={`fas fa-star ${
+                          star <= Math.round(Number(ratingScore)) ? "text-amber-400" : "text-slate-200"
+                        }`}
+                      ></i>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Dựa trên <strong>{totalReviews}</strong> lượt đánh giá
                   </p>
                 </div>
 
-                {/* Review 2 */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5 text-xs">
+                <div className="md:col-span-8 space-y-1.5 text-xs">
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = reviewSummary?.ratingBreakdown?.[star] || 0;
+                    const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
+                    return (
+                      <div key={star} className="flex items-center gap-2 text-[11px]">
+                        <span className="w-10 text-slate-600 font-medium shrink-0 flex items-center gap-0.5">
+                          {star} <i className="fas fa-star text-[10px] text-amber-400"></i>
+                        </span>
+                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-amber-400 rounded-full transition-all duration-300"
+                            style={{ width: `${pct}%` }}
+                          ></div>
+                        </div>
+                        <span className="w-12 text-right text-slate-500 font-mono shrink-0">
+                          {count} ({pct}%)
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Đánh giá riêng của người dùng nếu có */}
+              {userReview && (
+                <div className="p-4 bg-gradient-to-r from-amber-50/70 to-blue-50/60 border border-amber-300/80 rounded-2xl space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">
-                        T
-                      </div>
-                      <span className="font-bold text-slate-900">Trần Quốc Bảo</span>
-                      <span className="text-[10px] text-slate-400">Đã khám ngày 24/10/2026</span>
+                      <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white font-bold text-[10px] uppercase tracking-wider">
+                        Đánh giá của bạn
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        {userReview.updatedAt
+                          ? `Cập nhật: ${new Date(userReview.updatedAt).toLocaleDateString("vi-VN")}`
+                          : `Ngày: ${new Date(userReview.createdAt).toLocaleDateString("vi-VN")}`}
+                      </span>
                     </div>
-                    <span className="text-amber-500 text-[11px]">⭐⭐⭐⭐⭐</span>
+                    <div className="text-amber-500 text-xs font-mono">
+                      {"★".repeat(userReview.rating)}
+                      {"☆".repeat(5 - userReview.rating)}
+                    </div>
                   </div>
-                  <p className="text-slate-700 leading-relaxed">
-                    Đặt lịch trực tuyến qua hệ thống Klinik rất tiện lợi, đến nơi có nhân viên điều dưỡng hướng dẫn vào phòng khám ngay. Bác sĩ chuyên môn rất giỏi, dặn dò chế độ kiêng cữ chu đáo.
+                  <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                    "{userReview.comment}"
                   </p>
                 </div>
+              )}
+
+              {/* Danh sách các nhận xét từ bệnh nhân */}
+              <div className="space-y-3 pt-1">
+                {reviewsLoading ? (
+                  <div className="py-6 text-center text-xs text-slate-400 space-y-1">
+                    <i className="fas fa-spinner fa-spin text-blue-600"></i>
+                    <p>Đang tải các đánh giá mới nhất...</p>
+                  </div>
+                ) : reviewSummary?.reviews && reviewSummary.reviews.length > 0 ? (
+                  reviewSummary.reviews.map((rev) => {
+                    const initials = rev.patientName
+                      ? rev.patientName.trim().split(" ").slice(-1)[0][0]?.toUpperCase()
+                      : "P";
+                    return (
+                      <div
+                        key={rev.id}
+                        className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5 text-xs hover:border-slate-200 transition"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs">
+                              {initials}
+                            </div>
+                            <span className="font-bold text-slate-900">{rev.patientName || "Bệnh nhân ẩn danh"}</span>
+                            <span className="text-[10px] text-slate-400">
+                              {rev.createdAt
+                                ? new Date(rev.createdAt).toLocaleDateString("vi-VN")
+                                : "Gần đây"}
+                            </span>
+                            {rev.appointmentCode && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-mono">
+                                #{rev.appointmentCode}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-amber-400 text-xs">
+                            {"★".repeat(rev.rating)}
+                            <span className="text-slate-300">{"★".repeat(5 - rev.rating)}</span>
+                          </div>
+                        </div>
+                        <p className="text-slate-700 leading-relaxed pl-9">
+                          {rev.comment}
+                        </p>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-base">
+                      <i className="far fa-star"></i>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-700">Chưa có nhận xét nào</p>
+                    <p className="text-[11px] text-slate-500">
+                      Hãy là người đầu tiên chia sẻ trải nghiệm khám bệnh với Bác sĩ {doctor.fullName}.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -646,6 +833,21 @@ export default function DoctorDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Đánh giá & Chấm sao Bác sĩ */}
+      {showReviewModal && (
+        <DoctorReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          doctor={doctor}
+          patientId={currentPatientId}
+          existingReview={userReview}
+          onSuccess={() => {
+            loadReviews();
+            checkUserReview();
+          }}
+        />
       )}
 
     </div>

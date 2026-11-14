@@ -5,7 +5,9 @@ import { fetchAllDoctor, fetchScheduleSummary } from "../../service/doctorServic
 import { bookableSlotService } from "../../service/bookableSlotService";
 import { reportService } from "../../service/reportService";
 import { medicalRecordService } from "../../service/medicalRecordService";
+import { reviewService } from "../../service/reviewService";
 import MedicalRecordModal from "../../component/common/MedicalRecordModal";
+import DoctorReviewModal from "../../component/common/DoctorReviewModal";
 import { useToast } from "../../context/ToastContext";
 
 export default function BookingHistory() {
@@ -15,6 +17,12 @@ export default function BookingHistory() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Đánh giá Bác sĩ
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewTargetDoctor, setReviewTargetDoctor] = useState(null);
+  const [reviewTargetAppt, setReviewTargetAppt] = useState(null);
+  const [existingPatientReview, setExistingPatientReview] = useState(null);
 
   const [selectedAppt, setSelectedAppt] = useState(null);
   const [rescheduleAppt, setRescheduleAppt] = useState(null);
@@ -320,6 +328,29 @@ export default function BookingHistory() {
     }
   };
 
+  const handleOpenReviewModal = async (appt) => {
+    if (!appt?.doctor) {
+      showToastWarning("Thiếu thông tin", "Không tìm thấy thông tin bác sĩ phụ trách ca khám này.");
+      return;
+    }
+    setReviewTargetDoctor(appt.doctor);
+    setReviewTargetAppt(appt);
+    const pId = patient?.id;
+    if (pId) {
+      try {
+        const res = await reviewService.getPatientReviewForDoctor(appt.doctor.id, pId);
+        if (res?.success && res?.data) {
+          setExistingPatientReview(res.data);
+        } else {
+          setExistingPatientReview(null);
+        }
+      } catch {
+        setExistingPatientReview(null);
+      }
+    }
+    setShowReviewModal(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -569,6 +600,19 @@ export default function BookingHistory() {
                                 </button>
                               )}
 
+                              {/* Đánh giá Bác sĩ */}
+                              {appt.status === "completed" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenReviewModal(appt)}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 hover:border-amber-400 transition shadow-2xs cursor-pointer"
+                                  title="Đánh giá & chấm sao bác sĩ sau ca khám"
+                                >
+                                  <i className="fas fa-star text-amber-500"></i>
+                                  <span>Đánh giá</span>
+                                </button>
+                              )}
+
                               {/* Dời lịch */}
                               {appt.status === "pending" && (
                                 <button
@@ -785,18 +829,33 @@ export default function BookingHistory() {
               )}
 
               {selectedAppt.status === "completed" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const target = selectedAppt;
-                    setSelectedAppt(null);
-                    handleViewMedicalRecord(target);
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <i className="fas fa-file-medical"></i>
-                  <span>Xem Bệnh Án & Toa Thuốc</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = selectedAppt;
+                      setSelectedAppt(null);
+                      handleViewMedicalRecord(target);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <i className="fas fa-file-medical"></i>
+                    <span>Xem Bệnh Án & Toa Thuốc</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = selectedAppt;
+                      setSelectedAppt(null);
+                      handleOpenReviewModal(target);
+                    }}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <i className="fas fa-star text-amber-200"></i>
+                    <span>Đánh Giá Bác Sĩ</span>
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -966,6 +1025,26 @@ export default function BookingHistory() {
           onClose={() => setShowMedicalRecordModal(false)}
           record={activeMedicalRecord}
           appointment={selectedRecordAppt}
+        />
+      )}
+
+      {/* Modal Đánh Giá Bác Sĩ Chuẩn Y Tế */}
+      {showReviewModal && reviewTargetDoctor && (
+        <DoctorReviewModal
+          isOpen={showReviewModal}
+          onClose={() => {
+            setShowReviewModal(false);
+            setReviewTargetDoctor(null);
+            setReviewTargetAppt(null);
+            setExistingPatientReview(null);
+          }}
+          doctor={reviewTargetDoctor}
+          appointment={reviewTargetAppt}
+          patientId={patient?.id}
+          existingReview={existingPatientReview}
+          onSuccess={() => {
+            showToastSuccess("Đã lưu đánh giá", "Cảm ơn bạn đã phản hồi đánh giá bác sĩ!");
+          }}
         />
       )}
     </div>

@@ -2,6 +2,17 @@ import axios from 'axios';
 import { API_ENDPOINT } from '../config/apiConfig'; 
 
 const PatientService = {
+  // Lấy thông tin chi tiết patient theo ID
+  getPatientById: async (id) => {
+    try {
+      const res = await axios.get(`${API_ENDPOINT}/api/patient/${id}`);
+      return res.data;
+    } catch (error) {
+      console.error("Lỗi lấy thông tin patient:", error);
+      throw error;
+    }
+  },
+
   // Cập nhật thông tin patient
   updatePatient: async (id, patientData) => {
     try {

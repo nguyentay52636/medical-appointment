@@ -36,7 +36,7 @@ export default function NavBar() {
         { to: "about", label: "Về Chúng Tôi" },
         { to: "specialty", label: "Chuyên Khoa" },
         { to: "doctor_list", label: "Đội ngũ bác sĩ" },
-        { to: "ai-consult", label: "🤖 Tư Vấn AI" },
+        { to: "ai-consult", label: " Tư Vấn AI" },
         { to: "contact", label: "Liên Hệ" },
         { to: "support", label: "Hỗ Trợ" },
         { to: "condition", label: "Điều Khoản" },
@@ -290,7 +290,7 @@ export default function NavBar() {
                         <button
                             className="w-full bg-blue-600 text-white py-2 rounded-lg mb-3 cursor-pointer hover:bg-blue-700 transition"
                             onClick={() => {
-                                setShowAuthModal(false); 
+                                setShowAuthModal(false);
                                 navigate("/patient/login");
                             }}
                         >
@@ -300,7 +300,7 @@ export default function NavBar() {
                         <button
                             className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg cursor-pointer hover:bg-gray-300 transition"
                             onClick={() => {
-                                setShowAuthModal(false); 
+                                setShowAuthModal(false);
                                 navigate("/patient/register");
                             }}
                         >

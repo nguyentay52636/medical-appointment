@@ -112,6 +112,16 @@ public class PatientController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getPatientById(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(patientService.getPatientById(id));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/admin/{id}")
     public ResponseEntity<?> deletePatient(@PathVariable Integer id) {
         try {

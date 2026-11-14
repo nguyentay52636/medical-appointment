@@ -28,6 +28,10 @@ public class DoctorDTO {
     private Timestamp createdAt;
     private Double lat;
     private Double lng;
+    @Builder.Default
+    private Double averageRating = 5.0;
+    @Builder.Default
+    private Integer totalReviews = 0;
 
     public DoctorDTO(Doctor doctor) {
         if (doctor == null) return;

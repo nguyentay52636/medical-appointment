@@ -373,4 +373,40 @@ Thay vì nhồi nhét mã nguồn vào các file lớn (trước đây `AdminDoc
 | 4 | **Trang Chi Tiết Bác Sĩ & Slot Booking** | Hoàn thiện 100% | PASS ✅ | Hồ sơ BS đầy đủ, chọn ngày/slot 7 ngày tới, chuyển thẳng Booking 1-click. |
 | 5 | **AI Triage & CRM Chuyên Khoa** | Hoàn thiện 100% | PASS ✅ | Tách CRM JSON độc lập, tích hợp OpenRouter (Gemma/Nemotron), fallback CRM zero-downtime. |
 | 6 | **Hệ Thống Toast & Confirm Y Tế** | Hoàn thiện 100% | PASS ✅ | Thay thế hoàn toàn alert mặc định, giao diện chuẩn Hospital Grade đồng bộ toàn web. |
+| 7 | **Đánh Giá & Chấm Sao Bác Sĩ (Reviews)** | Hoàn thiện 100% | PASS ✅ | Bảng `doctor_review` MySQL, REST API Upsert, mỗi BN 1 đánh giá / 1 BS, cập nhật real-time. |
+
+---
+
+## 12. PHÂN HỆ ĐÁNH GIÁ & CHẤM SAO BÁC SĨ THỰC TẾ (DOCTOR REVIEW & RATING SYSTEM)
+
+> **Cập nhật ngày 14/11/2026**: Xóa bỏ hoàn toàn dữ liệu tĩnh (mock data) trên trang chi tiết bác sĩ; xây dựng hệ thống đánh giá thật từ CSDL MySQL -> Spring Boot API -> Giao diện React. Mỗi bệnh nhân được đánh giá 1 lần cho mỗi bác sĩ và được chỉnh sửa đánh giá bất kỳ lúc nào.
+
+### 12.1. Cơ sở dữ liệu MySQL (`doctor_review`)
+- Khóa chính `id`, khóa ngoại `doctor_id`, `patient_id`, `appointment_id`.
+- Ràng buộc duy nhất: `UNIQUE KEY unique_doctor_patient_review (doctor_id, patient_id)`.
+- Điểm đánh giá `rating` (1 - 5 sao), nhận xét `comment` (TEXT), `created_at`, `updated_at`.
+
+### 12.2. Backend Spring Boot REST API (`/api/reviews`)
+- Entity: `DoctorReview.java`
+- DTO: `DoctorReviewDTO.java`, `DoctorReviewSummaryDTO.java`
+- Repository: `DoctorReviewRepository.java` (JPQL tính `AVG(rating)` và `COUNT(rating)` theo thời gian thực)
+- Service: `DoctorReviewService.java` (Áp dụng mẫu Upsert: Tạo mới nếu chưa có, Cập nhật nếu đã có)
+- Controller: `DoctorReviewController.java`:
+  - `POST /api/reviews`: Lưu hoặc chỉnh sửa đánh giá.
+  - `GET /api/reviews/doctor/{doctorId}`: Lấy tóm tắt điểm trung bình, cơ cấu sao và danh sách nhận xét.
+  - `GET /api/reviews/doctor/{doctorId}/patient/{patientId}`: Kiểm tra đánh giá của bệnh nhân đối với bác sĩ.
+  - `DELETE /api/reviews/{id}`: Xóa đánh giá.
+
+### 12.3. Frontend React (`DoctorReviewModal.jsx`, `DoctorDetailPage.jsx`, `BookingHistoryPage.jsx`)
+1. **Modal Đánh Giá Bác Sĩ (`DoctorReviewModal.jsx`)**:
+   - Chọn sao tương tác (1-5 sao) kèm nhãn cảm xúc trực quan.
+   - Ô nhập nhận xét chi tiết có kiểm tra độ dài.
+   - Nút *"Gửi Đánh Giá Ngay"* khi tạo mới hoặc *"Cập Nhật Đánh Giá"* khi chỉnh sửa.
+2. **Trang Lịch Sử Đặt Lịch (`BookingHistoryPage.jsx`)**:
+   - Bổ sung nút bấm **⭐ Đánh giá** cho các ca khám đã hoàn tất (`completed`).
+3. **Trang Chi Tiết Bác Sĩ (`DoctorDetailPage.jsx`)**:
+   - Hiển thị điểm số thật (`averageRating`) và số lượt đánh giá thật (`totalReviews`).
+   - Thanh phân bố phần trăm số sao (5 sao -> 1 sao).
+   - Nổi bật thẻ *"Đánh giá của bạn dành cho Bác sĩ"* và nút *"Sửa Đánh Giá Của Bạn"*.
+   - Danh sách nhận xét từ các bệnh nhân thực tế và tự động cập nhật real-time ngay sau khi gửi đánh giá.
 

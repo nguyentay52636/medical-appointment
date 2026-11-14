@@ -125,6 +125,12 @@ public class PatientService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    public com.example.j2ee_backend.dto.PatientDTO getPatientById(Integer id) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bệnh nhân với ID: " + id));
+        return new com.example.j2ee_backend.dto.PatientDTO(patient);
+    }
+
     public void deletePatient(Integer id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bệnh nhân với ID: " + id));

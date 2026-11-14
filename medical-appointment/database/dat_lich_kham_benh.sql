@@ -463,6 +463,39 @@ CREATE TABLE IF NOT EXISTS `medical_record` (
   CONSTRAINT `fk_record_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `doctor_review` (Đánh giá & Chấm sao Bác sĩ sau khám)
+--
+
+CREATE TABLE IF NOT EXISTS `doctor_review` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `doctor_id` int(11) NOT NULL,
+  `patient_id` int(11) NOT NULL,
+  `appointment_id` int(11) DEFAULT NULL,
+  `rating` int(11) NOT NULL DEFAULT 5,
+  `comment` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_doctor_patient_review` (`doctor_id`, `patient_id`),
+  KEY `fk_review_doctor` (`doctor_id`),
+  KEY `fk_review_patient` (`patient_id`),
+  KEY `fk_review_appointment` (`appointment_id`),
+  CONSTRAINT `fk_review_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_review_patient` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_review_appointment` FOREIGN KEY (`appointment_id`) REFERENCES `appointment` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang nạp dữ liệu ban đầu cho bảng `doctor_review`
+--
+
+INSERT INTO `doctor_review` (`id`, `doctor_id`, `patient_id`, `appointment_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 1, 5, 'Bác sĩ Nguyễn Văn A khám rất tỉ mỉ và ân cần. Giải thích kỹ từng chỉ số xét nghiệm và giải đáp tận tình mọi câu hỏi của người bệnh. Uống thuốc theo toa 3 ngày là đỡ hẳn.', '2026-10-28 09:30:00', '2026-10-28 09:30:00'),
+(2, 1, 2, NULL, 5, 'Đặt lịch trực tuyến qua hệ thống Klinik rất tiện lợi, đến nơi có nhân viên điều dưỡng hướng dẫn vào phòng khám ngay. Bác sĩ chuyên môn rất giỏi, dặn dò chế độ kiêng cữ chu đáo.', '2026-10-29 14:15:00', '2026-10-29 14:15:00');
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -4,6 +4,7 @@ import com.example.j2ee_backend.dto.DoctorDTO;
 import com.example.j2ee_backend.dto.PasswordChangeRequestDTO;
 import com.example.j2ee_backend.entity.Doctor;
 import com.example.j2ee_backend.repository.DoctorRepository;
+import com.example.j2ee_backend.repository.DoctorReviewRepository;
 import com.example.j2ee_backend.service.AppointmentService;
 import com.example.j2ee_backend.service.DoctorService;
 import com.example.j2ee_backend.service.GeocodeService;
@@ -31,6 +32,9 @@ public class DoctorController {
 
     @Autowired
     private final GeocodeService geocodeService;
+
+    @Autowired
+    private final DoctorReviewRepository doctorReviewRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request){
@@ -74,14 +78,32 @@ public class DoctorController {
 
     @GetMapping("/all")
     public List<DoctorDTO> getAllDoctors() {
-        return doctorServices.getAllDoctors();
+        List<DoctorDTO> list = doctorServices.getAllDoctors();
+        if (doctorReviewRepository != null) {
+            for (DoctorDTO dto : list) {
+                if (dto.getId() != null) {
+                    Double avg = doctorReviewRepository.getAverageRatingByDoctorId(dto.getId());
+                    Integer count = doctorReviewRepository.countReviewsByDoctorId(dto.getId());
+                    dto.setAverageRating(avg != null ? Math.round(avg * 10.0) / 10.0 : 5.0);
+                    dto.setTotalReviews(count != null ? count : 0);
+                }
+            }
+        }
+        return list;
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getDoctorById(@PathVariable("id") Integer id) {
         try {
             Doctor doctor = doctorServices.findById(id);
-            return ResponseEntity.ok(new DoctorDTO(doctor));
+            DoctorDTO dto = new DoctorDTO(doctor);
+            if (doctorReviewRepository != null) {
+                Double avg = doctorReviewRepository.getAverageRatingByDoctorId(id);
+                Integer count = doctorReviewRepository.countReviewsByDoctorId(id);
+                dto.setAverageRating(avg != null ? Math.round(avg * 10.0) / 10.0 : 5.0);
+                dto.setTotalReviews(count != null ? count : 0);
+            }
+            return ResponseEntity.ok(dto);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
