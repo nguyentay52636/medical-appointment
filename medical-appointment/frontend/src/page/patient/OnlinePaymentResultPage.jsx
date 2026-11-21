@@ -26,8 +26,9 @@ export default function PaymentResult() {
 
     const fetchPaymentResult = async () => {
       try {
+        const allQueryParams = Object.fromEntries(searchParams.entries());
         const [apptData, doctorData] = await Promise.all([
-          appointmentService.getPaymentResult(txnRef, responseCode),
+          appointmentService.getPaymentResult(txnRef, responseCode, allQueryParams),
           fetchAllDoctor.getAllDoctors()
         ]);
 
@@ -86,38 +87,61 @@ export default function PaymentResult() {
         </p>
 
         {/* Card thông tin chi tiết */}
-        <div className="text-left bg-gray-50 p-4 rounded-xl space-y-2 mb-6 shadow-inner">
-          <p><span className="font-semibold">Mã lịch:</span> {appt.appointmentCode}</p>
+        <div className="text-left bg-gray-50 p-4 rounded-xl space-y-2 mb-6 shadow-inner text-sm">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span className="font-semibold text-gray-600">Trạng thái:</span>
+            <span className={`px-2.5 py-0.5 rounded-full font-bold text-xs ${
+              isPaid ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
+            }`}>
+              {isPaid ? "Đã Xác Nhận & Đã Thanh Toán" : "Chưa Hoàn Tất"}
+            </span>
+          </div>
+          <p><span className="font-semibold">Mã lịch hẹn:</span> <span className="font-mono font-bold text-blue-700">{appt.appointmentCode}</span></p>
           <p><span className="font-semibold">Ngày khám:</span> {appt.date ? new Date(appt.date).toLocaleDateString("vi-VN") : "-"}</p>
-          <p><span className="font-semibold">Giờ bắt đầu:</span> {appt.time || "-"}</p>
-          <p><span className="font-semibold">Giờ kết thúc:</span> {appt.endTime || "-"}</p>
+          <p><span className="font-semibold">Giờ khám:</span> {appt.time || "-"} {appt.endTime ? `- ${appt.endTime}` : ""}</p>
           <p><span className="font-semibold">Lý do khám:</span> {appt.reason || "Không có"}</p>
-          <p><span className="font-semibold">Ghi chú:</span> {appt.note || "Không có"}</p>
-          <p><span className="font-semibold">Địa chỉ:</span> {doctor?.address}</p>
+          {appt.note && <p><span className="font-semibold">Ghi chú:</span> {appt.note}</p>}
+          <p><span className="font-semibold">Địa chỉ:</span> {doctor?.address || "Phòng khám MediCare Clinic"}</p>
         </div>
 
         {/* Thông báo hẹn gặp nếu thanh toán thành công */}
         {isPaid && (
-          <div className="bg-blue-50 p-4 rounded-xl text-blue-700 font-medium mb-6">
-            Hẹn gặp bạn vào ngày khám. Chúc bạn sức khỏe tốt!
+          <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 font-medium mb-6 flex items-center justify-center gap-2">
+            <i className="fas fa-check-circle text-emerald-600"></i>
+            <span>Lịch hẹn đã được hệ thống ghi nhận thành công. Hẹn gặp bạn vào ngày khám!</span>
           </div>
         )}
 
         {/* Thông báo nếu thất bại */}
         {!isPaid && (
-          <div className="bg-red-50 p-4 rounded-xl text-red-700 font-medium mb-6">
+          <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700 font-medium mb-6">
             Thanh toán không thành công. Vui lòng thử lại để hoàn tất đặt lịch.
           </div>
         )}
 
-        <button
-          onClick={() => navigate(isPaid ? "/patient/home" : `/patient/payment?appointmentId=${appt.id}`)}
-          className={`px-6 py-3 font-bold rounded-xl transition cursor-pointer ${
-            isPaid ? "bg-green-600 text-white hover:bg-green-700" : "bg-red-600 text-white hover:bg-red-700"
-          }`}
-        >
-          {isPaid ? "Quay lại trang chủ" : "Thử lại thanh toán"}
-        </button>
+        {/* Nút thao tác */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {isPaid && (
+            <button
+              onClick={() => navigate("/patient/history")}
+              className="px-6 py-3 font-bold rounded-xl transition cursor-pointer bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 shadow-md"
+            >
+              <i className="fas fa-calendar-check"></i>
+              <span>Xem Lịch Hẹn Của Tôi</span>
+            </button>
+          )}
+          <button
+            onClick={() => navigate(isPaid ? "/patient/home" : `/patient/booking`)}
+            className={`px-6 py-3 font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-2 ${
+              isPaid
+                ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                : "bg-red-600 hover:bg-red-700 text-white"
+            }`}
+          >
+            <i className={`fas ${isPaid ? "fa-home" : "fa-undo"}`}></i>
+            <span>{isPaid ? "Về trang chủ" : "Thử lại đặt lịch"}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

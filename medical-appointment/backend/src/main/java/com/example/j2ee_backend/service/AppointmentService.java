@@ -301,8 +301,9 @@ public class AppointmentService {
 
     public AppointmentDTO getAppointmentByTxnRef(String txnRef) {
         return appointmentRepository.findByVnpTxnRef(txnRef)
+                .or(() -> appointmentRepository.findByAppointmentCode(txnRef))
                 .map(AppointmentDTO::new)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch khám với mã VNPay: " + txnRef));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch khám với mã giao dịch / mã hẹn: " + txnRef));
     }
 
     // Cập nhật trạng thái thanh toán của lịch khám
@@ -327,17 +328,65 @@ public class AppointmentService {
         } else {
             appointment.setPaymentStatus(status.toLowerCase());
 
-            // Nếu thanh toán thành công (offline/online) và lịch hẹn hợp lệ -> đánh dấu slot booked
+            // Nếu thanh toán thành công (offline/online) và lịch hẹn hợp lệ -> đánh dấu slot booked và tự động xác nhận lịch hẹn
             if ("paid".equalsIgnoreCase(status)) {
                 BookableSlot slot = appointment.getBookableSlot();
                 if (slot != null && !"booked".equalsIgnoreCase(slot.getStatus())) {
                     slot.setStatus("booked");
                     slotRepo.save(slot);
                 }
+                // Tự động xác nhận lịch hẹn khi đã thanh toán thành công
+                if ("pending".equalsIgnoreCase(appointment.getStatus())) {
+                    appointment.setStatus("confirmed");
+                    appointment.setUpdateAt(Timestamp.valueOf(LocalDateTime.now()));
+                }
             }
         }
 
         appointmentRepository.save(appointment);
+    }
+
+    /**
+     * Thanh toán trực tiếp trên trình duyệt (Direct / Instant Payment)
+     * Xác nhận thanh toán thành công, đặt slot thành booked và xác nhận lịch hẹn ngay lập tức
+     */
+    @Transactional
+    public AppointmentDTO payDirect(Integer appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Lịch khám không tồn tại: " + appointmentId));
+
+        appointment.setPaymentStatus("paid");
+        appointment.setStatus("confirmed");
+        appointment.setUpdateAt(Timestamp.valueOf(LocalDateTime.now()));
+
+        BookableSlot slot = appointment.getBookableSlot();
+        if (slot != null) {
+            slot.setStatus("booked");
+            slotRepo.save(slot);
+        }
+
+        Appointment saved = appointmentRepository.save(appointment);
+
+        // Tạo thông báo xác nhận cho bác sĩ
+        try {
+            if (saved.getPatient() != null && slot != null) {
+                Notification notification = new Notification();
+                notification.setDoctor(slot.getDoctor());
+                notification.setPatient(saved.getPatient());
+                notification.setTitle("Đã thanh toán & Xác nhận: " + saved.getAppointmentCode());
+                notification.setMessage("Bệnh nhân " + saved.getPatient().getFullName()
+                        + " đã thanh toán trực tuyến thành công phí khám ("
+                        + (saved.getPrice() != null ? saved.getPrice() : 200000)
+                        + "đ). Lịch hẹn đã được xác nhận tự động!");
+                notification.setRead(false);
+                notification.setCreatedAt(LocalDateTime.now());
+                notificationRepo.save(notification);
+            }
+        } catch (Exception ex) {
+            System.err.println("Lỗi tạo notification payDirect: " + ex.getMessage());
+        }
+
+        return new AppointmentDTO(saved);
     }
 
     @Transactional

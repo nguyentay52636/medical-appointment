@@ -14,13 +14,29 @@ export const appointmentService = {
     return res.data;
   },
 
-  getPaymentResult: async (vnpTxnRef, vnpResponseCode) => {
+  getPaymentResult: async (vnpTxnRef, vnpResponseCode, allParams = {}) => {
     const res = await axios.get(`${API_ENDPOINT}/api/appointment/payment/result`, {
       params: {
+        ...allParams,
         vnp_TxnRef: vnpTxnRef,
         vnp_ResponseCode: vnpResponseCode
       }
     });
+    return res.data;
+  },
+
+  checkPaymentStatus: async (appointmentId) => {
+    const res = await axios.get(`${API_ENDPOINT}/api/appointment/payment/status/${appointmentId}`);
+    return res.data;
+  },
+
+  payDirect: async (appointmentId) => {
+    const res = await axios.post(`${API_ENDPOINT}/api/appointment/payment/pay-direct/${appointmentId}`);
+    return res.data;
+  },
+
+  recreatePaymentUrl: async (appointmentId) => {
+    const res = await axios.post(`${API_ENDPOINT}/api/appointment/payment/create-url/${appointmentId}`);
     return res.data;
   },
 

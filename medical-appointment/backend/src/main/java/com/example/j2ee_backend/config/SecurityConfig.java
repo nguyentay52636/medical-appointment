@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/specialty/**").permitAll()
                         .requestMatchers("/api/medical-record/**").permitAll()
                         .requestMatchers("/api/reviews/**").permitAll()
+                        .requestMatchers("/api/appointment/payment/**").permitAll()
                         .requestMatchers("/swagger-ui/index.html").permitAll()
 
                         // Mọi request khác (tạm thời, sau này nên đổi thành .authenticated())

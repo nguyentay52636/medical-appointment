@@ -33,6 +33,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
     Optional<Appointment> findByVnpTxnRef(String vnpTxnRef);
 
+    Optional<Appointment> findByAppointmentCode(String appointmentCode);
+
     // 1. Tổng số lịch hẹn hôm nay (không tính hủy)
     @Query("""
         SELECT COUNT(a) 
