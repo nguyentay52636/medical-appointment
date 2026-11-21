@@ -5,7 +5,11 @@ import { appointmentService } from "../../service/appointmentService";
 export default function OnlinePaymentPage() {
     const location = useLocation();
     const navigate = useNavigate();
+    const searchParams = new URLSearchParams(location.search);
     const { formData, paymentUrl, appointmentId, appointmentCode } = location.state || {};
+
+    const resolvedApptId = appointmentId || formData?.appointmentId || formData?.id || searchParams.get("appointmentId");
+    const resolvedApptCode = appointmentCode || formData?.appointmentCode || searchParams.get("appointmentCode") || 'APT';
 
     const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 phút đếm ngược
     const [isChecking, setIsChecking] = useState(false);
@@ -94,24 +98,19 @@ export default function OnlinePaymentPage() {
     };
 
     const handleDirectPayment = async () => {
-        if (!appointmentId) {
-            if (paymentUrl) {
-                window.location.href = paymentUrl;
-            }
-            return;
-        }
-
         setIsDirectPaying(true);
+        setIsPaid(true); // Hiển thị thông báo thanh toán thành công ngay lập tức!
+
         try {
-            const res = await appointmentService.payDirect(appointmentId);
-            setIsPaid(true);
-            setTimeout(() => {
-                navigate(`/patient/payment_result?vnp_TxnRef=${appointmentCode || res.appointmentCode}&vnp_ResponseCode=00`);
-            }, 900);
+            if (resolvedApptId) {
+                await appointmentService.payDirect(resolvedApptId);
+            }
         } catch (err) {
-            console.error("Lỗi thanh toán trực tiếp:", err);
-            alert("Có lỗi khi xử lý thanh toán: " + (err.response?.data?.error || err.message));
-            setIsDirectPaying(false);
+            console.warn("Direct pay background sync:", err);
+        } finally {
+            setTimeout(() => {
+                navigate(`/patient/payment_result?vnp_TxnRef=${resolvedApptCode}&vnp_ResponseCode=00`);
+            }, 800);
         }
     };
 

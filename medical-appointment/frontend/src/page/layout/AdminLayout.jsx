@@ -36,6 +36,13 @@ function AdminLayoutInner() {
             badge: stats.totalPatients > 0 ? `${stats.totalPatients}` : null,
             badgeColor: 'bg-slate-800 text-slate-400'
         },
+        {
+            name: 'Quản lý Doanh thu',
+            path: '/admin/revenue',
+            icon: 'fas fa-chart-line',
+            badge: 'Dòng tiền',
+            badgeColor: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold'
+        },
     ];
 
     return (

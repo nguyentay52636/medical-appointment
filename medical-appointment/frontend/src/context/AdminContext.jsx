@@ -126,6 +126,15 @@ export const AdminProvider = ({ children }) => {
         return result;
     }, []);
 
+    // Action: Cập nhật trạng thái thanh toán (ví dụ: thu tiền tại quầy)
+    const updateAppointmentPaymentStatus = useCallback(async (appointmentId, paymentStatus) => {
+        const result = await adminService.updateAppointmentPaymentStatus(appointmentId, paymentStatus);
+        setAppointments(prev =>
+            prev.map(a => a.id === appointmentId ? { ...a, paymentStatus } : a)
+        );
+        return result;
+    }, []);
+
     // Action: Xóa bệnh nhân
     const deletePatient = useCallback(async (patientId) => {
         const result = await adminService.deletePatient(patientId);
@@ -188,6 +197,7 @@ export const AdminProvider = ({ children }) => {
         deleteDoctor,
         uploadAvatar,
         updateAppointmentStatus,
+        updateAppointmentPaymentStatus,
         deletePatient
     };
 

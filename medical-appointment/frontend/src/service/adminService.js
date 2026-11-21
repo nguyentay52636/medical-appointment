@@ -55,6 +55,11 @@ export const adminService = {
         return res.data;
     },
 
+    updateAppointmentPaymentStatus: async (appointmentId, paymentStatus) => {
+        const res = await axios.put(`${API_BASE}/appointment/admin/${appointmentId}/payment-status`, { paymentStatus });
+        return res.data;
+    },
+
     // 4. Quản lý Bệnh nhân
     getAllPatients: async () => {
         const res = await axios.get(`${API_BASE}/patient/all`);

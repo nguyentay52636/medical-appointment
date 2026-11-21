@@ -10,6 +10,17 @@ export default function AdminDashboard() {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
 
+    // Phân loại doanh thu online vs tại quầy
+    const onlineAppointments = appointments.filter(a => (a.paymentMethod || '').toLowerCase() === 'online');
+    const onlineRevenue = onlineAppointments
+        .filter(a => (a.paymentStatus || '').toLowerCase() === 'paid')
+        .reduce((sum, a) => sum + (a.price || 200000), 0);
+    const offlineAppointments = appointments.filter(a => (a.paymentMethod || '').toLowerCase() !== 'online');
+    const offlineRevenue = offlineAppointments
+        .filter(a => (a.paymentStatus || '').toLowerCase() === 'paid')
+        .reduce((sum, a) => sum + (a.price || 200000), 0);
+    const totalPaidRevenue = onlineRevenue + offlineRevenue;
+
     if (isLoading && doctors.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px]">
@@ -41,6 +52,13 @@ export default function AdminDashboard() {
                         <i className={`fas fa-sync-alt text-blue-600 ${isLoading ? 'fa-spin' : ''}`}></i>
                         <span>Làm mới</span>
                     </button>
+
+                    <Link
+                        to="/admin/revenue"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-semibold text-xs shadow-md shadow-emerald-500/20 transition cursor-pointer"
+                    >
+                        <i className="fas fa-chart-line"></i> Quản Lý Doanh Thu
+                    </Link>
 
                     <Link
                         to="/admin/doctors?action=create"
@@ -96,6 +114,45 @@ export default function AdminDashboard() {
                     badgeText="Ước tính"
                     badgeColor="bg-indigo-50 text-indigo-700"
                 />
+            </div>
+
+            {/* Banner Phân Loại Doanh Thu & Dòng Tiền */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-800">
+                <div className="space-y-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold uppercase tracking-wider">
+                        <i className="fas fa-coins"></i> Phân Loại Dòng Tiền & Doanh Thu
+                    </div>
+                    <h3 className="text-xl font-black tracking-tight text-white">
+                        Doanh Thu Thực Thu: <span className="text-emerald-400">{formatCurrency(totalPaidRevenue)}</span>
+                    </h3>
+                    <p className="text-xs text-slate-300 max-w-xl">
+                        Theo dõi chi tiết số liệu thanh toán trực tuyến qua VNPAY / QR Code và thu tiền mặt trực tiếp tại quầy tiếp đón phòng khám.
+                    </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="bg-slate-800/80 px-4 py-3 rounded-2xl border border-slate-700/60 min-w-[140px]">
+                        <span className="text-[11px] text-indigo-300 font-bold uppercase block flex items-center gap-1.5">
+                            <i className="fas fa-qrcode"></i> Trực Tuyến (Online)
+                        </span>
+                        <span className="text-base font-extrabold text-white">{formatCurrency(onlineRevenue)}</span>
+                    </div>
+
+                    <div className="bg-slate-800/80 px-4 py-3 rounded-2xl border border-slate-700/60 min-w-[140px]">
+                        <span className="text-[11px] text-teal-300 font-bold uppercase block flex items-center gap-1.5">
+                            <i className="fas fa-cash-register"></i> Tại Quầy (Offline)
+                        </span>
+                        <span className="text-base font-extrabold text-white">{formatCurrency(offlineRevenue)}</span>
+                    </div>
+
+                    <Link
+                        to="/admin/revenue"
+                        className="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 text-xs flex items-center gap-2 flex-shrink-0 cursor-pointer"
+                    >
+                        <span>Xem Báo Cáo Doanh Thu</span>
+                        <i className="fas fa-arrow-right text-[11px]"></i>
+                    </Link>
+                </div>
             </div>
 
             {/* Trạng thái ca khám toàn viện & Bác sĩ nổi bật */}

@@ -101,24 +101,7 @@ export default function Header() {
                         </Link>
                     </div>
 
-                    <div className="h-full inline-flex items-center space-x-1 lg:space-x-2">
-                        <a className="w-8 h-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:bg-[#166FE5]"
-                            href="https://www.facebook.com/klinik" aria-label="Facebook">
-                            <i className="fab fa-facebook-f text-sm"></i>
-                        </a>
-                        <a className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800"
-                            href="https://twitter.com/klinik" aria-label="Twitter">
-                            <i className="fab fa-twitter text-sm"></i>
-                        </a>
-                        <a className="w-8 h-8 rounded-full bg-[#0A66C2] text-white flex items-center justify-center hover:bg-[#0959A5] hidden sm:flex"
-                            href="https://www.linkedin.com/company/klinik" aria-label="LinkedIn">
-                            <i className="fab fa-linkedin-in text-sm"></i>
-                        </a>
-                        <a className="w-8 h-8 rounded-full bg-[#C13584] text-white flex items-center justify-center hover:bg-[#A93174]"
-                            href="https://www.instagram.com/klinik" aria-label="Instagram">
-                            <i className="fab fa-instagram text-sm"></i>
-                        </a>
-                    </div>
+
                 </div>
             </div>
         </div>

@@ -334,8 +334,11 @@ export default function BookingPage() {
                 navigate("/patient/payment", {
                     state: {
                         appointmentId: res.id || res.appointmentId,
+                        appointmentCode: res.appointmentCode,
                         formData: {
                             ...formData,
+                            appointmentId: res.id || res.appointmentId,
+                            appointmentCode: res.appointmentCode,
                             price: res.price || appointmentData.price,
                             doctorName: res.doctorName || formData.doctorName,
                             specialtyName: res.specialtyName || formData.specialtyName

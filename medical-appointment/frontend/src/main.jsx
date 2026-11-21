@@ -53,6 +53,7 @@ import AdminDoctors from './page/admin/AdminDoctors';
 import AdminCreateDoctor from './page/admin/AdminCreateDoctor';
 import AdminAppointments from './page/admin/AdminAppointments';
 import AdminPatients from './page/admin/AdminPatients';
+import AdminRevenue from './page/admin/AdminRevenue';
 
 // Helper điều hướng thông minh cho cổng bác sĩ
 function DoctorIndexRedirect() {
@@ -132,6 +133,7 @@ ReactDOM.createRoot(root).render(
                 <Route path="create-doctor" element={<Navigate to="/admin/doctors?action=create" replace />} />
                 <Route path="appointments" element={<AdminAppointments />} />
                 <Route path="patients" element={<AdminPatients />} />
+                <Route path="revenue" element={<AdminRevenue />} />
               </Route>
 
               {/* Bí danh tiện lợi: /dashboard và /dashboard/doctor */}
@@ -139,6 +141,7 @@ ReactDOM.createRoot(root).render(
               <Route path="dashboard/doctor" element={<Navigate to="/admin/doctors" replace />} />
               <Route path="dashboard/doctors" element={<Navigate to="/admin/doctors" replace />} />
               <Route path="dashboard/create-doctor" element={<Navigate to="/admin/doctors?action=create" replace />} />
+              <Route path="dashboard/revenue" element={<Navigate to="/admin/revenue" replace />} />
 
               {/* -------------------- 404 -------------------- */}
               <Route
