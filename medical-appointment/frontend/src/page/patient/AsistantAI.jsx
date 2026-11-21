@@ -214,7 +214,7 @@ export default function AssistantAI({ embedded = false }) {
         try {
             const pStr = sessionStorage.getItem("patient");
             if (pStr) patientId = JSON.parse(pStr)?.id;
-        } catch {}
+        } catch { }
 
         try {
             const triageRes = await fetchTriageConsultAI(text, sessionId, history, patientId);
@@ -275,7 +275,7 @@ export default function AssistantAI({ embedded = false }) {
     return (
         <div className={`${embedded ? 'h-full' : 'min-h-screen py-8 px-4 lg:px-12'} bg-slate-50 flex flex-col items-center justify-start`}>
             {/* Thanh tiêu đề chuyên nghiệp */}
-            <div className="w-full max-w-5xl mb-4 flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-4 md:p-5 rounded-2xl shadow-xs border border-slate-200">
+            <div className="w-full max-w-6xl mb-4 flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-4 md:p-5 rounded-2xl shadow-xs border border-slate-200">
                 <div className="flex items-center gap-3.5">
                     <div className="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20">
                         <Icons.Cross />
@@ -322,9 +322,9 @@ export default function AssistantAI({ embedded = false }) {
             </div>
 
             {/* Khung chat chính */}
-            <div className={`w-full max-w-5xl bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col ${embedded ? 'h-[72vh]' : 'h-[76vh]'} overflow-hidden`}>
+            <div className={`w-full max-w-6xl bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col ${embedded ? 'h-[72vh]' : 'h-[76vh]'} overflow-hidden`}>
                 {/* Khu vực cuộn tin nhắn */}
-                <div ref={messagesRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50/50">
+                <div ref={messagesRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50/80">
                     {/* Welcome Banner */}
                     {messages.length === 0 && (
                         <div className="py-8 px-4 text-center max-w-2xl mx-auto space-y-5">
@@ -376,46 +376,46 @@ export default function AssistantAI({ embedded = false }) {
                     {messages.map((m, idx) => (
                         <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             {m.role === 'user' ? (
-                                <div className="max-w-[85%] sm:max-w-[75%] bg-slate-900 text-white p-4 rounded-2xl rounded-tr-none shadow-xs">
-                                    <div className="text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1.5">
-                                        <Icons.User />
-                                        <span>Bạn đã mô tả</span>
+                                <div className="max-w-[85%] sm:max-w-[75%] bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white p-4.5 rounded-2xl rounded-tr-xs shadow-md shadow-blue-500/20 border border-blue-400/30">
+                                    <div className="text-[11px] font-bold text-blue-100 mb-1.5 flex items-center gap-1.5 tracking-wide">
+                                        <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-white">
+                                            <Icons.User />
+                                        </div>
+                                        <span>Bệnh nhân</span>
                                     </div>
-                                    <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed font-normal">
+                                    <div className="text-sm md:text-[15px] whitespace-pre-wrap leading-relaxed font-normal text-white">
                                         {m.text}
                                     </div>
                                 </div>
                             ) : (
-                                <div className="max-w-[92%] sm:max-w-[85%] bg-white border border-slate-200 rounded-2xl rounded-tl-none shadow-xs overflow-hidden">
+                                <div className="max-w-[94%] sm:max-w-[88%] bg-white border border-slate-200/90 rounded-2xl rounded-tl-xs shadow-md shadow-slate-200/70 overflow-hidden">
                                     {/* Header phiên phân tích */}
-                                    <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center">
+                                    <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-slate-50 border-b border-blue-100 flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
                                                 <Icons.Cross />
                                             </div>
-                                            <span className="text-xs font-bold text-slate-800">
-                                                Kết quả Sàng lọc Lâm sàng
+                                            <span className="text-xs md:text-sm font-bold text-slate-900 tracking-tight">
+                                                Bác Sĩ Trợ Lý MediCare
                                             </span>
                                             {m.triageData?.consultationSource && (
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                                                    m.triageData.consultationSource === 'AI_LLM_ONLINE'
-                                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                                        : 'bg-slate-100 text-slate-600 border border-slate-200'
-                                                }`}>
+                                                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${m.triageData.consultationSource === 'AI_LLM_ONLINE'
+                                                    ? 'bg-blue-100/90 text-blue-800 border border-blue-200'
+                                                    : 'bg-emerald-100/90 text-emerald-800 border border-emerald-200'
+                                                    }`}>
                                                     {m.triageData.consultationSource === 'AI_LLM_ONLINE'
-                                                        ? `AI Trực tuyến (${m.triageData.aiModelUsed || 'Gemma/Nemotron'})`
+                                                        ? `AI Lâm Sàng (${m.triageData.aiModelUsed || 'Gemma'})`
                                                         : 'Chuẩn Từ Điển CRM'}
                                                 </span>
                                             )}
                                         </div>
                                         {m.triageData?.urgencyLevel && (
-                                            <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1.5 ${
-                                                m.triageData.urgencyLevel === 'EMERGENCY'
-                                                    ? 'bg-red-50 text-red-700 border border-red-200'
-                                                    : m.triageData.urgencyLevel === 'ATTENTION'
-                                                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                            }`}>
+                                            <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5 shadow-2xs ${m.triageData.urgencyLevel === 'EMERGENCY'
+                                                ? 'bg-red-50 text-red-700 border border-red-200'
+                                                : m.triageData.urgencyLevel === 'ATTENTION'
+                                                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                }`}>
                                                 {m.triageData.urgencyLevel === 'EMERGENCY' ? (
                                                     <>
                                                         <Icons.AlertTriangle />
@@ -432,14 +432,14 @@ export default function AssistantAI({ embedded = false }) {
                                     </div>
 
                                     {/* Khối dữ liệu kết quả phân tầng rõ ràng */}
-                                    <div className="p-5 space-y-5 text-slate-800 text-sm">
+                                    <div className="p-5 md:p-6 space-y-5 text-slate-800 text-sm">
                                         {/* 1. Đánh giá sơ bộ */}
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center gap-1.5 text-slate-700 font-bold text-xs uppercase tracking-wider">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wider">
                                                 <Icons.Activity />
                                                 <span>Đánh Giá Triệu Chứng Lâm Sàng</span>
                                             </div>
-                                            <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                            <div className="p-4.5 bg-slate-50/90 border border-slate-200 rounded-xl shadow-inner">
                                                 <FormattedClinicalText
                                                     text={m.triageData?.analysis || m.text}
                                                 />
@@ -448,8 +448,8 @@ export default function AssistantAI({ embedded = false }) {
 
                                         {/* 2. Chuyên khoa đề xuất */}
                                         {m.triageData?.recommendedSpecialties && m.triageData.recommendedSpecialties.length > 0 && (
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-1.5 text-slate-700 font-bold text-xs uppercase tracking-wider">
+                                            <div className="space-y-2.5 pt-1">
+                                                <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wider">
                                                     <Icons.Hospital />
                                                     <span>Chuyên Khoa Đề Xuất Phù Hợp</span>
                                                 </div>
@@ -457,15 +457,15 @@ export default function AssistantAI({ embedded = false }) {
                                                     {m.triageData.recommendedSpecialties.map((spec, sIdx) => (
                                                         <div
                                                             key={sIdx}
-                                                            className="p-3.5 bg-white border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                                                            className="p-4 bg-white border border-blue-200/80 hover:border-blue-300 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:shadow-sm transition"
                                                         >
                                                             <div className="space-y-1">
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="font-bold text-slate-900 text-base">
+                                                                    <span className="font-extrabold text-slate-900 text-base">
                                                                         {spec.specialtyName}
                                                                     </span>
-                                                                    <span className="text-[11px] px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium border border-blue-100">
-                                                                        {spec.matchScore}% Độ tương thích
+                                                                    <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                                                                        {spec.matchScore}% Phù hợp
                                                                     </span>
                                                                 </div>
                                                                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -476,7 +476,7 @@ export default function AssistantAI({ embedded = false }) {
                                                             <div className="flex-shrink-0">
                                                                 <button
                                                                     onClick={() => handleFilterSpecialtyDoctors(spec.specialtyName)}
-                                                                    className="w-full sm:w-auto px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                                                                    className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-blue-500/20"
                                                                 >
                                                                     <span>Đặt khám khoa này</span>
                                                                     <Icons.ArrowRight />
@@ -488,10 +488,10 @@ export default function AssistantAI({ embedded = false }) {
                                             </div>
                                         )}
 
-                                        {/* 3. Ba hướng xử lý khuyến nghị */}
+                                        {/* 3. Hướng xử lý khuyến nghị */}
                                         {m.triageData?.actionSteps && m.triageData.actionSteps.length > 0 && (
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-1.5 text-slate-700 font-bold text-xs uppercase tracking-wider">
+                                            <div className="space-y-2.5 pt-1">
+                                                <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wider">
                                                     <Icons.ShieldCheck />
                                                     <span>Hướng Xử Lý Khuyến Nghị</span>
                                                 </div>
@@ -499,9 +499,9 @@ export default function AssistantAI({ embedded = false }) {
                                                     {m.triageData.actionSteps.map((step, stepIdx) => (
                                                         <div
                                                             key={stepIdx}
-                                                            className="p-3 bg-white border border-slate-200 rounded-xl flex items-start gap-3 shadow-2xs"
+                                                            className="p-3.5 bg-white border border-slate-200 rounded-xl flex items-start gap-3 shadow-2xs hover:border-slate-300 transition"
                                                         >
-                                                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                            <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
                                                                 {stepIdx + 1}
                                                             </span>
                                                             <div className="text-xs md:text-sm text-slate-700 leading-relaxed">
@@ -515,8 +515,8 @@ export default function AssistantAI({ embedded = false }) {
 
                                         {/* 4. Câu hỏi làm rõ triệu chứng */}
                                         {m.triageData?.followUpQuestions && m.triageData.followUpQuestions.length > 0 && (
-                                            <div className="space-y-2 pt-2 border-t border-slate-100">
-                                                <div className="flex items-center gap-1.5 text-slate-700 font-bold text-xs uppercase tracking-wider">
+                                            <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                                                <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wider">
                                                     <Icons.HelpCircle />
                                                     <span>Câu Hỏi Làm Rõ Triệu Chứng</span>
                                                 </div>
@@ -528,7 +528,7 @@ export default function AssistantAI({ embedded = false }) {
                                                         <button
                                                             key={qIdx}
                                                             onClick={() => handleSendMessage(q)}
-                                                            className="text-left text-xs px-3.5 py-2 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-200 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                                                            className="text-left text-xs px-3.5 py-2 bg-blue-50/70 hover:bg-blue-100 text-blue-800 hover:text-blue-900 border border-blue-200/80 hover:border-blue-300 rounded-xl transition cursor-pointer flex items-center gap-1.5 font-medium shadow-2xs"
                                                         >
                                                             <span>{q}</span>
                                                             <Icons.ArrowRight />
@@ -540,17 +540,17 @@ export default function AssistantAI({ embedded = false }) {
 
                                         {/* 5. Bác sĩ phụ trách lịch khám */}
                                         {m.triageData?.suggestedDoctors && m.triageData.suggestedDoctors.length > 0 && (
-                                            <div className="space-y-2 pt-2 border-t border-slate-100">
+                                            <div className="space-y-2.5 pt-2 border-t border-slate-100">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="flex items-center gap-1.5 text-slate-700 font-bold text-xs uppercase tracking-wider">
+                                                    <span className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wider">
                                                         <Icons.User />
                                                         <span>Bác Sĩ Chuyên Khoa Đang Có Lịch Khám</span>
                                                     </span>
                                                     <button
                                                         onClick={() => navigate("/patient/doctor_list")}
-                                                        className="text-xs text-blue-600 hover:underline cursor-pointer"
+                                                        className="text-xs text-blue-600 hover:text-blue-800 font-bold hover:underline cursor-pointer"
                                                     >
-                                                        Xem toàn bộ danh sách
+                                                        Xem toàn bộ danh sách →
                                                     </button>
                                                 </div>
 
@@ -558,7 +558,7 @@ export default function AssistantAI({ embedded = false }) {
                                                     {m.triageData.suggestedDoctors.slice(0, 2).map((doc) => (
                                                         <div
                                                             key={doc.id}
-                                                            className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 shadow-2xs"
+                                                            className="p-3.5 bg-white border border-slate-200 hover:border-blue-200 rounded-xl flex items-center justify-between gap-3 shadow-xs hover:shadow-sm transition"
                                                         >
                                                             <div className="flex items-center gap-2.5 overflow-hidden">
                                                                 <img
@@ -573,7 +573,7 @@ export default function AssistantAI({ embedded = false }) {
                                                                     <div className="text-[11px] text-blue-600 font-medium truncate">
                                                                         {doc.specialtyName} • {doc.experienceYears || 5} năm kinh nghiệm
                                                                     </div>
-                                                                    <div className="text-[11px] text-slate-500">
+                                                                    <div className="text-[11px] font-semibold text-rose-600">
                                                                         {(doc.pricePerAppointment || 200000).toLocaleString('vi-VN')} đ/lượt
                                                                     </div>
                                                                 </div>
@@ -581,7 +581,7 @@ export default function AssistantAI({ embedded = false }) {
 
                                                             <button
                                                                 onClick={() => handleBookDoctor(doc)}
-                                                                className="px-3 py-1.5 bg-slate-900 hover:bg-blue-600 text-white rounded-lg text-xs font-medium flex-shrink-0 transition cursor-pointer"
+                                                                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex-shrink-0 transition cursor-pointer shadow-xs shadow-blue-500/20"
                                                             >
                                                                 Đặt khám
                                                             </button>
@@ -599,10 +599,10 @@ export default function AssistantAI({ embedded = false }) {
                     {/* Trạng thái tải */}
                     {loading && (
                         <div className="flex justify-start">
-                            <div className="bg-white border border-slate-200 p-4 rounded-2xl rounded-tl-none shadow-xs flex items-center gap-3">
+                            <div className="bg-white border border-blue-200/80 p-4 rounded-2xl rounded-tl-xs shadow-md shadow-blue-500/5 flex items-center gap-3">
                                 <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-xs text-slate-600">
-                                    Đang phân tích lâm sàng và đối chiếu với từ điển chuyên khoa...
+                                <span className="text-xs font-semibold text-blue-900">
+                                    Bác sĩ AI đang phân tích lâm sàng và đối chiếu với từ điển chuyên khoa...
                                 </span>
                             </div>
                         </div>
@@ -613,14 +613,14 @@ export default function AssistantAI({ embedded = false }) {
                 <div className="p-3 md:p-4 bg-white border-t border-slate-200 flex-none space-y-2.5">
                     {/* Chip triệu chứng gợi ý nhanh */}
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs text-slate-600 scrollbar-none">
-                        <span className="text-[11px] text-slate-400 font-semibold uppercase flex-shrink-0">
+                        <span className="text-[11px] text-slate-400 font-bold uppercase flex-shrink-0">
                             Gợi ý:
                         </span>
                         {SAMPLE_SYMPTOMS.map((s, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => handleSendMessage(s.text)}
-                                className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-slate-200 flex-shrink-0 transition cursor-pointer text-[11px]"
+                                className="px-2.5 py-1 rounded-full bg-blue-50/80 hover:bg-blue-100 text-blue-700 hover:text-blue-900 border border-blue-200/80 flex-shrink-0 transition cursor-pointer text-[11px] font-semibold"
                             >
                                 {s.label}
                             </button>
@@ -634,17 +634,16 @@ export default function AssistantAI({ embedded = false }) {
                             onKeyDown={handleKeyDown}
                             placeholder="Nhập triệu chứng của bạn (ví dụ: đau đầu kéo dài, sốt nhẹ, đau tức ngực...)"
                             rows={2}
-                            className="flex-1 p-3 text-xs md:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 resize-none transition"
+                            className="flex-1 p-3 text-xs md:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 resize-none transition bg-slate-50/50 focus:bg-white"
                         />
 
                         <button
                             onClick={() => handleSendMessage()}
                             disabled={loading || input.trim() === ""}
-                            className={`px-5 md:px-6 rounded-xl text-white font-medium text-xs md:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                                loading || input.trim() === ""
-                                    ? 'bg-slate-300 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700 shadow-sm'
-                            }`}
+                            className={`px-5 md:px-6 rounded-xl text-white font-bold text-xs md:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer ${loading || input.trim() === ""
+                                ? 'bg-slate-300 cursor-not-allowed'
+                                : 'bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/25'
+                                }`}
                         >
                             <span>Gửi</span>
                             <Icons.Send />
@@ -698,11 +697,10 @@ export default function AssistantAI({ embedded = false }) {
                             <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto">
                                 <button
                                     onClick={() => setSelectedSpecialtyTab(null)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                                        selectedSpecialtyTab === null
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                                    }`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${selectedSpecialtyTab === null
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                                        }`}
                                 >
                                     Tất cả ({filteredCrmSpecialties.length})
                                 </button>
@@ -710,11 +708,10 @@ export default function AssistantAI({ embedded = false }) {
                                     <button
                                         key={s.id}
                                         onClick={() => setSelectedSpecialtyTab(s.id)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex-shrink-0 ${
-                                            selectedSpecialtyTab === s.id
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                                        }`}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex-shrink-0 ${selectedSpecialtyTab === s.id
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                                            }`}
                                     >
                                         {s.specialtyName}
                                     </button>
