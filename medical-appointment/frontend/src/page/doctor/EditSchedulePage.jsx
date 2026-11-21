@@ -272,7 +272,8 @@ function EditSchedule() {
                     </div>
 
                     <p className="text-sm text-gray-500">
-                        Nhập giờ theo định dạng 24h (HH:MM). Ví dụ: 08:00 - 11:00
+                        Nhập giờ theo định dạng 24h (HH:MM). Ví dụ: 08:00 - 11:00.
+                        Không xóa hoặc thu hẹp khung giờ nếu đã có lịch hẹn đã đặt/đã xác nhận trong khung đó.
                     </p>
                 </div>
             </div>

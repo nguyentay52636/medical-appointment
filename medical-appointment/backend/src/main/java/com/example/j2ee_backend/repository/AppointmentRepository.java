@@ -103,6 +103,17 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findUpcomingAppointmentsByDoctor(@Param("doctorId") Long doctorId);
 
     @Query("""
+    SELECT a FROM Appointment a
+    JOIN FETCH a.bookableSlot bs
+    WHERE bs.doctor.id = :doctorId
+      AND LOWER(a.status) IN ('pending', 'confirmed')
+      AND (bs.slotDate > CURRENT_DATE
+           OR (bs.slotDate = CURRENT_DATE AND bs.startTime >= CURRENT_TIME))
+    ORDER BY bs.slotDate ASC, bs.startTime ASC
+    """)
+    List<Appointment> findActiveUpcomingAppointmentsByDoctor(@Param("doctorId") Integer doctorId);
+
+    @Query("""
     SELECT a FROM Appointment a 
     JOIN a.bookableSlot bs 
     WHERE bs.doctor.id = :doctorId 

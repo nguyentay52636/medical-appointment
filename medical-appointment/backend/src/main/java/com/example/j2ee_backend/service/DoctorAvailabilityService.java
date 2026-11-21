@@ -2,8 +2,11 @@ package com.example.j2ee_backend.service;
 
 import com.example.j2ee_backend.dto.DoctorAvailabilityDTO;
 import com.example.j2ee_backend.dto.ScheduleUpdateRequestDTO;
+import com.example.j2ee_backend.entity.Appointment;
+import com.example.j2ee_backend.entity.BookableSlot;
 import com.example.j2ee_backend.entity.Doctor;
 import com.example.j2ee_backend.entity.DoctorAvailability;
+import com.example.j2ee_backend.repository.AppointmentRepository;
 import com.example.j2ee_backend.repository.DoctorAvailabilityRepository;
 import com.example.j2ee_backend.repository.DoctorRepository;
 import jakarta.persistence.EntityManager;
@@ -13,8 +16,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -22,14 +29,17 @@ public class DoctorAvailabilityService {
 
     private final DoctorAvailabilityRepository doctorAvailabilityRepository;
     private final DoctorRepository doctorRepo;
+    private final AppointmentRepository appointmentRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
     @Autowired
     public DoctorAvailabilityService(DoctorAvailabilityRepository doctorAvailabilityRepository,
-                                     DoctorRepository doctorRepo) {
+                                     DoctorRepository doctorRepo,
+                                     AppointmentRepository appointmentRepository) {
         this.doctorAvailabilityRepository = doctorAvailabilityRepository;
         this.doctorRepo = doctorRepo;
+        this.appointmentRepository = appointmentRepository;
     }
 
     public List<DoctorAvailability> findByDoctorId(Integer doctorId) {
@@ -41,6 +51,8 @@ public class DoctorAvailabilityService {
         String day = request.getDayOfWeek().toLowerCase();
         List<DoctorAvailabilityDTO> incoming = Optional.ofNullable(request.getSlots())
                 .orElse(Collections.emptyList());
+
+        assertNoBlockingAppointments(doctorId, day, incoming);
 
         // 1. Disable tất cả slot cũ
         doctorAvailabilityRepository.disableByDoctorIdAndDay(doctorId.longValue(), day);
@@ -73,6 +85,70 @@ public class DoctorAvailabilityService {
             }
             doctorAvailabilityRepository.save(slot);
         }
+    }
+
+    void assertNoBlockingAppointments(Integer doctorId, String dayOfWeek, List<DoctorAvailabilityDTO> incoming) {
+        List<Appointment> upcoming = appointmentRepository.findActiveUpcomingAppointmentsByDoctor(doctorId);
+        List<String> blocked = new ArrayList<>();
+        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
+
+        for (Appointment appointment : upcoming) {
+            BookableSlot slot = appointment.getBookableSlot();
+            if (slot == null || slot.getSlotDate() == null) {
+                continue;
+            }
+            if (!matchesDay(slot.getSlotDate(), dayOfWeek)) {
+                continue;
+            }
+
+            LocalTime start = slot.getStartTime() != null ? slot.getStartTime().toLocalTime() : null;
+            LocalTime end = slot.getEndTime() != null ? slot.getEndTime().toLocalTime() : null;
+            if (isAppointmentCovered(start, end, incoming)) {
+                continue;
+            }
+
+            String dateStr = slot.getSlotDate().toLocalDate().format(dateFmt);
+            String startStr = start != null ? start.format(timeFmt) : "?";
+            String endStr = end != null ? end.format(timeFmt) : "?";
+            String statusLabel = "confirmed".equalsIgnoreCase(appointment.getStatus())
+                    ? "đã xác nhận"
+                    : "đang chờ xác nhận";
+            blocked.add(dateStr + " " + startStr + "-" + endStr + " (" + statusLabel + ")");
+        }
+
+        if (!blocked.isEmpty()) {
+            throw new IllegalStateException(
+                    "Không thể xóa hoặc thu hẹp lịch làm việc vì đã có lịch hẹn trong khung giờ này: "
+                            + String.join("; ", blocked)
+                            + ". Bác sĩ không được xóa khung giờ trùng với lịch hẹn đã đặt/đã xác nhận.");
+        }
+    }
+
+    private boolean matchesDay(java.sql.Date slotDate, String dayOfWeek) {
+        if (slotDate == null || dayOfWeek == null) {
+            return false;
+        }
+        String slotDay = slotDate.toLocalDate().getDayOfWeek()
+                .getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+        return slotDay.equalsIgnoreCase(dayOfWeek);
+    }
+
+    boolean isAppointmentCovered(LocalTime start, LocalTime end, List<DoctorAvailabilityDTO> incoming) {
+        if (start == null || end == null) {
+            return true;
+        }
+        for (DoctorAvailabilityDTO dto : incoming) {
+            if (dto.getStartTime() == null || dto.getEndTime() == null) {
+                continue;
+            }
+            boolean startsInside = !start.isBefore(dto.getStartTime());
+            boolean endsInside = !end.isAfter(dto.getEndTime());
+            if (startsInside && endsInside) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Transactional
