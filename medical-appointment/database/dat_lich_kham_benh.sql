@@ -496,6 +496,36 @@ INSERT INTO `doctor_review` (`id`, `doctor_id`, `patient_id`, `appointment_id`, 
 (1, 1, 1, 1, 5, 'Bác sĩ Nguyễn Văn A khám rất tỉ mỉ và ân cần. Giải thích kỹ từng chỉ số xét nghiệm và giải đáp tận tình mọi câu hỏi của người bệnh. Uống thuốc theo toa 3 ngày là đỡ hẳn.', '2026-10-28 09:30:00', '2026-10-28 09:30:00'),
 (2, 1, 2, NULL, 5, 'Đặt lịch trực tuyến qua hệ thống Klinik rất tiện lợi, đến nơi có nhân viên điều dưỡng hướng dẫn vào phòng khám ngay. Bác sĩ chuyên môn rất giỏi, dặn dò chế độ kiêng cữ chu đáo.', '2026-10-29 14:15:00', '2026-10-29 14:15:00');
 
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `admin`
+--
+
+CREATE TABLE IF NOT EXISTS `admin` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `full_name` varchar(255) NOT NULL,
+  `role` varchar(50) NOT NULL DEFAULT 'admin',
+  `phone_number` varchar(20) DEFAULT NULL,
+  `avatar_url` longtext DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_admin_username` (`username`),
+  UNIQUE KEY `unique_admin_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang nạp dữ liệu cho bảng `admin`
+--
+
+INSERT INTO `admin` (`id`, `username`, `email`, `password`, `full_name`, `role`, `phone_number`, `created_at`, `updated_at`) VALUES
+(1, 'admin', 'admin@medicare.com', 'admin123', 'Quản Trị Viên Hệ Thống', 'admin', '0901234567', NOW(), NOW())
+ON DUPLICATE KEY UPDATE `role` = 'admin';
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

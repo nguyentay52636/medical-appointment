@@ -1,10 +1,51 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, Link } from 'react-router-dom';
+import { NavLink, Outlet, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { AdminProvider, useAdmin } from '../../context/AdminContext';
+import { useToast } from '../../context/ToastContext';
 
 function AdminLayoutInner() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const { stats, refreshAll, isLoading } = useAdmin();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { confirm, logoutSuccess } = useToast();
+
+    // Lấy thông tin tài khoản Admin từ sessionStorage
+    const storedAdmin = sessionStorage.getItem('admin');
+    let currentAdmin = null;
+    try {
+        currentAdmin = storedAdmin ? JSON.parse(storedAdmin) : null;
+    } catch {
+        currentAdmin = null;
+    }
+
+    // YÊU CẦU ĐĂNG NHẬP VÀ KIỂM TRA ROLE ADMIN:
+    // Nếu chưa đăng nhập hoặc role khác 'admin', điều hướng ngay về /admin/login
+    if (!currentAdmin || !currentAdmin.role || currentAdmin.role.toLowerCase() !== 'admin') {
+        return <Navigate to="/admin/login" replace state={{ from: location }} />;
+    }
+
+    // Xử lý Đăng xuất Admin
+    const handleLogout = () => {
+        confirm({
+            title: 'Đăng xuất khỏi hệ thống Quản trị?',
+            message: `Bạn đang đăng nhập với tư cách Quản trị viên (${currentAdmin.fullName || currentAdmin.username}). Bạn có chắc chắn muốn đăng xuất?`,
+            confirmText: 'Đăng xuất ngay',
+            cancelText: 'Hủy bỏ',
+            type: 'warning',
+            onConfirm: () => {
+                sessionStorage.removeItem('admin');
+                sessionStorage.removeItem('token');
+                logoutSuccess('admin');
+                navigate('/admin/login', { replace: true });
+            }
+        });
+    };
+
+    // Chữ cái đại diện avatar
+    const adminInitials = currentAdmin.fullName
+        ? currentAdmin.fullName.split(' ').map(w => w[0]).filter(Boolean).slice(-2).join('').toUpperCase()
+        : 'AD';
 
     const navItems = [
         {
@@ -56,7 +97,7 @@ function AdminLayoutInner() {
                 {/* Brand / Logo */}
                 <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800 bg-slate-950/60">
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-blue-500/30 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-blue-500/30 flex-shrink-0">
                             K
                         </div>
                         {isSidebarOpen && (
@@ -70,7 +111,7 @@ function AdminLayoutInner() {
                     </div>
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="text-slate-400 hover:text-white p-1 rounded-lg transition"
+                        className="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
                         title={isSidebarOpen ? 'Thu gọn menu' : 'Mở rộng menu'}
                     >
                         <i className={`fas ${isSidebarOpen ? 'fa-angle-left' : 'fa-angle-right'} text-lg`}></i>
@@ -85,7 +126,7 @@ function AdminLayoutInner() {
                             <button
                                 onClick={refreshAll}
                                 title="Đồng bộ lại toàn bộ dữ liệu"
-                                className="text-slate-500 hover:text-blue-400 transition"
+                                className="text-slate-500 hover:text-blue-400 transition cursor-pointer"
                             >
                                 <i className={`fas fa-sync-alt text-[10px] ${isLoading ? 'fa-spin text-blue-400' : ''}`}></i>
                             </button>
@@ -140,20 +181,48 @@ function AdminLayoutInner() {
                     </Link>
                 </nav>
 
-                {/* Admin User Footer Card */}
-                <div className="p-3 border-t border-slate-800 bg-slate-950/40">
-                    <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-800/50">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow">
-                            AD
-                        </div>
-                        {isSidebarOpen && (
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-white truncate">Ban Quản Trị</p>
-                                <p className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    Trực ban 24/7
-                                </p>
+                {/* Admin User Footer Card with Role & Logout */}
+                <div className="p-3 border-t border-slate-800 bg-slate-950/60">
+                    <div className="p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow flex-shrink-0">
+                                {adminInitials}
                             </div>
+                            {isSidebarOpen && (
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-white truncate" title={currentAdmin.fullName || currentAdmin.username}>
+                                        {currentAdmin.fullName || currentAdmin.username}
+                                    </p>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold uppercase tracking-wider">
+                                            {currentAdmin.role}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 truncate">
+                                            {currentAdmin.email || currentAdmin.username}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Nút Đăng Xuất Admin */}
+                        {isSidebarOpen ? (
+                            <button
+                                onClick={handleLogout}
+                                className="w-full mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-center gap-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 py-1.5 rounded-lg transition cursor-pointer"
+                                title="Đăng xuất tài khoản Admin"
+                            >
+                                <i className="fas fa-sign-out-alt text-sm"></i>
+                                <span>Đăng xuất Quản trị</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleLogout}
+                                className="w-full mt-2 flex items-center justify-center text-rose-400 hover:text-rose-300 py-1 transition cursor-pointer"
+                                title="Đăng xuất"
+                            >
+                                <i className="fas fa-sign-out-alt text-sm"></i>
+                            </button>
                         )}
                     </div>
                 </div>
@@ -172,7 +241,16 @@ function AdminLayoutInner() {
                         </h2>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        {/* Admin Badge */}
+                        <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-lg border border-slate-200 text-xs">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="font-semibold text-slate-700">{currentAdmin.fullName || currentAdmin.username}</span>
+                            <span className="px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 font-mono text-[10px] font-bold">
+                                {currentAdmin.role}
+                            </span>
+                        </div>
+
                         <button
                             onClick={refreshAll}
                             disabled={isLoading}
@@ -183,17 +261,22 @@ function AdminLayoutInner() {
                             <span className="hidden md:inline">Đồng bộ</span>
                         </button>
 
-                        <div className="text-right hidden md:block">
-                            <p className="text-xs font-bold text-slate-800">Cơ sở An Dương Vương</p>
-                            <p className="text-[11px] text-slate-500">273 An Dương Vương, P.4, Q.5, TP.HCM</p>
-                        </div>
-
                         <Link
                             to="/patient/home"
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition"
                         >
                             <i className="fas fa-globe text-slate-500"></i> Xem Website
                         </Link>
+
+                        {/* Nút Đăng xuất trên topbar */}
+                        <button
+                            onClick={handleLogout}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition cursor-pointer"
+                            title="Đăng xuất tài khoản quản trị"
+                        >
+                            <i className="fas fa-sign-out-alt"></i>
+                            <span className="hidden sm:inline">Đăng xuất</span>
+                        </button>
                     </div>
                 </header>
 

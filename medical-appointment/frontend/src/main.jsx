@@ -48,6 +48,7 @@ import ReportsPage from './page/doctor/ReportsPage';
 
 // ------------------ Clinic Admin Dashboard Pages ------------------
 import AdminLayout from './page/layout/AdminLayout';
+import AdminLoginPage from './page/admin/AdminLoginPage';
 import AdminDashboard from './page/admin/AdminDashboard';
 import AdminDoctors from './page/admin/AdminDoctors';
 import AdminCreateDoctor from './page/admin/AdminCreateDoctor';
@@ -125,6 +126,7 @@ ReactDOM.createRoot(root).render(
               </Route>
 
               {/* -------------------- CLINIC ADMIN DASHBOARD ROUTES -------------------- */}
+              <Route path="admin/login" element={<AdminLoginPage />} />
               <Route path="admin" element={<AdminLayout />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />

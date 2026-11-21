@@ -35,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Các API công khai
+                        .requestMatchers("/api/admin/**").permitAll()
                         .requestMatchers("/api/doctor/login").permitAll()
                         .requestMatchers("/api/doctor/all").permitAll()
                         .requestMatchers("/api/doctor/specialty/**").permitAll()

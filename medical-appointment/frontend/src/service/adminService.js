@@ -3,6 +3,34 @@ import axios from 'axios';
 const API_BASE = 'http://localhost:8080/api';
 
 export const adminService = {
+    // 0. Xác thực & Quản lý phiên Admin
+    login: async (usernameOrEmail, password) => {
+        const res = await axios.post(`${API_BASE}/admin/login`, {
+            usernameOrEmail,
+            password
+        });
+        return res.data;
+    },
+
+    getStoredAdmin: () => {
+        try {
+            const raw = sessionStorage.getItem('admin');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    },
+
+    isAdminLoggedIn: () => {
+        const admin = adminService.getStoredAdmin();
+        return !!(admin && admin.role && admin.role.toLowerCase() === 'admin');
+    },
+
+    logout: () => {
+        sessionStorage.removeItem('admin');
+        sessionStorage.removeItem('token');
+    },
+
     // 1. Quản lý Bác sĩ
     getAllDoctors: async () => {
         const res = await axios.get(`${API_BASE}/doctor/all`);
