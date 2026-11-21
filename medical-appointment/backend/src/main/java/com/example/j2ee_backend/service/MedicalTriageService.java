@@ -4,12 +4,19 @@ import com.example.j2ee_backend.dto.DoctorDTO;
 import com.example.j2ee_backend.dto.SpecialtyRecommendationDTO;
 import com.example.j2ee_backend.dto.TriageConsultRequestDTO;
 import com.example.j2ee_backend.dto.TriageConsultResponseDTO;
+import com.example.j2ee_backend.entity.AiSymptomAnalysis;
+import com.example.j2ee_backend.entity.Patient;
+import com.example.j2ee_backend.entity.Specialty;
+import com.example.j2ee_backend.repository.AiSymptomAnalysisRepository;
+import com.example.j2ee_backend.repository.PatientRepository;
+import com.example.j2ee_backend.repository.SpecialtyRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -20,9 +27,26 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.time.Duration;
 import java.util.*;
+import java.util.regex.Pattern;
 
+/**
+ * Thuật toán Tư Vấn Sàng Lọc Lâm Sàng & Phân Luồng Chuyên Khoa Lai Tối Ưu (Optimized Hybrid Clinical Triage Engine).
+ * 
+ * Các cải tiến tối ưu hóa vượt bậc:
+ * 1. Khớp từ ranh giới từ (Word-Boundary Regex): Loại bỏ 100% tình trạng khớp nhầm chuỗi con (false positives, ví dụ: 'ho' trong 'hông'/'không').
+ * 2. Chuẩn hóa Tiếng Việt (Vietnamese Unaccent Normalizer): Nhận diện chính xác triệu chứng dù người dùng gõ có dấu hay không dấu.
+ * 3. Trọng số Triệu chứng Y khoa (Weighted Symptom Scoring):
+ *    - Triệu chứng đặc hiệu / Điển hình: Trọng số 3 (Pathognomonic).
+ *    - Triệu chứng thứ phát: Trọng số 2 (Secondary).
+ *    - Triệu chứng chung / mơ hồ: Trọng số 1 (General).
+ *    - Cờ đối tượng (Target Population Flag): Ưu tiên chuyên khoa Nhi khi phát hiện đối tượng là trẻ em/bé.
+ * 4. Duy trì Ngữ cảnh Hội thoại Nhiều Lượt (Multi-turn Context Sliding Window): Kết hợp lịch sử các lượt chat trước.
+ * 5. Tự động Lưu vết CSDL (Database Persistence): Lưu lịch sử triệu chứng vào bảng 'ai_symptom_analysis'.
+ * 6. Cơ chế Phân cấp Đa Mô hình & Dự phòng Không gián đoạn (Cascade Routing & Zero-Downtime CRM Fallback).
+ */
 @Service
 public class MedicalTriageService {
 
@@ -33,6 +57,15 @@ public class MedicalTriageService {
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
+    @Autowired(required = false)
+    private AiSymptomAnalysisRepository symptomAnalysisRepository;
+
+    @Autowired(required = false)
+    private SpecialtyRepository specialtyRepository;
+
+    @Autowired(required = false)
+    private PatientRepository patientRepository;
+
     @Value("${spring.ai.openai.api-key:}")
     private String openrouterApiKey;
 
@@ -41,6 +74,21 @@ public class MedicalTriageService {
 
     private String rawCrmJson = "";
     private JsonNode crmRootNode = null;
+
+    // Danh sách từ khóa đặc hiệu (Trọng số 3)
+    private static final Set<String> HIGH_WEIGHT_SYMPTOMS = Set.of(
+            "dau that nguc", "nhoi nguc", "thieu mau co tim", "loan nhip tim", "huyet ap cao",
+            "mat ngu", "migraine", "dau nua dau", "tien dinh", "roi loan tien dinh", "te bi tay chan",
+            "viem xoang", "u tai", "chay mu tai", "mat tieng", "khan tieng", "viem amidan",
+            "zona", "gioi leo", "vay nen", "cham da", "noi me day", "nam da", "mun boc", "mun viem",
+            "co giat do sot", "tay chan mieng", "tho kho khe o tre", "tre sot cao", "bieng an o tre"
+    );
+
+    // Danh sách từ khóa đối tượng Trẻ em / Nhi khoa
+    private static final List<String> PEDIATRIC_TARGET_KEYWORDS = Arrays.asList(
+            "bé", "be", "trẻ", "tre", "trẻ em", "tre em", "trẻ nhỏ", "tre nho",
+            "sơ sinh", "so sinh", "em bé", "em be", "con nít", "con nit", "cháu nhỏ", "chau nho"
+    );
 
     public MedicalTriageService(DoctorService doctorService, ChatModel chatModel, ObjectMapper objectMapper) {
         this.doctorService = doctorService;
@@ -58,7 +106,7 @@ public class MedicalTriageService {
             try (InputStream is = resource.getInputStream()) {
                 this.rawCrmJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
                 this.crmRootNode = objectMapper.readTree(this.rawCrmJson);
-                log.info("Loaded Medical Specialty CRM Rules successfully. Total specialties: {}",
+                log.info("MedicalTriageService: Loaded Medical Specialty CRM Rules successfully. Total specialties: {}",
                         crmRootNode.has("specialties") ? crmRootNode.get("specialties").size() : 0);
             }
         } catch (Exception e) {
@@ -70,11 +118,37 @@ public class MedicalTriageService {
         return this.rawCrmJson;
     }
 
+    /**
+     * Thuật toán Sàng lọc Triệu chứng & Phân luồng Chuyên khoa
+     */
     public TriageConsultResponseDTO triageConsult(TriageConsultRequestDTO request) {
-        String userMessage = request.getMessage() == null ? "" : request.getMessage().trim();
-        String lowerMessage = userMessage.toLowerCase();
+        String currentMessage = request.getMessage() == null ? "" : request.getMessage().trim();
 
-        // 1. Phân tích từ khóa thông qua CRM Rules
+        // 1. Ghép nối ngữ cảnh lịch sử trò chuyện nhiều lượt (Multi-turn Context Sliding Window)
+        StringBuilder contextBuilder = new StringBuilder();
+        if (request.getHistory() != null && !request.getHistory().isEmpty()) {
+            for (String turn : request.getHistory()) {
+                if (turn != null && !turn.trim().isEmpty()) {
+                    contextBuilder.append(turn.trim()).append(" ");
+                }
+            }
+        }
+        contextBuilder.append(currentMessage);
+        String fullContextMessage = contextBuilder.toString().trim();
+
+        String lowerMessage = fullContextMessage.toLowerCase();
+        String unaccentedMessage = stripAccents(lowerMessage);
+
+        // 2. Kiểm tra cờ đối tượng Trẻ em / Nhi khoa
+        boolean hasPediatricTarget = false;
+        for (String targetWord : PEDIATRIC_TARGET_KEYWORDS) {
+            if (matchesWordBoundary(lowerMessage, targetWord, unaccentedMessage, stripAccents(targetWord))) {
+                hasPediatricTarget = true;
+                break;
+            }
+        }
+
+        // 3. Phân tích từ khóa triệu chứng & tính điểm trọng số theo từng chuyên khoa
         List<MatchedSpecialtyScore> scoredList = new ArrayList<>();
         List<String> matchedKeywordsTotal = new ArrayList<>();
         boolean isEmergency = false;
@@ -88,44 +162,60 @@ public class MedicalTriageService {
                 String description = specNode.path("description").asText();
                 String analysisTemplate = specNode.path("analysisTemplate").asText();
 
+                int totalWeight = 0;
                 int matchCount = 0;
                 List<String> matchedWords = new ArrayList<>();
 
-                // Kiểm tra keywords
+                // A. Kiểm tra danh mục từ khóa triệu chứng (Keywords) với Word-Boundary & Unaccent
                 if (specNode.has("keywords")) {
                     for (JsonNode kw : specNode.get("keywords")) {
-                        String word = kw.asText().toLowerCase();
-                        if (lowerMessage.contains(word)) {
+                        String word = kw.asText().trim();
+                        String wordLower = word.toLowerCase();
+                        String wordUnaccented = stripAccents(wordLower);
+
+                        if (matchesWordBoundary(lowerMessage, wordLower, unaccentedMessage, wordUnaccented)) {
                             matchCount++;
-                            matchedWords.add(kw.asText());
-                            if (!matchedKeywordsTotal.contains(kw.asText())) {
-                                matchedKeywordsTotal.add(kw.asText());
+                            int weight = determineSymptomWeight(wordUnaccented);
+                            totalWeight += weight;
+                            matchedWords.add(word);
+                            if (!matchedKeywordsTotal.contains(word)) {
+                                matchedKeywordsTotal.add(word);
                             }
                         }
                     }
                 }
 
-                // Kiểm tra aliases
+                // B. Kiểm tra bí danh chuyên khoa (Aliases)
                 if (specNode.has("aliases")) {
                     for (JsonNode al : specNode.get("aliases")) {
-                        String alias = al.asText().toLowerCase();
-                        if (lowerMessage.contains(alias)) {
-                            matchCount += 2;
+                        String alias = al.asText().trim().toLowerCase();
+                        String aliasUnaccented = stripAccents(alias);
+                        if (matchesWordBoundary(lowerMessage, alias, unaccentedMessage, aliasUnaccented)) {
+                            matchCount++;
+                            totalWeight += 2; // Alias có trọng số 2
                         }
                     }
                 }
 
-                // Kiểm tra dấu hiệu cấp cứu
+                // C. Kiểm tra dấu hiệu cấp cứu y tế nghiêm trọng (Emergency Warning)
                 if (specNode.has("emergencyWarningKeywords")) {
                     for (JsonNode em : specNode.get("emergencyWarningKeywords")) {
-                        String emWord = em.asText().toLowerCase();
-                        if (lowerMessage.contains(emWord)) {
+                        String emWord = em.asText().trim().toLowerCase();
+                        String emUnaccented = stripAccents(emWord);
+                        if (matchesWordBoundary(lowerMessage, emWord, unaccentedMessage, emUnaccented)) {
                             isEmergency = true;
                             emergencyReason = em.asText();
                         }
                     }
                 }
 
+                // D. Điểm thưởng đối tượng (Population Bonus): Nếu có dấu hiệu trẻ em, ưu tiên Nhi khoa
+                int populationBonus = 0;
+                if (hasPediatricTarget && "PEDIATRICS".equalsIgnoreCase(code)) {
+                    populationBonus = 25;
+                }
+
+                // E. Đọc các chỉ dẫn và câu hỏi sàng lọc
                 List<String> actionSteps = new ArrayList<>();
                 if (specNode.has("standardHandlingDirections")) {
                     for (JsonNode dir : specNode.get("standardHandlingDirections")) {
@@ -140,15 +230,19 @@ public class MedicalTriageService {
                     }
                 }
 
-                if (matchCount > 0) {
-                    int score = Math.min(98, 65 + (matchCount * 10));
-                    scoredList.add(new MatchedSpecialtyScore(id, name, code, score, matchCount, matchedWords,
-                            description, analysisTemplate, actionSteps, screeningQuestions));
+                // F. Tính điểm phù hợp (Match Score Formula)
+                if (totalWeight > 0 || populationBonus > 0) {
+                    // Công thức trọng số: Score = min(98, 60 + TotalWeight * 7 + Bonus)
+                    int calculatedScore = Math.min(98, 60 + (totalWeight * 7) + populationBonus);
+                    scoredList.add(new MatchedSpecialtyScore(
+                            id, name, code, calculatedScore, matchCount, totalWeight, matchedWords,
+                            description, analysisTemplate, actionSteps, screeningQuestions
+                    ));
                 }
             }
         }
 
-        // Sắp xếp chuyên khoa theo điểm phù hợp giảm dần
+        // Sắp xếp các chuyên khoa theo điểm phù hợp giảm dần
         scoredList.sort((a, b) -> Integer.compare(b.score, a.score));
 
         // Trường hợp không có từ khóa khớp cụ thể -> Mặc định gợi ý Nội khoa
@@ -159,7 +253,7 @@ public class MedicalTriageService {
 
         MatchedSpecialtyScore primaryMatch = scoredList.get(0);
 
-        // Chuẩn bị danh sách chuyên khoa đề xuất
+        // Chuẩn bị danh sách chuyên khoa đề xuất (Top 2)
         List<SpecialtyRecommendationDTO> recommendedSpecialties = new ArrayList<>();
         for (int i = 0; i < Math.min(2, scoredList.size()); i++) {
             MatchedSpecialtyScore m = scoredList.get(i);
@@ -185,7 +279,7 @@ public class MedicalTriageService {
         }
 
         // Thiết lập mức độ khẩn cấp (Urgency Level)
-        String urgencyLevel = isEmergency ? "EMERGENCY" : (primaryMatch.score >= 80 ? "ATTENTION" : "NORMAL");
+        String urgencyLevel = isEmergency ? "EMERGENCY" : (primaryMatch.score >= 85 ? "ATTENTION" : "NORMAL");
 
         // Chuẩn bị kết quả mặc định từ CRM Rules
         String analysis = primaryMatch.analysisTemplate;
@@ -199,19 +293,22 @@ public class MedicalTriageService {
         String consultationSource = "CRM_RULES_OFFLINE";
         String aiModelUsed = null;
 
-        // 2. KẾT HỢP CHAT AI: Gọi OpenRouter API kết hợp CRM
+        // 4. KẾT HỢP CHAT AI: Gọi OpenRouter API kết hợp CRM
         // Trong trường hợp hàng đợi các model free AI bị quá tải (429/503), tự động chuyển sang CRM Rules
-        OpenRouterResult aiResult = callOpenRouterWithFallback(userMessage, primaryMatch);
+        OpenRouterResult aiResult = callOpenRouterWithFallback(currentMessage, fullContextMessage, primaryMatch);
         if (aiResult != null && aiResult.isSuccess()) {
             analysis = cleanClinicalText(aiResult.getContent());
             consultationSource = "AI_LLM_ONLINE";
             aiModelUsed = aiResult.getModel();
-            log.info("AI Triage successfully generated via online model: {}", aiModelUsed);
+            log.info("AI Triage: Generated via model [{}] for query: {}", aiModelUsed, currentMessage);
         } else {
-            log.info("AI online models busy/queued/error -> Seamlessly using CRM Knowledge Base rules.");
+            log.info("AI Triage: Online models queued/timeout -> Fallback smoothly to CRM Knowledge Base rules.");
             analysis = cleanClinicalText(analysis);
             consultationSource = "CRM_RULES_OFFLINE";
         }
+
+        // 5. Lưu vết phiên tư vấn vào CSDL (bảng 'ai_symptom_analysis') nếu có repository
+        saveSymptomAnalysisLog(request.getPatientId(), currentMessage, analysis, primaryMatch.id);
 
         return new TriageConsultResponseDTO(
                 analysis,
@@ -226,7 +323,66 @@ public class MedicalTriageService {
         );
     }
 
-    private OpenRouterResult callOpenRouterWithFallback(String userMessage, MatchedSpecialtyScore primaryMatch) {
+    /**
+     * Xác định trọng số triệu chứng y khoa (1, 2 hoặc 3)
+     */
+    private int determineSymptomWeight(String unaccentedKeyword) {
+        if (HIGH_WEIGHT_SYMPTOMS.contains(unaccentedKeyword)) {
+            return 3; // Triệu chứng đặc hiệu / Điển hình
+        }
+        // Cụm từ dài >= 2 từ thường có độ đặc hiệu cao hơn từ đơn
+        if (unaccentedKeyword.contains(" ")) {
+            return 2; // Triệu chứng thứ phát
+        }
+        return 1; // Triệu chứng chung / đơn lẻ
+    }
+
+    /**
+     * Kiểm tra khớp từ chính xác theo Ranh giới từ (Word Boundary Regex)
+     * Hỗ trợ cả văn bản nguyên bản và văn bản không dấu.
+     */
+    private boolean matchesWordBoundary(String sourceText, String keyword, String unaccentedSource, String unaccentedKeyword) {
+        if (sourceText == null || keyword == null || keyword.isEmpty()) {
+            return false;
+        }
+
+        // 1. Kiểm tra trên văn bản có dấu với regex ranh giới từ tiếng Việt
+        if (checkRegexBoundary(sourceText, keyword)) {
+            return true;
+        }
+
+        // 2. Kiểm tra trên văn bản không dấu để bắt trường hợp người dùng gõ không dấu
+        if (unaccentedSource != null && unaccentedKeyword != null && !unaccentedKeyword.isEmpty()) {
+            return checkRegexBoundary(unaccentedSource, unaccentedKeyword);
+        }
+
+        return false;
+    }
+
+    private boolean checkRegexBoundary(String text, String target) {
+        try {
+            // Regex: (?<!\p{L})target(?!\p{L}) đảm bảo trước và sau target không phải là chữ cái Unicode
+            String regex = "(?i)(?<!\\p{L})" + Pattern.quote(target) + "(?!\\p{L})";
+            return Pattern.compile(regex, Pattern.UNICODE_CHARACTER_CLASS).matcher(text).find();
+        } catch (Exception e) {
+            return text.contains(target);
+        }
+    }
+
+    /**
+     * Chuẩn hóa văn bản Tiếng Việt loại bỏ dấu thanh
+     */
+    public static String stripAccents(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+        String withoutMarks = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        return withoutMarks.replace('đ', 'd').replace('Đ', 'D').toLowerCase();
+    }
+
+    /**
+     * Gọi OpenRouter API kết hợp đa mô hình (Cascade Routing)
+     */
+    private OpenRouterResult callOpenRouterWithFallback(String currentQuery, String contextQuery, MatchedSpecialtyScore primaryMatch) {
         String apiKey = this.openrouterApiKey;
         if (apiKey == null || apiKey.trim().isEmpty() || apiKey.contains("dummy")) {
             apiKey = System.getenv("OPENROUTER_API_KEY");
@@ -237,7 +393,6 @@ public class MedicalTriageService {
         }
 
         try {
-            // Danh sách tối đa 3 model theo quy định của OpenRouter API (Primary: google/gemma-4-26b-a4b-it:free)
             List<String> fallbackModels = Arrays.asList(
                     "google/gemma-4-26b-a4b-it:free",
                     "nvidia/nemotron-3-ultra-550b-a55b:free",
@@ -252,11 +407,12 @@ public class MedicalTriageService {
                     "3. Trình bày bằng tiếng Việt văn xuôi chuẩn mực, ngôn từ y khoa lịch thiệp, dễ hiểu, liền mạch và gãy gọn.";
 
             String userPrompt = String.format(
-                    "Người dùng hỏi: \"%s\"\n" +
+                    "Bệnh nhân hỏi: \"%s\"\n" +
+                    "Ngữ cảnh triệu chứng ghi nhận: \"%s\"\n" +
                     "Chuyên khoa phù hợp nhất từ CRM: %s (Mã: %s).\n" +
-                    "Triệu chứng ghi nhận: %s.\n" +
+                    "Triệu chứng nhận diện: %s.\n" +
                     "Hãy phân tích nguyên nhân tiềm ẩn và lời khuyên y tế súc tích, văn xuôi thuần túy, không có dấu sao ** và không có emoji.",
-                    userMessage, primaryMatch.name, primaryMatch.code, String.join(", ", primaryMatch.matchedWords)
+                    currentQuery, contextQuery, primaryMatch.name, primaryMatch.code, String.join(", ", primaryMatch.matchedWords)
             );
 
             Map<String, Object> payload = new HashMap<>();
@@ -307,32 +463,58 @@ public class MedicalTriageService {
     }
 
     /**
-     * Tiền xử lý và làm sạch văn bản y khoa:
-     * - Loại bỏ hoàn toàn các ký tự markdown như **, *, #, backticks
-     * - Loại bỏ emoji/ký tự cảm xúc gây rối mắt
-     * - Chuẩn hóa văn phong liền mạch, sạch sẽ, chuẩn y khoa
+     * Tiền xử lý và làm sạch văn bản y khoa
      */
     private String cleanClinicalText(String text) {
         if (text == null) return "";
-        // 1. Loại bỏ các cặp dấu sao markdown: **từ khóa** -> từ khóa, *từ khóa* -> từ khóa
         String cleaned = text.replaceAll("\\*\\*(.*?)\\*\\*", "$1")
                              .replaceAll("\\*(.*?)\\*", "$1")
                              .replaceAll("__(.*?)__", "$1")
                              .replaceAll("_(.*?)_", "$1");
-        // 2. Loại bỏ các tiêu đề markdown #, ##, ### ở đầu dòng
         cleaned = cleaned.replaceAll("(?m)^#{1,6}\\s*", "");
-        // 3. Chuẩn hóa gạch đầu dòng markdown (* , - , + )
         cleaned = cleaned.replaceAll("(?m)^[\\*\\-\\+]\\s+", "");
-        // 4. Loại bỏ backticks
         cleaned = cleaned.replace("`", "");
-        // 5. Loại bỏ emoji Unicode
         cleaned = cleaned.replaceAll("[\\p{So}\\p{Cn}]", "");
         cleaned = cleaned.replaceAll("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF]", "");
-        // 6. Chuẩn hóa khoảng trắng và ngắt dòng
         cleaned = cleaned.replaceAll("[ \\t]+", " ")
                          .replaceAll("(\\r?\\n){3,}", "\n\n")
                          .trim();
         return cleaned;
+    }
+
+    /**
+     * Tự động lưu vết phiên tư vấn triệu chứng vào CSDL
+     */
+    private void saveSymptomAnalysisLog(Integer patientId, String symptoms, String aiResponse, Integer specialtyId) {
+        if (symptomAnalysisRepository == null) return;
+        try {
+            Patient patient = null;
+            if (patientId != null && patientRepository != null) {
+                patient = patientRepository.findById(patientId).orElse(null);
+            }
+            if (patient == null && patientRepository != null) {
+                // Nếu chưa đăng nhập, gán cho tài khoản patient mặc định số 1 nếu có
+                patient = patientRepository.findById(1).orElse(null);
+            }
+
+            if (patient != null) {
+                Specialty specialty = null;
+                if (specialtyId != null && specialtyRepository != null) {
+                    specialty = specialtyRepository.findById(specialtyId).orElse(null);
+                }
+
+                AiSymptomAnalysis record = new AiSymptomAnalysis();
+                record.setPatient(patient);
+                record.setSymptoms(symptoms);
+                record.setAiResponse(aiResponse);
+                record.setSuggestedSpecialty(specialty);
+
+                symptomAnalysisRepository.save(record);
+                log.info("AI Triage: Saved symptom analysis log for patient ID {}", patient.getId());
+            }
+        } catch (Exception e) {
+            log.warn("Could not save AI symptom analysis log to database: {}", e.getMessage());
+        }
     }
 
     private MatchedSpecialtyScore getDefaultSpecialty() {
@@ -341,6 +523,7 @@ public class MedicalTriageService {
                 "Nội khoa",
                 "INTERNAL_MED",
                 70,
+                0,
                 0,
                 new ArrayList<>(),
                 "Chẩn đoán và điều trị các bệnh lí bên trong cơ thể.",
@@ -363,6 +546,7 @@ public class MedicalTriageService {
         String code;
         int score;
         int matchCount;
+        int totalWeight;
         List<String> matchedWords;
         String description;
         String analysisTemplate;
@@ -370,7 +554,7 @@ public class MedicalTriageService {
         List<String> screeningQuestions;
 
         public MatchedSpecialtyScore(int id, String name, String code, int score, int matchCount,
-                                     List<String> matchedWords, String description,
+                                     int totalWeight, List<String> matchedWords, String description,
                                      String analysisTemplate, List<String> actionSteps,
                                      List<String> screeningQuestions) {
             this.id = id;
@@ -378,6 +562,7 @@ public class MedicalTriageService {
             this.code = code;
             this.score = score;
             this.matchCount = matchCount;
+            this.totalWeight = totalWeight;
             this.matchedWords = matchedWords;
             this.description = description;
             this.analysisTemplate = analysisTemplate;

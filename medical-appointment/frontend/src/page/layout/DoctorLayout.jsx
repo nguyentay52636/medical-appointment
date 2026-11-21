@@ -23,11 +23,20 @@ const PRIMARY_COLOR = 'blue';
 // ================= DashboardHeader =================
 function DashboardHeader({ avatarUrl }) {
     const { doctor } = useContext(DoctorContext);
-    const storedDoctor = JSON.parse(sessionStorage.getItem('doctor'));
+    let storedDoctor = null;
+    try {
+        const raw = sessionStorage.getItem('doctor');
+        if (raw && raw !== 'undefined' && raw !== 'null') {
+            storedDoctor = JSON.parse(raw);
+        }
+    } catch (e) {
+        console.error("Lỗi parse sessionStorage doctor:", e);
+    }
     const finalAvatar = avatarUrl || doctor?.imageUrl || storedDoctor?.imageUrl || "https://i.pravatar.cc/150?img=5";
 
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState([]);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
     const navigate = useNavigate();
 
     const handleNotificationClick = (n) => {
@@ -141,7 +150,15 @@ function DashboardHeader({ avatarUrl }) {
 function DoctorLayout({ avatarUrl }) {
     const location = useLocation();
     const { doctor, logout } = useContext(DoctorContext);
-    const storedDoctor = JSON.parse(sessionStorage.getItem('doctor') || 'null');
+    let storedDoctor = null;
+    try {
+        const raw = sessionStorage.getItem('doctor');
+        if (raw && raw !== 'undefined' && raw !== 'null') {
+            storedDoctor = JSON.parse(raw);
+        }
+    } catch (e) {
+        console.error("Lỗi parse sessionStorage doctor trong DoctorLayout:", e);
+    }
     const currentDoctor = doctor || storedDoctor;
     const finalAvatar = avatarUrl || currentDoctor?.imageUrl || "https://i.pravatar.cc/150?img=5";
     const navigate = useNavigate();

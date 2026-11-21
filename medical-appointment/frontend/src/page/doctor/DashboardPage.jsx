@@ -6,14 +6,36 @@ import { getDashboardStats, getUpcomingAppointments, getMissedAppointments } fro
 const fetchDashboardData = async () => {
     try {
         const [stats, appointments, missedAppointments] = await Promise.all([
-            getDashboardStats(),
-            getUpcomingAppointments(),
-            getMissedAppointments(),
+            getDashboardStats().catch(err => {
+                console.warn("Lỗi tải stats:", err);
+                return {
+                    totalAppointmentsToday: 0,
+                    pendingAppointments: 0,
+                    confirmedAppointments: 0,
+                    totalUniquePatientsToday: 0
+                };
+            }),
+            getUpcomingAppointments().catch(err => {
+                console.warn("Lỗi tải upcoming:", err);
+                return [];
+            }),
+            getMissedAppointments().catch(err => {
+                console.warn("Lỗi tải missed:", err);
+                return [];
+            }),
         ]);
-        return { stats, appointments, missedAppointments };
+        return {
+            stats: stats || { totalAppointmentsToday: 0, pendingAppointments: 0, confirmedAppointments: 0, totalUniquePatientsToday: 0 },
+            appointments: Array.isArray(appointments) ? appointments : [],
+            missedAppointments: Array.isArray(missedAppointments) ? missedAppointments : []
+        };
     } catch (error) {
         console.error("Lỗi khi fetch dashboard:", error);
-        throw error;
+        return {
+            stats: { totalAppointmentsToday: 0, pendingAppointments: 0, confirmedAppointments: 0, totalUniquePatientsToday: 0 },
+            appointments: [],
+            missedAppointments: []
+        };
     }
 };
 
@@ -24,7 +46,14 @@ function DoctorDashboard() {
     if (isLoading) return <div className={`text-center p-8 text-xl font-semibold text-${PRIMARY_COLOR}-600 bg-white shadow-lg rounded-xl`}>Đang tải dữ liệu...</div>;
     if (error) return <div className="text-center p-6 text-lg font-medium text-red-600 bg-red-50 border rounded-xl shadow-md">Lỗi tải Dashboard: {error}</div>;
 
-    const { stats, appointments, missedAppointments} = data;
+    const stats = data?.stats || {
+        totalAppointmentsToday: 0,
+        pendingAppointments: 0,
+        confirmedAppointments: 0,
+        totalUniquePatientsToday: 0
+    };
+    const appointments = Array.isArray(data?.appointments) ? data.appointments : [];
+    const missedAppointments = Array.isArray(data?.missedAppointments) ? data.missedAppointments : [];
 
     return (
         <div className="space-y-8">
@@ -34,10 +63,10 @@ function DoctorDashboard() {
 
             {/* Hàng 1: Stat Cards (Công việc Hôm nay) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Lịch Hẹn Hôm Nay" value={stats.totalAppointmentsToday} color="bg-indigo-600" icon="fas fa-calendar-day" />
-                <StatCard title="Chờ Duyệt" value={stats.pendingAppointments} color="bg-amber-500" icon="fas fa-clock" />
-                <StatCard title="Đã Xác Nhận" value={stats.confirmedAppointments} color="bg-emerald-600" icon="fas fa-check-circle" />
-                <StatCard title="Tổng Bệnh Nhân" value={stats.totalUniquePatientsToday} color="bg-gray-700" icon="fas fa-users" />
+                <StatCard title="Lịch Hẹn Hôm Nay" value={stats.totalAppointmentsToday ?? 0} color="bg-indigo-600" icon="fas fa-calendar-day" />
+                <StatCard title="Chờ Duyệt" value={stats.pendingAppointments ?? 0} color="bg-amber-500" icon="fas fa-clock" />
+                <StatCard title="Đã Xác Nhận" value={stats.confirmedAppointments ?? 0} color="bg-emerald-600" icon="fas fa-check-circle" />
+                <StatCard title="Tổng Bệnh Nhân" value={stats.totalUniquePatientsToday ?? 0} color="bg-gray-700" icon="fas fa-users" />
             </div>
 
             {/* Hàng 2: Danh sách công việc (Ưu tiên hàng ngày) */}
@@ -73,11 +102,11 @@ const StatCard = ({ title, value, color, icon }) => (
     </div>
 );
 
-const UpcomingAppointments = ({ appointments, primaryColor }) => (
+const UpcomingAppointments = ({ appointments = [], primaryColor }) => (
     <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-100">
         <h2 className="text-xl font-bold mb-4 text-gray-800 border-b border-gray-100 pb-2">📋 Lịch Hẹn Sắp Tới</h2>
         <ul className="divide-y divide-gray-100">
-            {appointments.length > 0 ? (
+            {appointments && appointments.length > 0 ? (
                 appointments.slice(0, 5).map(appt => (
                     <li key={appt.id} className="py-3 flex items-center transition-colors hover:bg-blue-50/50 rounded-lg px-2 -mx-2">
                         <div className="mr-4 text-gray-400 text-lg flex-shrink-0">
@@ -108,13 +137,13 @@ const UpcomingAppointments = ({ appointments, primaryColor }) => (
 
     </div>
 );
-const MissedAppointments = ({ appointments, primaryColor }) => (
+const MissedAppointments = ({ appointments = [], primaryColor }) => (
     <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-100">
         <h2 className="text-xl font-bold mb-4 text-gray-800 border-b border-gray-100 pb-2">
             ⚠️ Lịch Hẹn Đã Quá Giờ
         </h2>
         <ul className="divide-y divide-gray-100">
-            {appointments.length > 0 ? (
+            {appointments && appointments.length > 0 ? (
                 appointments.map(appt => (
                     <li key={appt.id} className="py-3 flex items-center">
                         <div className="flex-1">

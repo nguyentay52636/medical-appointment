@@ -10,6 +10,7 @@ function Appointments() {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     const [filterDate, setFilterDate] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
 
@@ -85,57 +86,125 @@ function Appointments() {
         );
     }
 
-    // Lọc
+    // Lọc & Tìm kiếm
     const handleResetFilter = () => {
+        setSearchTerm('');
         setFilterDate('');
         setFilterStatus('');
     };
 
-    const filteredAppointments = appointments
-        .filter(appt => !filterStatus || appt.status === filterStatus)
-        .filter(appt => !filterDate || appt.date.slice(0, 10) === filterDate);
+    const filteredAppointments = appointments.filter(appt => {
+        // Lọc theo trạng thái
+        if (filterStatus && appt.status !== filterStatus) return false;
+        // Lọc theo ngày
+        if (filterDate && appt.date && appt.date.slice(0, 10) !== filterDate) return false;
+        // Tìm kiếm theo tên, số điện thoại, mã lịch hẹn, lý do khám, email
+        if (searchTerm.trim()) {
+            const q = searchTerm.trim().toLowerCase();
+            const matchName = appt.patientName?.toLowerCase().includes(q);
+            const matchPhone = appt.patientPhone?.toLowerCase().includes(q);
+            const matchCode = (appt.appointmentCode || String(appt.id))?.toLowerCase().includes(q);
+            const matchReason = appt.reason?.toLowerCase().includes(q);
+            const matchEmail = appt.patientEmail?.toLowerCase().includes(q);
+            if (!matchName && !matchPhone && !matchCode && !matchReason && !matchEmail) {
+                return false;
+            }
+        }
+        return true;
+    });
 
     return (
         <div className="space-y-6">
-            {/* Bộ lọc */}
-            <div className="bg-white p-4 rounded-xl shadow mb-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-
-                {/* Lọc theo ngày */}
-                <div>
-                    <label className="block font-semibold mb-1">Ngày khám:</label>
-                    <input
-                        type="date"
-                        value={filterDate}
-                        onChange={(e) => setFilterDate(e.target.value)}
-                        className="w-full border px-3 py-2 rounded cursor-pointer"
-                    />
+            {/* Bộ lọc & Tìm kiếm Người Bệnh */}
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+                {/* Thanh tìm kiếm người bệnh chính */}
+                <div className="relative">
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                            <i className="fas fa-search text-blue-600"></i> Tìm kiếm người bệnh / Ca khám
+                        </span>
+                        {searchTerm && (
+                            <span className="text-[11px] text-blue-600 font-semibold lowercase">
+                                Đang lọc theo từ khóa: "{searchTerm}"
+                            </span>
+                        )}
+                    </label>
+                    <div className="relative flex items-center">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                            <i className="fas fa-user-search text-sm"></i>
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Nhập họ tên người bệnh, số điện thoại, mã ca khám (#APT...), hoặc lý do khám..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-sm font-medium transition shadow-2xs"
+                        />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm('')}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+                                title="Xóa từ khóa tìm kiếm"
+                            >
+                                <i className="fas fa-times-circle text-base"></i>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Lọc theo trạng thái */}
-                <div>
-                    <label className="block font-semibold mb-1">Trạng thái:</label>
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full border px-3 py-2 rounded cursor-pointer"
-                    >
-                        <option value="">Tất cả</option>
-                        <option value="pending">Chờ duyệt</option>
-                        <option value="confirmed">Đã xác nhận</option>
-                        <option value="completed">Đã khám</option>
-                        <option value="missed">Đã bỏ lỡ</option>
-                        <option value="cancelled">Đã hủy</option>
-                    </select>
-                </div>
+                {/* Hàng lọc phụ: Ngày khám & Trạng thái & Reset */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-1">
+                    {/* Lọc theo ngày */}
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
+                            <i className="far fa-calendar-alt text-gray-400"></i> Ngày khám:
+                        </label>
+                        <input
+                            type="date"
+                            value={filterDate}
+                            onChange={(e) => setFilterDate(e.target.value)}
+                            className="w-full border border-gray-300 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-100 cursor-pointer bg-white"
+                        />
+                    </div>
 
-                {/* Nút reset */}
-                <div className="flex items-end">
-                    <button
-                        onClick={handleResetFilter}
-                        className={`1w-full px-4 py-2 text-white text-base font-semibold bg-${PRIMARY_COLOR}-600 hover:bg-${PRIMARY_COLOR}-700 rounded hover:scale-[1.01] cursor-pointer`}
-                    >
-                        Xóa lọc
-                    </button>
+                    {/* Lọc theo trạng thái */}
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
+                            <i className="fas fa-tasks text-gray-400"></i> Trạng thái ca khám:
+                        </label>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="w-full border border-gray-300 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-100 cursor-pointer bg-white"
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="pending">Chờ duyệt</option>
+                            <option value="confirmed">Đã xác nhận</option>
+                            <option value="completed">Đã khám</option>
+                            <option value="missed">Đã bỏ lỡ</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                    </div>
+
+                    {/* Nút reset */}
+                    <div className="flex items-end">
+                        <button
+                            type="button"
+                            onClick={handleResetFilter}
+                            className="w-full px-4 py-2 text-gray-700 hover:text-red-600 text-xs sm:text-sm font-bold bg-gray-100 hover:bg-red-50 rounded-xl transition border border-gray-200 cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                            <i className="fas fa-undo text-xs"></i>
+                            <span>Xóa tất cả lọc</span>
+                        </button>
+                    </div>
+
+                    {/* Thống kê số lượng kết quả */}
+                    <div className="flex items-end justify-start sm:justify-end text-xs text-gray-500 font-medium pb-1.5">
+                        <span>
+                            Tìm thấy <strong className="text-blue-700 font-bold">{filteredAppointments.length}</strong> / {appointments.length} ca khám
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -188,11 +257,23 @@ function Appointments() {
                                     className={`py-5 grid grid-cols-5 items-center transition-all duration-300 hover:bg-${PRIMARY_COLOR}-50/50 rounded-lg px-4 -mx-4 cursor-pointer`}
                                 >
                                     <div className="col-span-2 min-w-0 pr-4">
-                                        <p className="text-xl font-bold text-gray-900 leading-snug">{appt.patientName}</p>
-                                        <p className="text-sm text-gray-500 mt-1 truncate flex items-center">
-                                            <i className={`fas fa-notes-medical mr-2 text-${PRIMARY_COLOR}-400 text-xs`}></i>
-                                            Lý do: {appt.reason ? appt.reason : "Không có lý do"}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-xl font-bold text-gray-900 leading-snug">{appt.patientName}</p>
+                                            <span className="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-mono font-bold border border-blue-200">
+                                                #{appt.appointmentCode || appt.id}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
+                                            {appt.patientPhone && (
+                                                <span className="flex items-center gap-1 font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+                                                    <i className="fas fa-phone text-blue-500 text-[10px]"></i> {appt.patientPhone}
+                                                </span>
+                                            )}
+                                            <span className="truncate flex items-center">
+                                                <i className={`fas fa-notes-medical mr-1.5 text-${PRIMARY_COLOR}-400 text-xs`}></i>
+                                                Lý do: {appt.reason ? appt.reason : "Không có lý do"}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="col-span-1 text-gray-700 font-medium flex items-center justify-start">
@@ -228,9 +309,21 @@ function Appointments() {
                                 </li>
                             ))
                         ) : (
-                            <div className="text-center py-10">
-                                <i className="fas fa-file-alt text-6xl text-red-300 mb-4"></i>
-                                <p className="text-xl text-gray-500 font-medium">Không có lịch hẹn nào được tìm thấy.</p>
+                            <div className="text-center py-12 space-y-3">
+                                <i className="fas fa-user-slash text-5xl text-gray-300"></i>
+                                <p className="text-lg text-gray-700 font-bold">Không tìm thấy ca khám nào phù hợp.</p>
+                                <p className="text-xs text-gray-400">
+                                    {searchTerm ? `Không có kết quả khớp với từ khóa "${searchTerm}".` : "Thử chọn ngày khác hoặc trạng thái khác."}
+                                </p>
+                                {(searchTerm || filterDate || filterStatus) && (
+                                    <button
+                                        type="button"
+                                        onClick={handleResetFilter}
+                                        className="mt-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs transition cursor-pointer"
+                                    >
+                                        Xóa tất cả bộ lọc & tìm kiếm
+                                    </button>
+                                )}
                             </div>
                         )}
                     </ul>

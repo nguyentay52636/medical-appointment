@@ -209,8 +209,15 @@ export default function AssistantAI({ embedded = false }) {
             return (m.role === 'system' ? 'Assistant: ' : 'User: ') + (m.text || m.triageData?.analysis || "");
         });
 
+        // Lấy ID bệnh nhân nếu đã đăng nhập để lưu vết phân tích
+        let patientId = null;
         try {
-            const triageRes = await fetchTriageConsultAI(text, sessionId, history);
+            const pStr = sessionStorage.getItem("patient");
+            if (pStr) patientId = JSON.parse(pStr)?.id;
+        } catch {}
+
+        try {
+            const triageRes = await fetchTriageConsultAI(text, sessionId, history, patientId);
             setMessages((m) => [
                 ...m,
                 {

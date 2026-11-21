@@ -6,6 +6,7 @@ public class TriageConsultRequestDTO {
     private String message;
     private String sessionId;
     private List<String> history;
+    private Integer patientId;
 
     public TriageConsultRequestDTO() {}
 
@@ -13,6 +14,14 @@ public class TriageConsultRequestDTO {
         this.message = message;
         this.sessionId = sessionId;
         this.history = history;
+    }
+
+    public Integer getPatientId() {
+        return patientId;
+    }
+
+    public void setPatientId(Integer patientId) {
+        this.patientId = patientId;
     }
 
     public String getMessage() {

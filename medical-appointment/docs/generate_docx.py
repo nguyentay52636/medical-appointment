@@ -92,6 +92,35 @@ def build_docx_from_markdown(md_path, docx_path):
             i += 1
             continue
 
+        # Math Block ($$...$$)
+        if line.startswith('$$'):
+            math_lines = []
+            if line.endswith('$$') and len(line) > 2:
+                math_lines.append(line[2:-2].strip())
+                i += 1
+            else:
+                i += 1
+                while i < n and not lines[i].strip().startswith('$$'):
+                    math_lines.append(lines[i].strip())
+                    i += 1
+                if i < n and lines[i].strip().startswith('$$'):
+                    i += 1
+            
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.left_indent = Inches(0.3)
+            p.paragraph_format.right_indent = Inches(0.3)
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(6)
+            math_text = '\n'.join(math_lines)
+            run = p.add_run(math_text)
+            run.font.name = 'Cambria Math'
+            run.font.size = Pt(11)
+            run.font.italic = True
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(30, 58, 138) # Deep Blue
+            continue
+
         # Skip markdown horizontal rule
         if line in ['---', '***', '___']:
             p = doc.add_paragraph()
@@ -270,8 +299,8 @@ def build_docx_from_markdown(md_path, docx_path):
     print(f"File DOCX created successfully at: {docx_path}")
 
 def format_inline_text(paragraph, text, italic=False):
-    # Split text by bold (**text** or `code`)
-    pattern = re.compile(r'(\*\*[^*]+\*\*|`[^`]+`)')
+    # Split text by bold (**text** or `code` or $math$)
+    pattern = re.compile(r'(\*\*[^*]+\*\*|`[^`]+`|\$[^$]+\$)')
     parts = pattern.split(text)
 
     for part in parts:
@@ -288,13 +317,29 @@ def format_inline_text(paragraph, text, italic=False):
             run.font.name = 'Consolas'
             run.font.size = Pt(10)
             run.font.color.rgb = RGBColor(194, 65, 12) # Amber 700 / Code color
+        elif part.startswith('$') and part.endswith('$') and len(part) > 2:
+            math_text = part[1:-1]
+            run = paragraph.add_run(math_text)
+            run.font.name = 'Cambria Math'
+            run.font.size = Pt(10.5)
+            run.font.italic = True
+            run.font.color.rgb = RGBColor(30, 58, 138)
         else:
             run = paragraph.add_run(part)
             run.font.italic = italic
 
 if __name__ == '__main__':
+    import sys
     base_dir = '/Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/docs'
-    md_file = os.path.join(base_dir, 'BAO_CAO_TONG_QUAN_VA_TINH_NANG_DU_AN.md')
-    docx_file = os.path.join(base_dir, 'BAO_CAO_TONG_QUAN_VA_TINH_NANG_DU_AN.docx')
+    if len(sys.argv) >= 3:
+        md_file = sys.argv[1]
+        docx_file = sys.argv[2]
+    elif len(sys.argv) == 2:
+        md_file = sys.argv[1]
+        docx_file = os.path.splitext(md_file)[0] + '.docx'
+    else:
+        md_file = os.path.join(base_dir, 'BAO_CAO_TONG_QUAN_VA_TINH_NANG_DU_AN.md')
+        docx_file = os.path.join(base_dir, 'BAO_CAO_TONG_QUAN_VA_TINH_NANG_DU_AN.docx')
     build_docx_from_markdown(md_file, docx_file)
+
 

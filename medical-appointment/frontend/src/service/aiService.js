@@ -17,11 +17,12 @@ export const fetchChatResponse = async (message, sessionId = null, history = nul
     }
 };
 
-export const fetchTriageConsultAI = async (message, sessionId = null, history = null) => {
+export const fetchTriageConsultAI = async (message, sessionId = null, history = null, patientId = null) => {
     const payload = {
       message: message,
       sessionId: sessionId,
       history: history,
+      patientId: patientId,
     };
 
     try {

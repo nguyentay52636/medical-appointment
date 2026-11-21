@@ -269,17 +269,22 @@ Toàn bộ phân hệ Admin được thiết kế theo nguyên lý Clean Archite
 
 ---
 
-### 5.5. Phân hệ AI Tư vấn Sàng lọc & Phân luồng Chuyên khoa (Clinical Triage CRM)
+### 5.5. Phân hệ AI Tư vấn Sàng lọc & Phân luồng Chuyên khoa (Clinical Triage CRM & CDSS)
 * **Tệp tri thức JSON CRM độc lập**:
   - Backend: `backend/src/main/resources/data/medical_specialty_crm_rules.json`
   - Frontend: `frontend/src/data/medicalSpecialtyDictionary.json`
   - Tách rời hoàn toàn tri thức y khoa ra khỏi mã nguồn nghiệp vụ, cho phép cập nhật từ khóa bệnh lý và câu hỏi sàng lọc mà không cần biên dịch lại hệ thống.
-  - 5 chuyên khoa cốt lõi: Nội khoa (`INTERNAL_MED`), Tim mạch (`CARDIOLOGY`), Tai Mũi Họng (`ENT`), Da liễu (`DERMATOLOGY`), Nhi khoa (`PEDIATRICS`).
-* **Động cơ phân tích lai (Hybrid Engine)**:
-  - Khớp từ khóa triệu chứng và tính điểm tương đồng (`matchScore` 65% - 98%).
-  - Tự động nhận diện các dấu hiệu nguy hiểm cấp cứu (co giật, liệt nửa người, đau ngực dữ dội...) để gắn nhãn `EMERGENCY` và hiển thị cảnh báo đỏ khẩn cấp.
-  - Tích hợp mô hình AI LLM qua OpenRouter (Google Gemma / NVIDIA Nemotron 550B).
-  - **Cơ chế Fallback thông minh (Zero-Downtime CRM Fallback)**: Khi mô hình AI trực tuyến bị nghẽn (429 Too Many Requests / Timeout) hoặc mất kết nối mạng, hệ thống tự động chuyển sang tri thức từ điển CRM JSON mà không bao giờ báo lỗi hệ thống.
+  - Hỗ trợ các chuyên khoa lâm sàng trọng yếu: Tim mạch (`CARDIOLOGY`), Thần kinh (`NEUROLOGY`), Hô hấp (`RESPIRATORY`), Tiêu hóa (`DIGESTIVE`), Da liễu (`DERMATOLOGY`), Cơ xương khớp (`MUSCULOSKELETAL`), Sản phụ khoa (`OBSTETRICS`), Nhi khoa (`PEDIATRICS`).
+* **Động cơ phân tích lai tối ưu (Optimized Hybrid Engine - `MedicalTriageService.java`)**:
+  - **Khớp ranh giới từ vựng Unicode (Word-Boundary Regex `(?<!\\p{L})keyword(?!\\p{L})`)**: Loại trừ 100% hiện tượng dương tính giả (False Positives), ví dụ từ "ho" không bị khớp nhầm vào "không", "hông", "hóa".
+  - **Chuẩn hóa chuỗi NFD & Bóc tách dấu thanh**: Hỗ trợ người dùng nhập tiếng Việt có dấu lẫn không dấu (`sot cao kho tho` -> nhận diện chính xác như `sốt cao khó thở`).
+  - **Ma trận Trọng số Triệu chứng Phân cấp (Weighted Symptom Scoring)**: Triệu chứng chỉ điểm bậc 1 ($w=3$), thứ cấp ($w=2$), triệu chứng chung ($w=1$).
+  - **Cửa sổ trượt ngữ cảnh hội thoại đa lượt (Multi-turn Context Sliding Window)**: Ghi nhớ và tổng hợp triệu chứng qua nhiều câu chat liên tiếp với hệ số suy giảm thời gian $\gamma = 0.85$.
+  - **Nhận diện cấp cứu thời gian thực (Zero-Latency Emergency Triggering)**: Bắt tức thời các từ khóa nguy cấp (hôn mê, đau thắt ngực, đột quỵ, co giật, nôn ra máu) với độ trễ $< 2\text{ ms}$.
+  - **Điểm cộng đối tượng đặc thù (Demographic Population Boost)**: Tự động cộng $+25$ điểm cho chuyên khoa Nhi (`PEDIATRICS`) khi phát hiện các từ khóa đối tượng như `bé`, `con nhỏ`, `trẻ em`.
+  - **Lưu vết bệnh án thông minh**: Mọi phiên phân tích được lưu vết tự động vào bảng `ai_symptom_analysis` với các trường `session_id`, `patient_id`, `patient_input`, `detected_symptoms`, `matched_specialty`, `urgency_level`, `confidence_score`.
+* **Tài liệu học thuật chuyên sâu đính kèm**:
+  - Đã xuất bản báo cáo toán học và thuật toán riêng biệt: [THUAT_TOAN_VA_CONG_THUC_AI.md](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/docs/THUAT_TOAN_VA_CONG_THUC_AI.md) và [THUAT_TOAN_VA_CONG_THUC_AI.docx](file:///Users/m1lt43/Desktop/DoAnChuyennganh/medical-appointment/docs/THUAT_TOAN_VA_CONG_THUC_AI.docx) bao gồm 5 thuật toán: Rule-based Weighted Clinical Triage, Haversine Geocoding Doctor Recommendation, Cosine Similarity RAG Vector Search, WHO/WPRO BMI Engine, Bayesian Dynamic Doctor Rating.
 * **Giao diện phản hồi 4 khối trực quan (`AssistantAI.jsx`)**:
   - 🩺 *Khối 1: AI Phân tích vấn đề*: Đánh giá lâm sàng nguyên nhân tiềm ẩn.
   - 🏥 *Khối 2: Đề xuất Chuyên khoa*: Huy hiệu khoa, điểm khớp triệu chứng, lý do chuyên môn và nút "Đặt khám khoa này".

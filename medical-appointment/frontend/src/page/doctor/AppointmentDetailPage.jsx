@@ -48,22 +48,21 @@ function AppointmentDetail() {
     const [error, setError] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [showRecordModal, setShowRecordModal] = useState(false);
+    const [showExamFormEarly, setShowExamFormEarly] = useState(false);
 
-    // Form Khám bệnh State
+    // Form Khám bệnh State: Ban đầu để trống hoàn toàn, không điền sẵn dữ liệu giả
     const [examForm, setExamForm] = useState({
         examinationType: 'Khám tổng quát',
-        bloodPressure: '120/80',
-        heartRate: '75',
-        temperature: '37.0',
-        weight: '65',
-        height: '170',
+        bloodPressure: '',
+        heartRate: '',
+        temperature: '',
+        weight: '',
+        height: '',
         clinicalSymptoms: '',
         diagnosis: '',
         labResults: '',
-        prescriptions: [
-            { name: 'Paracetamol 500mg', quantity: '10', unit: 'viên', dosage: 'Sáng 1v, Chiều 1v sau ăn', note: 'Uống khi sốt hoặc đau' }
-        ],
-        doctorAdvice: 'Ăn uống đủ chất, uống nhiều nước ấm (2L/ngày), nghỉ ngơi hợp lý và tái khám khi có dấu hiệu bất thường.',
+        prescriptions: [],
+        doctorAdvice: '',
         followUpDate: ''
     });
 
@@ -123,11 +122,11 @@ function AppointmentDetail() {
 
                     setExamForm({
                         examinationType: rec.examinationType || 'Khám tổng quát',
-                        bloodPressure: rec.bloodPressure || '120/80',
-                        heartRate: rec.heartRate ? String(rec.heartRate) : '75',
-                        temperature: rec.temperature ? String(rec.temperature) : '37.0',
-                        weight: rec.weight ? String(rec.weight) : '65',
-                        height: rec.height ? String(rec.height) : '170',
+                        bloodPressure: rec.bloodPressure || '',
+                        heartRate: rec.heartRate ? String(rec.heartRate) : '',
+                        temperature: rec.temperature ? String(rec.temperature) : '',
+                        weight: rec.weight ? String(rec.weight) : '',
+                        height: rec.height ? String(rec.height) : '',
                         clinicalSymptoms: rec.clinicalSymptoms || '',
                         diagnosis: rec.diagnosis || '',
                         labResults: rec.labResults || '',
@@ -460,8 +459,45 @@ function AppointmentDetail() {
                 </div>
             </div>
 
+            {/* Khi ca khám đang chờ duyệt và chưa có bệnh án, chỉ hiển thị thông tin tiếp nhận */}
+            {isPending && !medicalRecord && !showExamFormEarly && (
+                <div className="bg-white rounded-3xl p-8 border border-amber-200 bg-gradient-to-br from-amber-50/50 via-white to-orange-50/30 shadow-sm text-center space-y-4">
+                    <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-2xl shadow-xs">
+                        <i className="fas fa-hourglass-half animate-pulse"></i>
+                    </div>
+                    <div className="max-w-xl mx-auto space-y-2">
+                        <h3 className="text-xl font-black text-gray-900 tracking-tight">
+                            Lịch Khám Đang Ở Trạng Thái Chờ Duyệt (Chưa Khám)
+                        </h3>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                            Bệnh nhân đã đăng ký ca khám với lý do: <strong className="text-gray-900">"{appointment.reason || 'Khám bệnh'}"</strong>.
+                            Lịch hẹn này chưa diễn ra và chưa có thông tin khám bệnh lâm sàng. Bác sĩ vui lòng kiểm tra thông tin bệnh nhân ở trên và bấm <strong>"Xác Nhận Lịch Hẹn"</strong> để tiếp nhận ca khám vào phòng khám.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => handleAction('confirm')}
+                            disabled={isProcessing}
+                            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                            <i className="fas fa-check-circle"></i>
+                            <span>Xác Nhận Lịch Hẹn & Tiếp Nhận Ngay</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowExamFormEarly(true)}
+                            className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition border border-gray-200 cursor-pointer"
+                        >
+                            <i className="fas fa-notes-medical mr-1.5 text-blue-600"></i>
+                            <span>Mở Sớm Form Khám & Kê Đơn</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* PHÂN HỆ KHÁM BỆNH & LẬP BỆNH ÁN (MEDICAL EXAMINATION SUITE) */}
-            {!isCancelled && (
+            {!isCancelled && (!isPending || medicalRecord || showExamFormEarly) && (
                 <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
                     
                     {/* Header Phân Hệ Khám */}
@@ -532,7 +568,7 @@ function AppointmentDetail() {
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Ví dụ: 120/80"
+                                        placeholder="VD: 120/80"
                                         value={examForm.bloodPressure}
                                         onChange={(e) => setExamForm(prev => ({ ...prev, bloodPressure: e.target.value }))}
                                         className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 font-bold text-rose-600 focus:ring-2 focus:ring-blue-500 text-sm"
@@ -546,7 +582,7 @@ function AppointmentDetail() {
                                     </label>
                                     <input
                                         type="number"
-                                        placeholder="75"
+                                        placeholder="VD: 75"
                                         value={examForm.heartRate}
                                         onChange={(e) => setExamForm(prev => ({ ...prev, heartRate: e.target.value }))}
                                         className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 font-bold text-rose-500 focus:ring-2 focus:ring-blue-500 text-sm"
@@ -561,7 +597,7 @@ function AppointmentDetail() {
                                     <input
                                         type="number"
                                         step="0.1"
-                                        placeholder="37.0"
+                                        placeholder="VD: 37.0"
                                         value={examForm.temperature}
                                         onChange={(e) => setExamForm(prev => ({ ...prev, temperature: e.target.value }))}
                                         className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 font-bold text-amber-600 focus:ring-2 focus:ring-blue-500 text-sm"
@@ -576,7 +612,7 @@ function AppointmentDetail() {
                                     <input
                                         type="number"
                                         step="0.5"
-                                        placeholder="65"
+                                        placeholder="VD: 65"
                                         value={examForm.weight}
                                         onChange={(e) => setExamForm(prev => ({ ...prev, weight: e.target.value }))}
                                         className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 font-bold text-blue-600 focus:ring-2 focus:ring-blue-500 text-sm"
@@ -591,7 +627,7 @@ function AppointmentDetail() {
                                     <input
                                         type="number"
                                         step="1"
-                                        placeholder="170"
+                                        placeholder="VD: 170"
                                         value={examForm.height}
                                         onChange={(e) => setExamForm(prev => ({ ...prev, height: e.target.value }))}
                                         className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 font-bold text-indigo-600 focus:ring-2 focus:ring-blue-500 text-sm"
