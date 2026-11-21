@@ -1,8 +1,10 @@
 // src/pages/doctor/Schedule.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import useFetch from '../../hook/useFetch';
 import { fetchDoctorSchedule, fetchScheduleSummary, initDefaultDoctorSchedule } from '../../service/doctorService';
+import { useToast } from '../../context/ToastContext';
+import ScheduleConflictModal, { parseScheduleConflict } from '../../component/common/ScheduleConflictModal';
 
 const DAYS = {
     monday: 'Thứ Hai', tuesday: 'Thứ Ba', wednesday: 'Thứ Tư',
@@ -66,10 +68,14 @@ function Schedule() {
     }
     
     const DOCTOR_ID = doctor?.id || 1;
+    const navigate = useNavigate();
+    const { success: showToastSuccess, error: showToastError, confirm } = useToast();
 
     const [summary, setSummary] = useState(null);
     const [isResetting, setIsResetting] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [conflictData, setConflictData] = useState(null);
+    const [showConflictModal, setShowConflictModal] = useState(false);
 
     const fetchScheduleStable = useCallback(
         () => fetchDoctorSchedule(DOCTOR_ID),
@@ -91,21 +97,36 @@ function Schedule() {
         loadSummary();
     }, [loadSummary, refreshKey]);
 
-    const handleApplyDefaultSchedule = async () => {
-        if (!window.confirm("Bạn có chắc muốn áp dụng Lịch làm việc chuẩn (Thứ 2 đến Thứ 6: 08:00 - 11:30 & 13:30 - 17:00, 35 giờ/tuần)? Các ca khám cũ sẽ được làm mới.")) {
-            return;
-        }
-
-        setIsResetting(true);
-        try {
-            await initDefaultDoctorSchedule(DOCTOR_ID);
-            alert("Đã áp dụng Lịch làm việc chuẩn (Thứ 2 - Thứ 6) thành công!");
-            setRefreshKey(prev => prev + 1);
-        } catch (err) {
-            alert(err.response?.data || err.message || "Lỗi khi áp dụng lịch chuẩn");
-        } finally {
-            setIsResetting(false);
-        }
+    const handleApplyDefaultSchedule = () => {
+        confirm({
+            title: "Áp Dụng Lịch Làm Việc Chuẩn",
+            message: "Bạn có chắc muốn áp dụng Lịch làm việc chuẩn (Thứ 2 đến Thứ 6: 08:00 - 11:30 & 13:30 - 17:00, 35 giờ/tuần)? Các khung giờ hiện tại sẽ được cập nhật lại theo lịch chuẩn.",
+            confirmText: "Áp Dụng Ngay",
+            cancelText: "Hủy Bỏ",
+            type: "info",
+            onConfirm: async () => {
+                setIsResetting(true);
+                try {
+                    await initDefaultDoctorSchedule(DOCTOR_ID);
+                    showToastSuccess("Đã áp dụng lịch chuẩn", "Lịch làm việc chuẩn (Thứ 2 - Thứ 6) đã được áp dụng thành công!");
+                    setRefreshKey(prev => prev + 1);
+                } catch (err) {
+                    console.error("Lỗi áp dụng lịch chuẩn:", err);
+                    const rawMsg = err.response?.data?.message || err.response?.data || err.message || "Lỗi khi áp dụng lịch chuẩn";
+                    const parsed = parseScheduleConflict(rawMsg);
+                    if (parsed) {
+                        setConflictData(parsed);
+                        setShowConflictModal(true);
+                        showToastError("Không thể áp dụng lịch", "Có lịch hẹn của bệnh nhân trong các khung giờ bị thay đổi.");
+                    } else {
+                        const clean = typeof rawMsg === 'string' ? rawMsg.replace(/^Lỗi:\s*/i, '') : 'Lỗi áp dụng lịch chuẩn';
+                        showToastError("Lỗi áp dụng lịch", clean);
+                    }
+                } finally {
+                    setIsResetting(false);
+                }
+            }
+        });
     };
 
     if (isLoading)
@@ -230,6 +251,14 @@ function Schedule() {
                     ))}
                 </div>
             </div>
+
+            {/* Modal cảnh báo xung đột lịch hẹn */}
+            <ScheduleConflictModal
+                isOpen={showConflictModal}
+                onClose={() => setShowConflictModal(false)}
+                conflictData={conflictData}
+                onNavigateToAppointments={() => navigate('/doctor/appointment')}
+            />
         </div>
     );
 }

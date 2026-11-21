@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useFetch from '../../hook/useFetch';
 import { fetchDoctorSchedule, updateDoctorSchedule } from '../../service/doctorService';
+import { useToast } from '../../context/ToastContext';
+import ScheduleConflictModal, { parseScheduleConflict } from '../../component/common/ScheduleConflictModal';
 
 const PRIMARY_COLOR = 'blue';
 const SECONDARY_COLOR = 'emerald';
@@ -32,6 +34,10 @@ function EditSchedule() {
     const doctor = JSON.parse(sessionStorage.getItem("doctor"));
     const DOCTOR_ID = doctor?.id || null;
 
+    const { success: showToastSuccess, error: showToastError, warning: showToastWarning, info: showToastInfo, confirm } = useToast();
+    const [conflictData, setConflictData] = useState(null);
+    const [showConflictModal, setShowConflictModal] = useState(false);
+
     const fetcher = useCallback(() => fetchDoctorSchedule(DOCTOR_ID), [DOCTOR_ID]);
     const { data: fullSchedule, error } = useFetch(fetcher, []);
 
@@ -48,8 +54,6 @@ function EditSchedule() {
             const loaded = fullSchedule[dayKey]
                 .sort((a, b) => a.timeRange.localeCompare(b.timeRange));
             setCurrentTimes(loaded);
-
-            
         }
     }, [fullSchedule, dayKey]);
 
@@ -58,29 +62,30 @@ function EditSchedule() {
         const start = startTime.trim();
         const end = endTime.trim();
 
-        if (!start) return alert("Giờ bắt đầu không được để trống");
-        if (!end) return alert("Giờ kết thúc không được để trống");
-        if (!timeRegex.test(start)) return alert("Giờ bắt đầu phải đúng định dạng HH:MM (ví dụ 09:00)");
-        if (!timeRegex.test(end)) return alert("Giờ kết thúc phải đúng định dạng HH:MM (ví dụ 11:00)");
-        if (start >= end) return alert("Giờ kết thúc phải lớn hơn giờ bắt đầu!");
+        if (!start) return showToastWarning("Thiếu thông tin", "Giờ bắt đầu không được để trống!");
+        if (!end) return showToastWarning("Thiếu thông tin", "Giờ kết thúc không được để trống!");
+        if (!timeRegex.test(start)) return showToastWarning("Định dạng không hợp lệ", "Giờ bắt đầu phải đúng định dạng HH:MM (ví dụ 09:00)!");
+        if (!timeRegex.test(end)) return showToastWarning("Định dạng không hợp lệ", "Giờ kết thúc phải đúng định dạng HH:MM (ví dụ 11:00)!");
+        if (start >= end) return showToastWarning("Thời gian không hợp lệ", "Giờ kết thúc phải lớn hơn giờ bắt đầu!");
 
         const timeRange = `${start}-${end}`;
         const slot = { timeRange, slotDurationMinutes: newDuration };
 
         // Kiểm tra trùng
         if (currentTimes.some(t => t.timeRange === timeRange)) {
-            return alert("Khung giờ này đã tồn tại!");
+            return showToastWarning("Khung giờ trùng lặp", "Khung giờ này đã tồn tại trong danh sách của bạn!");
         }
 
         // Kiểm tra chồng lấp
         for (const t of currentTimes) {
             const [oldStart, oldEnd] = t.timeRange.split("-");
             if (start < oldEnd && end > oldStart) {
-                return alert("Khung giờ mới bị trùng với khung giờ đã tồn tại!");
+                return showToastWarning("Khung giờ chồng lấn", "Khung giờ mới bị trùng hoặc lấn vào khung giờ đã tồn tại!");
             }
         }
 
         setCurrentTimes([...currentTimes, slot].sort((a, b) => a.timeRange.localeCompare(b.timeRange)));
+        showToastSuccess("Đã thêm khung giờ", `Đã thêm khung ${timeRange} (${newDuration} phút). Hãy nhấn 'Lưu Lịch Làm Việc' để áp dụng.`);
         setStartTime('');
         setEndTime('');
     };
@@ -117,9 +122,41 @@ function EditSchedule() {
         return { totalHours, activeDays, isCompliant };
     })();
 
+    const executeSave = async (doctorId, payload) => {
+        setIsSaving(true);
+        try {
+            console.log("PAYLOAD GỬI LÊN:", JSON.stringify(payload, null, 2));
+            await updateDoctorSchedule(doctorId, payload);
+            showToastSuccess(
+                "Lưu lịch thành công!",
+                `Lịch làm việc cố định ngày ${dayName} đã được cập nhật thành công.`
+            );
+            setTimeout(() => {
+                navigate('/doctor/schedule');
+            }, 800);
+        } catch (err) {
+            console.error("Lỗi lưu lịch:", err);
+            const rawMsg = err.response?.data?.message || err.response?.data || err.message || "Lỗi không xác định";
+            const parsed = parseScheduleConflict(rawMsg);
+            if (parsed) {
+                setConflictData(parsed);
+                setShowConflictModal(true);
+                showToastError(
+                    "Không thể lưu lịch làm việc",
+                    "Phát hiện lịch hẹn đã đặt trong khung giờ bị xóa hoặc thu hẹp."
+                );
+            } else {
+                const clean = typeof rawMsg === 'string' ? rawMsg.replace(/^Lỗi:\s*/i, '') : 'Không thể lưu lịch làm việc';
+                showToastError("Lỗi lưu lịch", clean);
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleSave = async () => {
         const doctorId = JSON.parse(sessionStorage.getItem("doctor"))?.id;
-        if (!doctorId) return alert("Không tìm thấy ID bác sĩ!");
+        if (!doctorId) return showToastError("Lỗi tài khoản", "Không tìm thấy thông tin tài khoản bác sĩ!");
 
         const oldTimes = (fullSchedule?.[dayKey] || []).map(t => ({
             timeRange: t.timeRange,
@@ -132,46 +169,35 @@ function EditSchedule() {
         }));
         
         if (JSON.stringify(oldTimes) === JSON.stringify(newTimes)) {
-            return alert("Không có thay đổi nào để lưu!");
+            return showToastInfo("Không có thay đổi", "Lịch làm việc chưa có thay đổi nào để lưu!");
         }
+
+        const payload = {
+            dayOfWeek: dayKey.toLowerCase(),  
+            slots: currentTimes.map(t => {
+                const [startTime, endTime] = t.timeRange.split("-");
+                return {
+                    startTime,
+                    endTime,
+                    slotDurationMinutes: t.slotDurationMinutes
+                };
+            })
+        };
 
         // Cảnh báo quy chế nếu chưa đạt định mức tối thiểu
         if (!projectedStats.isCompliant) {
-            const confirmSave = window.confirm(
-                `CẢNH BÁO QUY CHẾ PHÒNG KHÁM:\n\n` +
-                `Sau khi lưu ngày này, tổng thời gian trực trong tuần của bạn là ${projectedStats.totalHours} giờ và ${projectedStats.activeDays} ngày làm việc.\n` +
-                `(Quy chế yêu cầu tối thiểu 20 giờ và 3 ngày trực/tuần để đảm bảo nhận lịch khám).\n\n` +
-                `Bạn có chắc chắn vẫn muốn lưu cấu hình này?`
-            );
-            if (!confirmSave) return;
+            confirm({
+                title: "Cảnh Báo Định Mức Trực Cả Tuần",
+                message: `Sau khi lưu ngày ${dayName}, tổng thời gian trực trong tuần của bạn là ${projectedStats.totalHours} giờ và ${projectedStats.activeDays} ngày làm việc (Quy chế phòng khám yêu cầu tối thiểu 20 giờ và 3 ngày trực/tuần để đảm bảo nhận lịch khám). Bạn có chắc chắn vẫn muốn lưu cấu hình này?`,
+                confirmText: "Vẫn Lưu Lịch",
+                cancelText: "Xem Lại",
+                type: "warning",
+                onConfirm: () => executeSave(doctorId, payload)
+            });
+            return;
         }
 
-        setIsSaving(true);
-
-        try {
-            // Gửi đúng format: mảng object có timeRange + duration
-            const payload = {
-                dayOfWeek: dayKey.toLowerCase(),  
-                slots: currentTimes.map(t => {
-                    const [startTime, endTime] = t.timeRange.split("-");
-                    return {
-                        startTime,
-                        endTime,
-                        slotDurationMinutes: t.slotDurationMinutes
-                    };
-                })
-            };
-            console.log("PAYLOAD GỬI LÊN:", JSON.stringify(payload, null, 2));
-            await updateDoctorSchedule(doctorId, payload);
-            alert("Lưu lịch thành công!");
-            navigate('/doctor/schedule');
-        } catch (err) {
-            console.error("Lỗi lưu lịch:", err);
-            const errorMsg = err.response?.data || err.message || "Lỗi không xác định";
-            alert("Lỗi lưu lịch: " + errorMsg);
-        } finally {
-            setIsSaving(false);
-        }
+        await executeSave(doctorId, payload);
     };
 
     if (error) return (
@@ -306,6 +332,14 @@ function EditSchedule() {
                     {isSaving ? <>Đang Lưu...</> : <>Lưu Lịch Làm Việc</>}
                 </button>
             </div>
+
+            {/* Modal cảnh báo xung đột lịch hẹn đã đặt chuẩn thiết kế */}
+            <ScheduleConflictModal
+                isOpen={showConflictModal}
+                onClose={() => setShowConflictModal(false)}
+                conflictData={conflictData}
+                onNavigateToAppointments={() => navigate('/doctor/appointment')}
+            />
         </div>
     );
 }
